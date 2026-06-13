@@ -5,7 +5,7 @@
 Specs, tickets, and how they flow into each other are described in
 [specs/README.md](specs/README.md).
 
-**0 specs · 0 tickets** — 0 in-progress · 0 todo · 0 backlog · 0 done · 0 wontfix
+**1 specs · 0 tickets** — 0 in-progress · 0 todo · 0 backlog · 0 done · 0 wontfix
 
 ## Board
 
@@ -27,4 +27,6 @@ _None._
 
 ## Specs
 
-_None._
+| Spec | Title | Status | Release | Tickets done |
+| --- | --- | --- | --- | --- |
+| [SPEC-001](specs/SPEC-001-server-foundation.md) | Server foundation: app factory, configuration, errors, and health | draft | v0.1.0 | 0/0 |
