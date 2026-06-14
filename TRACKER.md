@@ -5,7 +5,7 @@
 Specs, tickets, and how they flow into each other are described in
 [specs/README.md](specs/README.md).
 
-**1 specs · 0 tickets** — 0 in-progress · 0 todo · 0 backlog · 0 done · 0 wontfix
+**1 specs · 7 tickets** — 0 in-progress · 7 todo · 0 backlog · 0 done · 0 wontfix
 
 ## Board
 
@@ -13,9 +13,17 @@ Specs, tickets, and how they flow into each other are described in
 
 _None._
 
-### Todo (0)
+### Todo (7)
 
-_None._
+| Ticket | Title | Spec | Type | Priority | Release |
+| --- | --- | --- | --- | --- | --- |
+| [ZS-001](tickets/ZS-001-project-tooling.md) | Set up project tooling: uv, ruff, mypy, pytest, pre-commit | [SPEC-001](specs/SPEC-001-server-foundation.md) | chore | P0 | v0.1.0 |
+| [ZS-002](tickets/ZS-002-app-factory.md) | App factory, lifespan, and zvec-server entry point | [SPEC-001](specs/SPEC-001-server-foundation.md) | feature | P0 | v0.1.0 |
+| [ZS-003](tickets/ZS-003-settings.md) | Settings from ZVEC_SERVER_* environment variables and .env | [SPEC-001](specs/SPEC-001-server-foundation.md) | feature | P0 | v0.1.0 |
+| [ZS-005](tickets/ZS-005-error-envelope.md) | Error hierarchy and consistent JSON error envelope | [SPEC-001](specs/SPEC-001-server-foundation.md) | feature | P0 | v0.1.0 |
+| [ZS-006](tickets/ZS-006-health-endpoints.md) | Liveness and readiness endpoints | [SPEC-001](specs/SPEC-001-server-foundation.md) | feature | P0 | v0.1.0 |
+| [ZS-004](tickets/ZS-004-structured-logging.md) | Structured logging (JSON or console) | [SPEC-001](specs/SPEC-001-server-foundation.md) | feature | P1 | v0.1.0 |
+| [ZS-007](tickets/ZS-007-ci-pipeline.md) | CI pipeline: Python 3.12/3.13 test matrix and Docker build | [SPEC-001](specs/SPEC-001-server-foundation.md) | chore | P1 | v0.1.0 |
 
 ### Backlog (0)
 
@@ -29,4 +37,4 @@ _None._
 
 | Spec | Title | Status | Release | Tickets done |
 | --- | --- | --- | --- | --- |
-| [SPEC-001](specs/SPEC-001-server-foundation.md) | Server foundation: app factory, configuration, errors, and health | draft | v0.1.0 | 0/0 |
+| [SPEC-001](specs/SPEC-001-server-foundation.md) | Server foundation: app factory, configuration, errors, and health | accepted | v0.1.0 | 0/7 |

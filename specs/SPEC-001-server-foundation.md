@@ -1,7 +1,7 @@
 ---
 id: SPEC-001
 title: Server foundation: app factory, configuration, errors, and health
-status: draft
+status: accepted
 created: 2026-06-13
 release: v0.1.0
 ---
@@ -204,3 +204,13 @@ Python version, plus a container image build without push.
   take down the rest. Operators should alert on `collections_unavailable > 0`.
 - One worker bounds request-handling parallelism; blocking engine work must be
   offloaded to a threadpool so the event loop stays free.
+
+## Tickets
+
+- ZS-001 — Set up project tooling: uv, ruff, mypy, pytest, pre-commit
+- ZS-002 — App factory, lifespan, and zvec-server entry point
+- ZS-003 — Settings from ZVEC_SERVER_* environment variables and .env
+- ZS-004 — Structured logging (JSON or console)
+- ZS-005 — Error hierarchy and consistent JSON error envelope
+- ZS-006 — Liveness and readiness endpoints
+- ZS-007 — CI pipeline: Python 3.12/3.13 test matrix and Docker build
