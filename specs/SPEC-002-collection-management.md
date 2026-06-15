@@ -1,7 +1,7 @@
 ---
 id: SPEC-002
 title: Collection management and metadata store
-status: draft
+status: accepted
 created: 2026-06-14
 release: v0.1.0
 ---
@@ -200,3 +200,12 @@ Engine exceptions become `ZvecOperationError` (500) in the adapter.
 - Zvec may impose naming or path rules beyond our regex; such engine rejections
   flow through the create error mapping.
 - Nothing bumps `updated_at` after creation yet; `touch()` exists for later use.
+
+## Tickets
+
+- ZS-008 — Zvec adapter: runtime init, enum and schema mapping
+- ZS-009 — SQLite metadata store for collection records
+- ZS-010 — In-memory collection registry loaded at startup
+- ZS-011 — Per-collection reader/writer lock and threadpool offload
+- ZS-012 — Collection endpoints: create, list, get, drop
+- ZS-013 — Flush and optimize endpoints

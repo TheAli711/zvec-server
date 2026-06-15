@@ -5,7 +5,7 @@
 Specs, tickets, and how they flow into each other are described in
 [specs/README.md](specs/README.md).
 
-**2 specs · 7 tickets** — 0 in-progress · 7 todo · 0 backlog · 0 done · 0 wontfix
+**2 specs · 13 tickets** — 0 in-progress · 13 todo · 0 backlog · 0 done · 0 wontfix
 
 ## Board
 
@@ -13,7 +13,7 @@ Specs, tickets, and how they flow into each other are described in
 
 _None._
 
-### Todo (7)
+### Todo (13)
 
 | Ticket | Title | Spec | Type | Priority | Release |
 | --- | --- | --- | --- | --- | --- |
@@ -22,8 +22,14 @@ _None._
 | [ZS-003](tickets/ZS-003-settings.md) | Settings from ZVEC_SERVER_* environment variables and .env | [SPEC-001](specs/SPEC-001-server-foundation.md) | feature | P0 | v0.1.0 |
 | [ZS-005](tickets/ZS-005-error-envelope.md) | Error hierarchy and consistent JSON error envelope | [SPEC-001](specs/SPEC-001-server-foundation.md) | feature | P0 | v0.1.0 |
 | [ZS-006](tickets/ZS-006-health-endpoints.md) | Liveness and readiness endpoints | [SPEC-001](specs/SPEC-001-server-foundation.md) | feature | P0 | v0.1.0 |
+| [ZS-008](tickets/ZS-008-zvec-adapter.md) | Zvec adapter: runtime init, enum and schema mapping | [SPEC-002](specs/SPEC-002-collection-management.md) | feature | P0 | v0.1.0 |
+| [ZS-009](tickets/ZS-009-metadata-store.md) | SQLite metadata store for collection records | [SPEC-002](specs/SPEC-002-collection-management.md) | feature | P0 | v0.1.0 |
+| [ZS-010](tickets/ZS-010-collection-registry.md) | In-memory collection registry loaded at startup | [SPEC-002](specs/SPEC-002-collection-management.md) | feature | P0 | v0.1.0 |
+| [ZS-011](tickets/ZS-011-collection-locking.md) | Per-collection reader/writer lock and threadpool offload | [SPEC-002](specs/SPEC-002-collection-management.md) | feature | P0 | v0.1.0 |
+| [ZS-012](tickets/ZS-012-collection-endpoints.md) | Collection endpoints: create, list, get, drop | [SPEC-002](specs/SPEC-002-collection-management.md) | feature | P0 | v0.1.0 |
 | [ZS-004](tickets/ZS-004-structured-logging.md) | Structured logging (JSON or console) | [SPEC-001](specs/SPEC-001-server-foundation.md) | feature | P1 | v0.1.0 |
 | [ZS-007](tickets/ZS-007-ci-pipeline.md) | CI pipeline: Python 3.12/3.13 test matrix and Docker build | [SPEC-001](specs/SPEC-001-server-foundation.md) | chore | P1 | v0.1.0 |
+| [ZS-013](tickets/ZS-013-flush-and-optimize.md) | Flush and optimize endpoints | [SPEC-002](specs/SPEC-002-collection-management.md) | feature | P1 | v0.1.0 |
 
 ### Backlog (0)
 
@@ -38,4 +44,4 @@ _None._
 | Spec | Title | Status | Release | Tickets done |
 | --- | --- | --- | --- | --- |
 | [SPEC-001](specs/SPEC-001-server-foundation.md) | Server foundation: app factory, configuration, errors, and health | accepted | v0.1.0 | 0/7 |
-| [SPEC-002](specs/SPEC-002-collection-management.md) | Collection management and metadata store | draft | v0.1.0 | 0/0 |
+| [SPEC-002](specs/SPEC-002-collection-management.md) | Collection management and metadata store | accepted | v0.1.0 | 0/6 |
