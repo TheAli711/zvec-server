@@ -5,7 +5,7 @@
 Specs, tickets, and how they flow into each other are described in
 [specs/README.md](specs/README.md).
 
-**3 specs · 17 tickets** — 0 in-progress · 17 todo · 0 backlog · 0 done · 0 wontfix
+**4 specs · 17 tickets** — 0 in-progress · 17 todo · 0 backlog · 0 done · 0 wontfix
 
 ## Board
 
@@ -50,3 +50,4 @@ _None._
 | [SPEC-001](specs/SPEC-001-server-foundation.md) | Server foundation: app factory, configuration, errors, and health | accepted | v0.1.0 | 0/7 |
 | [SPEC-002](specs/SPEC-002-collection-management.md) | Collection management and metadata store | accepted | v0.1.0 | 0/6 |
 | [SPEC-003](specs/SPEC-003-document-operations.md) | Document operations | accepted | v0.1.0 | 0/4 |
+| [SPEC-004](specs/SPEC-004-vector-search.md) | Vector similarity search | draft | v0.1.0 | 0/0 |
