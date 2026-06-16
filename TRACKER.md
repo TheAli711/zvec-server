@@ -5,7 +5,7 @@
 Specs, tickets, and how they flow into each other are described in
 [specs/README.md](specs/README.md).
 
-**3 specs · 13 tickets** — 0 in-progress · 13 todo · 0 backlog · 0 done · 0 wontfix
+**3 specs · 17 tickets** — 0 in-progress · 17 todo · 0 backlog · 0 done · 0 wontfix
 
 ## Board
 
@@ -13,7 +13,7 @@ Specs, tickets, and how they flow into each other are described in
 
 _None._
 
-### Todo (13)
+### Todo (17)
 
 | Ticket | Title | Spec | Type | Priority | Release |
 | --- | --- | --- | --- | --- | --- |
@@ -27,6 +27,10 @@ _None._
 | [ZS-010](tickets/ZS-010-collection-registry.md) | In-memory collection registry loaded at startup | [SPEC-002](specs/SPEC-002-collection-management.md) | feature | P0 | v0.1.0 |
 | [ZS-011](tickets/ZS-011-collection-locking.md) | Per-collection reader/writer lock and threadpool offload | [SPEC-002](specs/SPEC-002-collection-management.md) | feature | P0 | v0.1.0 |
 | [ZS-012](tickets/ZS-012-collection-endpoints.md) | Collection endpoints: create, list, get, drop | [SPEC-002](specs/SPEC-002-collection-management.md) | feature | P0 | v0.1.0 |
+| [ZS-014](tickets/ZS-014-doc-mapper.md) | Document mapper: REST to zvec.Doc, generated ids, per-doc status | [SPEC-003](specs/SPEC-003-document-operations.md) | feature | P0 | v0.1.0 |
+| [ZS-015](tickets/ZS-015-write-endpoints.md) | Insert, upsert, and update endpoints | [SPEC-003](specs/SPEC-003-document-operations.md) | feature | P0 | v0.1.0 |
+| [ZS-016](tickets/ZS-016-delete-endpoint.md) | Delete documents by ids or by filter | [SPEC-003](specs/SPEC-003-document-operations.md) | feature | P0 | v0.1.0 |
+| [ZS-017](tickets/ZS-017-fetch-endpoints.md) | Fetch documents by ids and get a document by id | [SPEC-003](specs/SPEC-003-document-operations.md) | feature | P0 | v0.1.0 |
 | [ZS-004](tickets/ZS-004-structured-logging.md) | Structured logging (JSON or console) | [SPEC-001](specs/SPEC-001-server-foundation.md) | feature | P1 | v0.1.0 |
 | [ZS-007](tickets/ZS-007-ci-pipeline.md) | CI pipeline: Python 3.12/3.13 test matrix and Docker build | [SPEC-001](specs/SPEC-001-server-foundation.md) | chore | P1 | v0.1.0 |
 | [ZS-013](tickets/ZS-013-flush-and-optimize.md) | Flush and optimize endpoints | [SPEC-002](specs/SPEC-002-collection-management.md) | feature | P1 | v0.1.0 |
@@ -45,4 +49,4 @@ _None._
 | --- | --- | --- | --- | --- |
 | [SPEC-001](specs/SPEC-001-server-foundation.md) | Server foundation: app factory, configuration, errors, and health | accepted | v0.1.0 | 0/7 |
 | [SPEC-002](specs/SPEC-002-collection-management.md) | Collection management and metadata store | accepted | v0.1.0 | 0/6 |
-| [SPEC-003](specs/SPEC-003-document-operations.md) | Document operations | draft | v0.1.0 | 0/0 |
+| [SPEC-003](specs/SPEC-003-document-operations.md) | Document operations | accepted | v0.1.0 | 0/4 |

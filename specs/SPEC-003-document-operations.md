@@ -1,7 +1,7 @@
 ---
 id: SPEC-003
 title: Document operations
-status: draft
+status: accepted
 created: 2026-06-15
 release: v0.1.0
 ---
@@ -193,3 +193,10 @@ takes locks; the manager does.
 - Returned vectors reflect storage precision (FP16, INT8), not the input values.
 - A filter delete gives no count or per-document detail; clients needing
   confirmation must fetch or search afterwards.
+
+## Tickets
+
+- ZS-014 — Document mapper: REST to zvec.Doc, generated ids, per-doc status
+- ZS-015 — Insert, upsert, and update endpoints
+- ZS-016 — Delete documents by ids or by filter
+- ZS-017 — Fetch documents by ids and get a document by id
