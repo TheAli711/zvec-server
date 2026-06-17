@@ -1,7 +1,7 @@
 ---
 id: SPEC-005
 title: Optional API-key authentication
-status: draft
+status: accepted
 created: 2026-06-17
 release: v0.1.0
 ---
@@ -162,3 +162,8 @@ imports `auth`; the package is wired once in `app.py`.
   counts as public. Revisit if prefixed deployments show up.
 - Rotating the key needs a restart. Acceptable for a single static key.
 - CORS preflight requests carry no credentials and will get 401; CORS is out of scope.
+
+## Tickets
+
+- ZS-020 — Pluggable AuthProvider with a static API-key provider
+- ZS-021 — ASGI auth middleware with public health paths
