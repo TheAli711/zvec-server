@@ -1,7 +1,7 @@
 ---
 id: SPEC-004
 title: Vector similarity search
-status: draft
+status: accepted
 created: 2026-06-16
 release: v0.1.0
 ---
@@ -205,3 +205,8 @@ delete-by-filter.
 - The 1000 `topk` cap guards against oversized responses, especially with
   `include_vector`. It may need to become configurable.
 - Filter error messages are the engine's and vary in quality.
+
+## Tickets
+
+- ZS-018 — Query mapper: vector or document-id queries, topk, filter
+- ZS-019 — Search endpoint with multi-query and output control
