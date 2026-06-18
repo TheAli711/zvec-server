@@ -5,7 +5,7 @@
 Specs, tickets, and how they flow into each other are described in
 [specs/README.md](specs/README.md).
 
-**6 specs · 21 tickets** — 0 in-progress · 21 todo · 0 backlog · 0 done · 0 wontfix
+**6 specs · 25 tickets** — 0 in-progress · 25 todo · 0 backlog · 0 done · 0 wontfix
 
 ## Board
 
@@ -13,7 +13,7 @@ Specs, tickets, and how they flow into each other are described in
 
 _None._
 
-### Todo (21)
+### Todo (25)
 
 | Ticket | Title | Spec | Type | Priority | Release |
 | --- | --- | --- | --- | --- | --- |
@@ -38,6 +38,10 @@ _None._
 | [ZS-013](tickets/ZS-013-flush-and-optimize.md) | Flush and optimize endpoints | [SPEC-002](specs/SPEC-002-collection-management.md) | feature | P1 | v0.1.0 |
 | [ZS-020](tickets/ZS-020-auth-provider.md) | Pluggable AuthProvider with a static API-key provider | [SPEC-005](specs/SPEC-005-api-key-auth.md) | feature | P1 | v0.1.0 |
 | [ZS-021](tickets/ZS-021-auth-middleware.md) | ASGI auth middleware with public health paths | [SPEC-005](specs/SPEC-005-api-key-auth.md) | feature | P1 | v0.1.0 |
+| [ZS-022](tickets/ZS-022-docker-image.md) | Multi-stage Dockerfile and docker-compose | [SPEC-006](specs/SPEC-006-packaging-and-docs.md) | feature | P1 | v0.1.0 |
+| [ZS-023](tickets/ZS-023-user-docs.md) | User docs: README, API, configuration, architecture | [SPEC-006](specs/SPEC-006-packaging-and-docs.md) | docs | P1 | v0.1.0 |
+| [ZS-024](tickets/ZS-024-examples.md) | Runnable examples: Python client and curl script | [SPEC-006](specs/SPEC-006-packaging-and-docs.md) | docs | P2 | v0.1.0 |
+| [ZS-025](tickets/ZS-025-community-files.md) | Contributor and community files | [SPEC-006](specs/SPEC-006-packaging-and-docs.md) | docs | P2 | v0.1.0 |
 
 ### Backlog (0)
 
@@ -56,4 +60,4 @@ _None._
 | [SPEC-003](specs/SPEC-003-document-operations.md) | Document operations | accepted | v0.1.0 | 0/4 |
 | [SPEC-004](specs/SPEC-004-vector-search.md) | Vector similarity search | accepted | v0.1.0 | 0/2 |
 | [SPEC-005](specs/SPEC-005-api-key-auth.md) | Optional API-key authentication | accepted | v0.1.0 | 0/2 |
-| [SPEC-006](specs/SPEC-006-packaging-and-docs.md) | Container image, documentation, and examples | draft | v0.1.0 | 0/0 |
+| [SPEC-006](specs/SPEC-006-packaging-and-docs.md) | Container image, documentation, and examples | accepted | v0.1.0 | 0/4 |

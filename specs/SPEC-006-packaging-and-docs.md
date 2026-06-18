@@ -1,7 +1,7 @@
 ---
 id: SPEC-006
 title: Container image, documentation, and examples
-status: draft
+status: accepted
 created: 2026-06-18
 release: v0.1.0
 ---
@@ -186,3 +186,10 @@ any HTTP status of 400 or above, and keeps its optional auth-header array safe u
 - The Python example needs `httpx`, which is a dev dependency, not a runtime one.
 - The security and conduct contacts are a personal address until the project has a
   shared one.
+
+## Tickets
+
+- ZS-022 — Multi-stage Dockerfile and docker-compose
+- ZS-023 — User docs: README, API, configuration, architecture
+- ZS-024 — Runnable examples: Python client and curl script
+- ZS-025 — Contributor and community files
