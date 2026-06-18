@@ -5,7 +5,7 @@
 Specs, tickets, and how they flow into each other are described in
 [specs/README.md](specs/README.md).
 
-**5 specs · 21 tickets** — 0 in-progress · 21 todo · 0 backlog · 0 done · 0 wontfix
+**6 specs · 21 tickets** — 0 in-progress · 21 todo · 0 backlog · 0 done · 0 wontfix
 
 ## Board
 
@@ -56,3 +56,4 @@ _None._
 | [SPEC-003](specs/SPEC-003-document-operations.md) | Document operations | accepted | v0.1.0 | 0/4 |
 | [SPEC-004](specs/SPEC-004-vector-search.md) | Vector similarity search | accepted | v0.1.0 | 0/2 |
 | [SPEC-005](specs/SPEC-005-api-key-auth.md) | Optional API-key authentication | accepted | v0.1.0 | 0/2 |
+| [SPEC-006](specs/SPEC-006-packaging-and-docs.md) | Container image, documentation, and examples | draft | v0.1.0 | 0/0 |
