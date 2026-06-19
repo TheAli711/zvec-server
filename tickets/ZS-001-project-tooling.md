@@ -4,7 +4,7 @@ title: Set up project tooling: uv, ruff, mypy, pytest, pre-commit
 spec: SPEC-001
 type: chore
 priority: P0
-status: todo
+status: in-progress
 release: v0.1.0
 created: 2026-06-14
 ---

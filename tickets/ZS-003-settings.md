@@ -4,7 +4,7 @@ title: Settings from ZVEC_SERVER_* environment variables and .env
 spec: SPEC-001
 type: feature
 priority: P0
-status: todo
+status: in-progress
 release: v0.1.0
 created: 2026-06-14
 ---

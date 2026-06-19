@@ -4,7 +4,7 @@ title: CI pipeline: Python 3.12/3.13 test matrix and Docker build
 spec: SPEC-001
 type: chore
 priority: P1
-status: todo
+status: in-progress
 release: v0.1.0
 created: 2026-06-14
 ---

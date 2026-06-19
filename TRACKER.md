@@ -5,15 +5,11 @@
 Specs, tickets, and how they flow into each other are described in
 [specs/README.md](specs/README.md).
 
-**6 specs · 25 tickets** — 0 in-progress · 25 todo · 0 backlog · 0 done · 0 wontfix
+**6 specs · 25 tickets** — 13 in-progress · 12 todo · 0 backlog · 0 done · 0 wontfix
 
 ## Board
 
-### In progress (0)
-
-_None._
-
-### Todo (25)
+### In progress (13)
 
 | Ticket | Title | Spec | Type | Priority | Release |
 | --- | --- | --- | --- | --- | --- |
@@ -27,15 +23,20 @@ _None._
 | [ZS-010](tickets/ZS-010-collection-registry.md) | In-memory collection registry loaded at startup | [SPEC-002](specs/SPEC-002-collection-management.md) | feature | P0 | v0.1.0 |
 | [ZS-011](tickets/ZS-011-collection-locking.md) | Per-collection reader/writer lock and threadpool offload | [SPEC-002](specs/SPEC-002-collection-management.md) | feature | P0 | v0.1.0 |
 | [ZS-012](tickets/ZS-012-collection-endpoints.md) | Collection endpoints: create, list, get, drop | [SPEC-002](specs/SPEC-002-collection-management.md) | feature | P0 | v0.1.0 |
+| [ZS-004](tickets/ZS-004-structured-logging.md) | Structured logging (JSON or console) | [SPEC-001](specs/SPEC-001-server-foundation.md) | feature | P1 | v0.1.0 |
+| [ZS-007](tickets/ZS-007-ci-pipeline.md) | CI pipeline: Python 3.12/3.13 test matrix and Docker build | [SPEC-001](specs/SPEC-001-server-foundation.md) | chore | P1 | v0.1.0 |
+| [ZS-013](tickets/ZS-013-flush-and-optimize.md) | Flush and optimize endpoints | [SPEC-002](specs/SPEC-002-collection-management.md) | feature | P1 | v0.1.0 |
+
+### Todo (12)
+
+| Ticket | Title | Spec | Type | Priority | Release |
+| --- | --- | --- | --- | --- | --- |
 | [ZS-014](tickets/ZS-014-doc-mapper.md) | Document mapper: REST to zvec.Doc, generated ids, per-doc status | [SPEC-003](specs/SPEC-003-document-operations.md) | feature | P0 | v0.1.0 |
 | [ZS-015](tickets/ZS-015-write-endpoints.md) | Insert, upsert, and update endpoints | [SPEC-003](specs/SPEC-003-document-operations.md) | feature | P0 | v0.1.0 |
 | [ZS-016](tickets/ZS-016-delete-endpoint.md) | Delete documents by ids or by filter | [SPEC-003](specs/SPEC-003-document-operations.md) | feature | P0 | v0.1.0 |
 | [ZS-017](tickets/ZS-017-fetch-endpoints.md) | Fetch documents by ids and get a document by id | [SPEC-003](specs/SPEC-003-document-operations.md) | feature | P0 | v0.1.0 |
 | [ZS-018](tickets/ZS-018-query-mapper.md) | Query mapper: vector or document-id queries, topk, filter | [SPEC-004](specs/SPEC-004-vector-search.md) | feature | P0 | v0.1.0 |
 | [ZS-019](tickets/ZS-019-search-endpoint.md) | Search endpoint with multi-query and output control | [SPEC-004](specs/SPEC-004-vector-search.md) | feature | P0 | v0.1.0 |
-| [ZS-004](tickets/ZS-004-structured-logging.md) | Structured logging (JSON or console) | [SPEC-001](specs/SPEC-001-server-foundation.md) | feature | P1 | v0.1.0 |
-| [ZS-007](tickets/ZS-007-ci-pipeline.md) | CI pipeline: Python 3.12/3.13 test matrix and Docker build | [SPEC-001](specs/SPEC-001-server-foundation.md) | chore | P1 | v0.1.0 |
-| [ZS-013](tickets/ZS-013-flush-and-optimize.md) | Flush and optimize endpoints | [SPEC-002](specs/SPEC-002-collection-management.md) | feature | P1 | v0.1.0 |
 | [ZS-020](tickets/ZS-020-auth-provider.md) | Pluggable AuthProvider with a static API-key provider | [SPEC-005](specs/SPEC-005-api-key-auth.md) | feature | P1 | v0.1.0 |
 | [ZS-021](tickets/ZS-021-auth-middleware.md) | ASGI auth middleware with public health paths | [SPEC-005](specs/SPEC-005-api-key-auth.md) | feature | P1 | v0.1.0 |
 | [ZS-022](tickets/ZS-022-docker-image.md) | Multi-stage Dockerfile and docker-compose | [SPEC-006](specs/SPEC-006-packaging-and-docs.md) | feature | P1 | v0.1.0 |

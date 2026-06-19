@@ -4,7 +4,7 @@ title: Collection endpoints: create, list, get, drop
 spec: SPEC-002
 type: feature
 priority: P0
-status: todo
+status: in-progress
 release: v0.1.0
 created: 2026-06-15
 ---
