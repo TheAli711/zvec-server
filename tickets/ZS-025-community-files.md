@@ -4,7 +4,7 @@ title: Contributor and community files
 spec: SPEC-006
 type: docs
 priority: P2
-status: todo
+status: in-progress
 release: v0.1.0
 created: 2026-06-18
 ---
