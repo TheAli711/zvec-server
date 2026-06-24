@@ -1,0 +1,25 @@
+# Pre-commit hooks for Zvec Server.
+#
+#   uv run pre-commit install        # set up the git hook
+#   uv run pre-commit run --all-files  # run against the whole repo
+#
+# Keep the ruff hook version roughly in sync with the `ruff` pin in pyproject.toml.
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.7.4
+    hooks:
+      # Lint, applying autofixes.
+      - id: ruff
+        args: ["--fix"]
+      # Format.
+      - id: ruff-format
