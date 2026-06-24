@@ -1,7 +1,7 @@
 ---
 id: SPEC-002
 title: Collection management and metadata store
-status: accepted
+status: implemented
 created: 2026-06-14
 release: v0.1.0
 ---

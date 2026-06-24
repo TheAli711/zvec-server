@@ -1,7 +1,7 @@
 ---
 id: SPEC-006
 title: Container image, documentation, and examples
-status: accepted
+status: implemented
 created: 2026-06-18
 release: v0.1.0
 ---

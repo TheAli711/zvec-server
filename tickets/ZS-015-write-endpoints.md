@@ -4,9 +4,10 @@ title: Insert, upsert, and update endpoints
 spec: SPEC-003
 type: feature
 priority: P0
-status: in-progress
+status: done
 release: v0.1.0
 created: 2026-06-16
+closed: 2026-06-24
 ---
 
 # ZS-015: Insert, upsert, and update endpoints
@@ -19,16 +20,16 @@ ZS-014. Writes run under the collection's exclusive lock in the threadpool.
 
 ## Acceptance criteria
 
-- [ ] `operations.insert(collection, docs, mode)` converts docs, dispatches to
+- [x] `operations.insert(collection, docs, mode)` converts docs, dispatches to
       `collection.insert`, `upsert`, or `update` by `mode`, and builds the
       per-document response.
-- [ ] Engine `ValueError` → `400 invalid_argument`; any other engine exception →
+- [x] Engine `ValueError` → `400 invalid_argument`; any other engine exception →
       `500 zvec_operation_error`; our own errors propagate unchanged.
-- [ ] The three routes call `managed.write(...)`; unknown collection → `404`,
+- [x] The three routes call `managed.write(...)`; unknown collection → `404`,
       unavailable → `503`, empty `docs` → `422 validation_error`.
-- [ ] Per-document failures return `200` with `ok: false` entries and a non-zero
+- [x] Per-document failures return `200` with `ok: false` entries and a non-zero
       `error_count`.
-- [ ] Integration tests cover insert with ids, generated ids, missing collection,
+- [x] Integration tests cover insert with ids, generated ids, missing collection,
       upsert of a new id, and a partial update of one field read back via GET.
 
 ## Notes
@@ -40,3 +41,9 @@ ZS-014. Writes run under the collection's exclusive lock in the threadpool.
 - One exclusive lock per batch means large batches delay reads on that collection;
   note this in the docs rather than chunking server-side.
 - Routes live in `api/vectors.py` under the `documents` tag.
+
+## Resolution
+
+Added `insert` (with a `mode` parameter) to `adapter/operations.py`, the
+`WriteRequest` model, and the three routes in `api/vectors.py`, covered by
+`test_vectors_api.py`.

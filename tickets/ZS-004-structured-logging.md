@@ -4,9 +4,10 @@ title: Structured logging (JSON or console)
 spec: SPEC-001
 type: feature
 priority: P1
-status: in-progress
+status: done
 release: v0.1.0
 created: 2026-06-14
+closed: 2026-06-24
 ---
 
 # ZS-004: Structured logging (JSON or console)
@@ -20,14 +21,14 @@ same handler so access and error logs are not in a second format.
 
 ## Acceptance criteria
 
-- [ ] `fmt="json"` uses python-json-logger with keys `timestamp`, `level`,
+- [x] `fmt="json"` uses python-json-logger with keys `timestamp`, `level`,
       `name`, `message`, plus any `extra={...}` fields passed by the caller.
-- [ ] `fmt="console"` uses `%(asctime)s %(levelname)-8s %(name)s | %(message)s`.
-- [ ] A single stdout handler replaces the root logger's handlers; the level is
+- [x] `fmt="console"` uses `%(asctime)s %(levelname)-8s %(name)s | %(message)s`.
+- [x] A single stdout handler replaces the root logger's handlers; the level is
       applied case-insensitively.
-- [ ] `uvicorn`, `uvicorn.error`, and `uvicorn.access` get the same handler and
+- [x] `uvicorn`, `uvicorn.error`, and `uvicorn.access` get the same handler and
       level, with `propagate = False` to avoid duplicate lines.
-- [ ] The entry point passes `log_config=None` to Uvicorn so it does not install
+- [x] The entry point passes `log_config=None` to Uvicorn so it does not install
       its default config over ours.
 
 ## Notes
@@ -38,3 +39,9 @@ same handler so access and error logs are not in a second format.
   tests; it must be safe to call repeatedly (replace handlers, do not append).
 - The Zvec engine keeps its own log files, controlled separately by
   `ZVEC_SERVER_ZVEC_LOG_DIR`; this ticket covers Python logging only.
+
+## Resolution
+
+Added `logging.py` with the JSON and console formatters and Uvicorn logger
+alignment, wired into the lifespan. Tests use the `console` format at `WARNING` to
+keep output quiet.

@@ -4,9 +4,10 @@ title: Settings from ZVEC_SERVER_* environment variables and .env
 spec: SPEC-001
 type: feature
 priority: P0
-status: in-progress
+status: done
 release: v0.1.0
 created: 2026-06-14
+closed: 2026-06-24
 ---
 
 # ZS-003: Settings from ZVEC_SERVER_* environment variables and .env
@@ -20,18 +21,18 @@ code never handles `None` paths.
 
 ## Acceptance criteria
 
-- [ ] Env prefix `ZVEC_SERVER_`, `.env` (UTF-8) support, case-insensitive names,
+- [x] Env prefix `ZVEC_SERVER_`, `.env` (UTF-8) support, case-insensitive names,
       unknown variables ignored.
-- [ ] Fields and defaults: `data_dir=./data`, `metadata_db_path`,
+- [x] Fields and defaults: `data_dir=./data`, `metadata_db_path`,
       `collections_dir`, `host=0.0.0.0`, `port=8000`, `log_level=INFO`
       (`DEBUG|INFO|WARNING|ERROR|CRITICAL`), `log_format=json` (`json|console`),
       `enable_mmap=true`, `zvec_memory_limit_mb`, `zvec_query_threads`,
       `zvec_optimize_threads`, `zvec_log_dir` (all unset by default).
-- [ ] An after-validator fills `metadata_db_path = data_dir/metadata.db` and
+- [x] An after-validator fills `metadata_db_path = data_dir/metadata.db` and
       `collections_dir = data_dir/collections` only when they are unset.
-- [ ] `ensure_directories()` creates the data dir, collections dir, and the
+- [x] `ensure_directories()` creates the data dir, collections dir, and the
       metadata DB's parent directory.
-- [ ] `get_settings()` returns a cached instance; `create_app(settings)` accepts an
+- [x] `get_settings()` returns a cached instance; `create_app(settings)` accepts an
       explicit override for tests.
 
 ## Notes
@@ -43,3 +44,8 @@ code never handles `None` paths.
 - The model should be easy to extend with cross-field validators; an optional API
   key is in project scope and will need one.
 - Provide `.env.example` listing every variable with its default.
+
+## Resolution
+
+Added `config.py` with the `Settings` model, the derived-path validator,
+`ensure_directories()`, and cached `get_settings()`, plus `.env.example`.

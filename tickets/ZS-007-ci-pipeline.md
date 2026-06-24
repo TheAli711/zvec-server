@@ -4,9 +4,10 @@ title: CI pipeline: Python 3.12/3.13 test matrix and Docker build
 spec: SPEC-001
 type: chore
 priority: P1
-status: in-progress
+status: done
 release: v0.1.0
 created: 2026-06-14
+closed: 2026-06-24
 ---
 
 # ZS-007: CI pipeline: Python 3.12/3.13 test matrix and Docker build
@@ -19,15 +20,15 @@ still builds. Nothing merges to `main` with a red gate.
 
 ## Acceptance criteria
 
-- [ ] `.github/workflows/ci.yml` triggers on push to any branch and on
+- [x] `.github/workflows/ci.yml` triggers on push to any branch and on
       `pull_request`, with `permissions: contents: read`.
-- [ ] A `test` job with a non-fail-fast matrix over Python `3.12` and `3.13` runs
+- [x] A `test` job with a non-fail-fast matrix over Python `3.12` and `3.13` runs
       `uv sync --extra dev`, `ruff check`, `ruff format --check`, `mypy`, and
       `pytest --cov=zvec_server` (XML + terminal reports).
-- [ ] Coverage XML is uploaded as a `coverage-<python>` artifact, even on failure.
-- [ ] A `docker` job builds the image with Buildx and `docker/build-push-action`
+- [x] Coverage XML is uploaded as a `coverage-<python>` artifact, even on failure.
+- [x] A `docker` job builds the image with Buildx and `docker/build-push-action`
       (`push: false`, tag `zvec-server:ci`, GitHub Actions layer cache).
-- [ ] A concurrency group cancels superseded runs on the same ref.
+- [x] A concurrency group cancels superseded runs on the same ref.
 
 ## Notes
 
@@ -36,3 +37,8 @@ still builds. Nothing merges to `main` with a red gate.
   separately); it only proves the image builds and never pushes.
 - Tests run the real Zvec engine, so the runner needs the `zvec` wheel for Linux
   x86_64 on both Python versions.
+
+## Resolution
+
+Added `ci.yml` with the `test` matrix and `docker` build jobs as described, and a
+CI badge in the README.

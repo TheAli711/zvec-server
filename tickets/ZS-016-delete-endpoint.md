@@ -4,9 +4,10 @@ title: Delete documents by ids or by filter
 spec: SPEC-003
 type: feature
 priority: P0
-status: in-progress
+status: done
 release: v0.1.0
 created: 2026-06-16
+closed: 2026-06-24
 ---
 
 # ZS-016: Delete documents by ids or by filter
@@ -19,15 +20,15 @@ to Zvec verbatim and echo it back, since the engine returns no per-document stat
 
 ## Acceptance criteria
 
-- [ ] `DeleteRequest` has optional `ids` and `filter` with a model validator
+- [x] `DeleteRequest` has optional `ids` and `filter` with a model validator
       rejecting neither/both → `422 validation_error`.
-- [ ] Id deletes call `collection.delete(ids)` and return `results` per id and
+- [x] Id deletes call `collection.delete(ids)` and return `results` per id and
       `ok` = every item ok.
-- [ ] Filter deletes call `collection.delete_by_filter(filter)` and return
+- [x] Filter deletes call `collection.delete_by_filter(filter)` and return
       `{"ok": true, "filter": <filter>, "message": "Deleted by filter."}`.
-- [ ] A malformed filter → `400 invalid_argument` with `details.filter`; other
+- [x] A malformed filter → `400 invalid_argument` with `details.filter`; other
       engine failures → `500 zvec_operation_error`.
-- [ ] The route runs under the exclusive write lock; tests cover id delete (then
+- [x] The route runs under the exclusive write lock; tests cover id delete (then
       fetch shows only the survivor), filter delete, and the 422 cases.
 
 ## Notes
@@ -39,3 +40,9 @@ to Zvec verbatim and echo it back, since the engine returns no per-document stat
   for clients.
 - There is no count of deleted documents for filter deletes; callers that need one
   must query before or after.
+
+## Resolution
+
+Added `DeleteRequest`/`DeleteResponse`, `operations.delete`, and the route in
+`api/vectors.py`, with model and integration tests. The filter-delete integration
+test flushes the collection before issuing the delete.

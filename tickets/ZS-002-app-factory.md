@@ -4,9 +4,10 @@ title: App factory, lifespan, and zvec-server entry point
 spec: SPEC-001
 type: feature
 priority: P0
-status: in-progress
+status: done
 release: v0.1.0
 created: 2026-06-14
+closed: 2026-06-24
 ---
 
 # ZS-002: App factory, lifespan, and zvec-server entry point
@@ -20,19 +21,19 @@ in one interpreter, each pointed at its own temporary data directory.
 
 ## Acceptance criteria
 
-- [ ] Lifespan order: `configure_logging` → engine init (once per process) →
+- [x] Lifespan order: `configure_logging` → engine init (once per process) →
       `settings.ensure_directories()` → metadata store `connect()` → collection
       manager `load_all()` → `app.state.ready = True`. Shutdown sets `ready = False`,
       then closes the manager and the store.
-- [ ] `settings`, `store`, and `manager` live on `app.state`; `deps.get_manager`
+- [x] `settings`, `store`, and `manager` live on `app.state`; `deps.get_manager`
       and `deps.get_metadata` expose them to routers.
-- [ ] `zvec-server` and `python -m zvec_server` call `uvicorn.run` with
+- [x] `zvec-server` and `python -m zvec_server` call `uvicorn.run` with
       `"zvec_server.app:create_app"`, `factory=True`, `workers=1`,
       `log_config=None`, and host/port from settings.
-- [ ] OpenAPI is titled `Zvec Server`, versioned from `__version__`, with tags
+- [x] OpenAPI is titled `Zvec Server`, versioned from `__version__`, with tags
       `health`, `collections`, `documents`; exception handlers and routers are
       registered in the factory.
-- [ ] `tests/conftest.py` provides `settings` (tmp `data_dir`) and `client`
+- [x] `tests/conftest.py` provides `settings` (tmp `data_dir`) and `client`
       (`TestClient` running the lifespan) fixtures.
 
 ## Notes
@@ -44,3 +45,9 @@ in one interpreter, each pointed at its own temporary data directory.
 - Engine init must tolerate repeated app startups in one process (tests); the guard
   belongs in the adapter, not here.
 - Depends on ZS-003 (settings), ZS-004 (logging), ZS-005 (handlers).
+
+## Resolution
+
+Added `app.py`, `__main__.py`, and `deps.py` with the lifespan and entry points
+described above, and a startup log line reporting host and port. The factory also
+mounts the collection and document routers as those features landed.

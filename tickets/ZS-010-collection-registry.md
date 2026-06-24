@@ -4,9 +4,10 @@ title: In-memory collection registry loaded at startup
 spec: SPEC-002
 type: feature
 priority: P0
-status: in-progress
+status: done
 release: v0.1.0
 created: 2026-06-15
+closed: 2026-06-24
 ---
 
 # ZS-010: In-memory collection registry loaded at startup
@@ -20,19 +21,19 @@ Also add the adapter's low-level lifecycle helpers the manager calls.
 
 ## Acceptance criteria
 
-- [ ] `load_all()` reads every record and opens each collection with its stored
+- [x] `load_all()` reads every record and opens each collection with its stored
       `enable_mmap` (falling back to the server default); a missing directory or
       any open failure yields an *unavailable* entry (handle `None`) and a warning
       or error log instead of aborting startup.
-- [ ] `get(name)` raises `CollectionNotFoundError` (404) or
+- [x] `get(name)` raises `CollectionNotFoundError` (404) or
       `CollectionUnavailableError` (503); `info(name)` works for unavailable
       entries and reports `available: false` with `stats: null`.
-- [ ] `list()` returns summaries with `doc_count` read live (or `null` when
+- [x] `list()` returns summaries with `doc_count` read live (or `null` when
       unavailable); `counts()` returns `(loaded, unavailable)` for `/readyz`.
-- [ ] `adapter/collections.py` wraps create, open, destroy, stats (`doc_count`,
+- [x] `adapter/collections.py` wraps create, open, destroy, stats (`doc_count`,
       `index_completeness`), and schema serialization, turning engine failures
       into `ZvecOperationError`.
-- [ ] `test_manager.py` covers reopen after restart and the missing-directory case
+- [x] `test_manager.py` covers reopen after restart and the missing-directory case
       against the real engine.
 
 ## Notes
@@ -44,3 +45,9 @@ Also add the adapter's low-level lifecycle helpers the manager calls.
 - No retry for unavailable entries in this release: restore the data and restart.
 - Record options are stored as JSON; tolerate unparseable JSON by falling back to
   defaults rather than failing the load.
+
+## Resolution
+
+Added `CollectionManager` and `ManagedCollection` in `manager.py` and the helpers
+in `adapter/collections.py`, wired into the lifespan via `load_all()` and
+`close()`, with unit tests for reopen and unavailable collections.

@@ -1,0 +1,45 @@
+# Docker Compose for local / single-host deployments of Zvec Server.
+#
+#   docker compose up --build
+#
+# The server stores all state (collections + SQLite metadata) under /data,
+# which is bind-mounted to ./data on the host so it survives container restarts.
+services:
+  zvec-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: zvec-server:latest
+    container_name: zvec-server
+    ports:
+      - "8000:8000"
+    volumes:
+      # Persist collections and metadata.db on the host.
+      - ./data:/data
+    environment:
+      # Storage (matches ENV in the Dockerfile; shown here for clarity).
+      ZVEC_SERVER_DATA_DIR: /data
+      # HTTP server.
+      ZVEC_SERVER_HOST: 0.0.0.0
+      ZVEC_SERVER_PORT: "8000"
+      # Logging: json | console. Use "console" for human-readable local logs.
+      ZVEC_SERVER_LOG_LEVEL: INFO
+      ZVEC_SERVER_LOG_FORMAT: json
+      # Zvec engine tuning.
+      ZVEC_SERVER_ENABLE_MMAP: "true"
+      # Uncomment to cap engine memory / thread pools (defaults: auto-detect):
+      # ZVEC_SERVER_ZVEC_MEMORY_LIMIT_MB: "2048"
+      # ZVEC_SERVER_ZVEC_QUERY_THREADS: "4"
+      # ZVEC_SERVER_ZVEC_OPTIMIZE_THREADS: "2"
+      # Authentication. Enable and set a key to require
+      # `Authorization: Bearer <api_key>` on every request (health probes stay
+      # public). Prefer injecting the key from a secret manager / Docker secret.
+      # ZVEC_SERVER_AUTH_ENABLED: "true"
+      # ZVEC_SERVER_API_KEY: "change-me"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

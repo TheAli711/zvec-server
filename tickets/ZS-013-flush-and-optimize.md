@@ -4,9 +4,10 @@ title: Flush and optimize endpoints
 spec: SPEC-002
 type: feature
 priority: P1
-status: in-progress
+status: done
 release: v0.1.0
 created: 2026-06-15
+closed: 2026-06-24
 ---
 
 # ZS-013: Flush and optimize endpoints
@@ -19,15 +20,15 @@ open collections at shutdown so a clean stop does not lose buffered writes.
 
 ## Acceptance criteria
 
-- [ ] Both endpoints resolve the collection via `manager.get` (404 unknown, 503
+- [x] Both endpoints resolve the collection via `manager.get` (404 unknown, 503
       unavailable) and run the adapter call under the exclusive write lock.
-- [ ] Flush returns `{"message": "Collection '<name>' flushed."}`; optimize returns
+- [x] Flush returns `{"message": "Collection '<name>' flushed."}`; optimize returns
       `{"message": "Collection '<name>' optimized."}`.
-- [ ] Engine failures surface as `500 zvec_operation_error`.
-- [ ] `CollectionManager.close()` flushes every open collection under its write
+- [x] Engine failures surface as `500 zvec_operation_error`.
+- [x] `CollectionManager.close()` flushes every open collection under its write
       lock, logging and continuing past individual failures, then clears the
       registry.
-- [ ] An integration test calls flush and optimize on a fresh collection.
+- [x] An integration test calls flush and optimize on a fresh collection.
 
 ## Notes
 
@@ -38,3 +39,9 @@ open collections at shutdown so a clean stop does not lose buffered writes.
   exposed yet.
 - The routes call `adapter.collections` directly through `managed.write`, which
   the api → adapter import direction allows.
+
+## Resolution
+
+Added the two routes to `api/collections.py`, `flush_collection` and
+`optimize_collection` in `adapter/collections.py`, and `flush_all()` in the
+manager's shutdown path.

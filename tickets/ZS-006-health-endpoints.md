@@ -4,9 +4,10 @@ title: Liveness and readiness endpoints
 spec: SPEC-001
 type: feature
 priority: P0
-status: in-progress
+status: done
 release: v0.1.0
 created: 2026-06-14
+closed: 2026-06-24
 ---
 
 # ZS-006: Liveness and readiness endpoints
@@ -20,15 +21,15 @@ registered collections failed to open.
 
 ## Acceptance criteria
 
-- [ ] `GET /healthz` returns `200 {"status": "ok"}` and does no I/O.
-- [ ] `GET /readyz` returns `503` (`http_error`, "Service not ready.") while
+- [x] `GET /healthz` returns `200 {"status": "ok"}` and does no I/O.
+- [x] `GET /readyz` returns `503` (`http_error`, "Service not ready.") while
       `app.state.ready` is false or no manager is attached.
-- [ ] Once ready, `/readyz` returns `200 {"status": "ready", "collections_loaded":
+- [x] Once ready, `/readyz` returns `200 {"status": "ready", "collections_loaded":
       N, "collections_unavailable": M}` from the manager's `counts()`, and stays
       `200` when `M > 0`.
-- [ ] `HealthResponse` and `ReadyResponse` carry OpenAPI examples; both routes are
+- [x] `HealthResponse` and `ReadyResponse` carry OpenAPI examples; both routes are
       tagged `health`.
-- [ ] Integration tests cover both probes and that `/openapi.json` is served.
+- [x] Integration tests cover both probes and that `/openapi.json` is served.
 
 ## Notes
 
@@ -39,3 +40,8 @@ registered collections failed to open.
   enabled; keep them outside any auth-protected router.
 - The collection counts depend on the collection registry being attached to
   `app.state` by the lifespan (ZS-002).
+
+## Resolution
+
+Added `api/health.py` and the health/readiness models; the readiness check reads
+`app.state.ready` and the manager's loaded/unavailable counts.

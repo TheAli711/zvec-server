@@ -4,9 +4,10 @@ title: Set up project tooling: uv, ruff, mypy, pytest, pre-commit
 spec: SPEC-001
 type: chore
 priority: P0
-status: in-progress
+status: done
 release: v0.1.0
 created: 2026-06-14
+closed: 2026-06-24
 ---
 
 # ZS-001: Set up project tooling: uv, ruff, mypy, pytest, pre-commit
@@ -21,18 +22,18 @@ drift.
 
 ## Acceptance criteria
 
-- [ ] `pyproject.toml` builds with hatchling from `src/zvec_server`, requires
+- [x] `pyproject.toml` builds with hatchling from `src/zvec_server`, requires
       Python >= 3.12, reads the version dynamically from
       `src/zvec_server/__init__.py`, and ships `py.typed`.
-- [ ] Runtime deps pinned by floor (`fastapi`, `uvicorn[standard]`, `pydantic`,
+- [x] Runtime deps pinned by floor (`fastapi`, `uvicorn[standard]`, `pydantic`,
       `pydantic-settings`, `zvec>=0.5.0`, `readerwriterlock`,
       `python-json-logger`); a `dev` extra adds pytest, pytest-cov, httpx, ruff,
       mypy. `uv.lock` is committed.
-- [ ] `uv run ruff check`, `uv run ruff format --check`, `uv run mypy`, and
+- [x] `uv run ruff check`, `uv run ruff format --check`, `uv run mypy`, and
       `uv run pytest` all pass on an empty-but-importable package.
-- [ ] mypy disallows untyped and incomplete defs, warns on `Any` returns, and
+- [x] mypy disallows untyped and incomplete defs, warns on `Any` returns, and
       ignores missing stubs only for `zvec`, `readerwriterlock`, `pythonjsonlogger`.
-- [ ] `.pre-commit-config.yaml` runs the standard hygiene hooks plus ruff (with
+- [x] `.pre-commit-config.yaml` runs the standard hygiene hooks plus ruff (with
       `--fix`) and ruff-format.
 
 ## Notes
@@ -45,3 +46,10 @@ drift.
 - Tests must hit the real Zvec engine in `tmp_path`; do not introduce engine mocks
   here. Keep the ruff pre-commit rev roughly in step with the ruff floor.
 - Every module starts with `from __future__ import annotations`.
+
+## Resolution
+
+The package skeleton, `pyproject.toml`, `uv.lock`, and `.pre-commit-config.yaml`
+were added with the gates above. One gap versus the plan: `pre-commit` itself was
+not added to the `dev` extra, so contributors need it installed separately before
+`uv run pre-commit install` works.

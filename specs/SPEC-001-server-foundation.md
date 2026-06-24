@@ -1,7 +1,7 @@
 ---
 id: SPEC-001
 title: Server foundation: app factory, configuration, errors, and health
-status: accepted
+status: implemented
 created: 2026-06-13
 release: v0.1.0
 ---

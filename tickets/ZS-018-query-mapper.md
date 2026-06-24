@@ -4,9 +4,10 @@ title: Query mapper: vector or document-id queries, topk, filter
 spec: SPEC-004
 type: feature
 priority: P0
-status: in-progress
+status: done
 release: v0.1.0
 created: 2026-06-17
+closed: 2026-06-24
 ---
 
 # ZS-018: Query mapper: vector or document-id queries, topk, filter
@@ -20,17 +21,17 @@ SQL-like filter. This is the engine-facing half of SPEC-004; the route is ZS-019
 
 ## Acceptance criteria
 
-- [ ] `QuerySpec` (`field`, `vector`, `id`, `params`) in `models/search.py` rejects
+- [x] `QuerySpec` (`field`, `vector`, `id`, `params`) in `models/search.py` rejects
       neither or both of `vector` / `id`, and the module does not import `zvec`.
-- [ ] `SearchRequest` requires at least one query and bounds `topk` to 1..1000
+- [x] `SearchRequest` requires at least one query and bounds `topk` to 1..1000
       (default 10); `filter` is an optional string passed through verbatim.
-- [ ] `adapter/query_mapper.build_queries` builds a `zvec.Query` by vector or by id, and
+- [x] `adapter/query_mapper.build_queries` builds a `zvec.Query` by vector or by id, and
       maps `params: {"ef": <int>}` to `zvec.HnswQueryParam`; other shapes (including a
       boolean `ef`) yield no param so the engine uses its defaults.
-- [ ] `adapter/operations.search` issues all queries in one `collection.query` call and
+- [x] `adapter/operations.search` issues all queries in one `collection.query` call and
       translates a `ValueError` to `InvalidArgumentError` (with `details.filter`) and
       any other failure to `ZvecOperationError`.
-- [ ] Unit tests cover the exactly-one-of rule, the `queries` minimum, and the `topk`
+- [x] Unit tests cover the exactly-one-of rule, the `queries` minimum, and the `topk`
       bounds.
 
 ## Notes
@@ -41,3 +42,10 @@ SQL-like filter. This is the engine-facing half of SPEC-004; the route is ZS-019
 - Risk: silently dropping unknown `params` hides typos. Acceptable while `ef` is the
   only tunable; `flat` and `ivf` get engine defaults.
 - Do not validate filter syntax server-side; let Zvec reject it and map the error.
+
+## Resolution
+
+Added `QuerySpec` and `SearchRequest` in `models/search.py`, `build_queries` in
+`adapter/query_mapper.py`, and `search` in `adapter/operations.py`. Only HNSW `ef` is
+translated; any other `params` shape falls back to engine defaults, as planned. Model
+validation is covered in `tests/unit/test_models.py`.

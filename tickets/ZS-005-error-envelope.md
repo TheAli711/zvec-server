@@ -4,9 +4,10 @@ title: Error hierarchy and consistent JSON error envelope
 spec: SPEC-001
 type: feature
 priority: P0
-status: in-progress
+status: done
 release: v0.1.0
 created: 2026-06-14
+closed: 2026-06-24
 ---
 
 # ZS-005: Error hierarchy and consistent JSON error envelope
@@ -21,20 +22,20 @@ Define `zvec_server/errors.py`: a `ZvecServerError` base carrying `status_code`,
 
 ## Acceptance criteria
 
-- [ ] Subclasses with fixed status/code: `CollectionNotFoundError` (404),
+- [x] Subclasses with fixed status/code: `CollectionNotFoundError` (404),
       `DocumentNotFoundError` (404), `CollectionAlreadyExistsError` (409),
       `SchemaValidationError` (422), `InvalidArgumentError` (400),
       `CollectionUnavailableError` (503), `ZvecOperationError` (500); the base
       defaults to 500 `internal_error`.
-- [ ] `build_error_payload(code, message, details)` renders the envelope with
+- [x] `build_error_payload(code, message, details)` renders the envelope with
       `details` dropped when `None`, and is the only renderer in the codebase.
-- [ ] `RequestValidationError` → 422 `validation_error` with the Pydantic errors
+- [x] `RequestValidationError` → 422 `validation_error` with the Pydantic errors
       under `details.errors`; Starlette `HTTPException` → its status with
       `http_error` and the exception detail as the message.
-- [ ] Any other exception → 500 `internal_error`, message "An unexpected error
+- [x] Any other exception → 500 `internal_error`, message "An unexpected error
       occurred.", traceback logged; app errors with status >= 500 are logged with
       `exc_info`.
-- [ ] `ErrorResponse` is re-exported from `models/common.py` for OpenAPI use.
+- [x] `ErrorResponse` is re-exported from `models/common.py` for OpenAPI use.
 
 ## Notes
 
@@ -44,3 +45,9 @@ Define `zvec_server/errors.py`: a `ZvecServerError` base carrying `status_code`,
 - Keep `build_error_payload` public: a middleware running outside the exception
   handler stack (e.g. an auth check) must emit identical bodies.
 - Codes are part of the API contract; renaming one is a breaking change.
+
+## Resolution
+
+Added `errors.py` with the hierarchy, envelope models, and four handlers registered
+by `create_app`. An `unauthorized` (401) subclass was also added to the hierarchy
+ahead of the authentication work.

@@ -1,7 +1,7 @@
 ---
 id: SPEC-005
 title: Optional API-key authentication
-status: accepted
+status: implemented
 created: 2026-06-17
 release: v0.1.0
 ---

@@ -4,9 +4,10 @@ title: Fetch documents by ids and get a document by id
 spec: SPEC-003
 type: feature
 priority: P0
-status: in-progress
+status: done
 release: v0.1.0
 created: 2026-06-16
+closed: 2026-06-24
 ---
 
 # ZS-017: Fetch documents by ids and get a document by id
@@ -19,17 +20,17 @@ collection's shared read lock so they proceed concurrently with other reads.
 
 ## Acceptance criteria
 
-- [ ] `FetchRequest`: `ids` (min 1), `output_fields` (null = all),
+- [x] `FetchRequest`: `ids` (min 1), `output_fields` (null = all),
       `include_vector` (default `false`); `FetchResponse` is `{"docs": {id:
       DocOut}}`, with missing ids omitted.
-- [ ] `operations.fetch` passes `output_fields` and `include_vector` to
+- [x] `operations.fetch` passes `output_fields` and `include_vector` to
       `collection.fetch` and maps engine errors (`ValueError` → `400`, others →
       `500`).
-- [ ] `GET /docs/{doc_id}` accepts `include_vector` and repeated `output_fields`
+- [x] `GET /docs/{doc_id}` accepts `include_vector` and repeated `output_fields`
       query params and returns the bare `DocOut`.
-- [ ] A missing document on GET → `404 document_not_found` with
+- [x] A missing document on GET → `404 document_not_found` with
       `details: {"collection": name, "id": doc_id}`.
-- [ ] Integration tests cover batch fetch with a missing id and vectors compared
+- [x] Integration tests cover batch fetch with a missing id and vectors compared
       within FP32 tolerance, single GET, and the 404 path.
 
 ## Notes
@@ -39,3 +40,9 @@ collection's shared read lock so they proceed concurrently with other reads.
 - Returned vectors reflect storage precision; tests must compare approximately.
 - Route order in `api/vectors.py`: `docs/fetch` is POST and `docs/{doc_id}` is GET,
   so they do not collide.
+
+## Resolution
+
+Added `FetchRequest`/`FetchResponse`, `operations.fetch`, and both routes in
+`api/vectors.py`, raising `DocumentNotFoundError` from the GET handler when the id
+is absent from the fetch result.

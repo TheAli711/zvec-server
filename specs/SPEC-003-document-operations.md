@@ -1,7 +1,7 @@
 ---
 id: SPEC-003
 title: Document operations
-status: accepted
+status: implemented
 created: 2026-06-15
 release: v0.1.0
 ---

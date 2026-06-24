@@ -1,7 +1,7 @@
 ---
 id: SPEC-004
 title: Vector similarity search
-status: accepted
+status: implemented
 created: 2026-06-16
 release: v0.1.0
 ---

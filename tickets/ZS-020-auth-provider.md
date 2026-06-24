@@ -4,9 +4,10 @@ title: Pluggable AuthProvider with a static API-key provider
 spec: SPEC-005
 type: feature
 priority: P1
-status: in-progress
+status: done
 release: v0.1.0
 created: 2026-06-17
+closed: 2026-06-24
 ---
 
 # ZS-020: Pluggable AuthProvider with a static API-key provider
@@ -21,18 +22,18 @@ ZS-021.
 
 ## Acceptance criteria
 
-- [ ] `Settings` has `auth_enabled: bool = False` and `api_key: SecretStr | None`; a
+- [x] `Settings` has `auth_enabled: bool = False` and `api_key: SecretStr | None`; a
       validator fails startup when auth is enabled and the key is unset or blank.
-- [ ] `auth/provider.py` defines `AuthProvider` (`enabled`,
+- [x] `auth/provider.py` defines `AuthProvider` (`enabled`,
       `authenticate(authorization)`), `DisabledAuthProvider`, and `ApiKeyAuthProvider`,
       which rejects an empty key at construction.
-- [ ] `ApiKeyAuthProvider` accepts a case-insensitive `Bearer` scheme with surrounding
+- [x] `ApiKeyAuthProvider` accepts a case-insensitive `Bearer` scheme with surrounding
       whitespace, compares with `hmac.compare_digest`, and raises `AuthenticationError`
       (401, `unauthorized`) for a missing header, wrong scheme, blank token, or wrong key.
-- [ ] `build_auth_provider(settings)` returns the disabled provider when off and the
+- [x] `build_auth_provider(settings)` returns the disabled provider when off and the
       API-key provider otherwise.
-- [ ] `.env.example` documents both variables, off by default.
-- [ ] `tests/unit/test_auth.py` covers the providers, the factory, and the settings
+- [x] `.env.example` documents both variables, off by default.
+- [x] `tests/unit/test_auth.py` covers the providers, the factory, and the settings
       validation, including a parametrized set of bad headers.
 
 ## Notes
@@ -46,3 +47,10 @@ ZS-021.
   `adapter` must not import `auth`.
 - Risk: `compare_digest` can reveal key length but not contents; recommend
   `openssl rand -hex 32`.
+
+## Resolution
+
+Added the `auth` package with `provider.py` and the two settings in `config.py`, with a
+`model_validator` that rejects a missing or whitespace-only key when auth is enabled.
+`AuthenticationError` renders as 401 `unauthorized` through the shared error envelope.
+Unit tests landed in `tests/unit/test_auth.py`; no changes from the plan.

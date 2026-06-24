@@ -4,9 +4,10 @@ title: Per-collection reader/writer lock and threadpool offload
 spec: SPEC-002
 type: feature
 priority: P0
-status: in-progress
+status: done
 release: v0.1.0
 created: 2026-06-15
+closed: 2026-06-24
 ---
 
 # ZS-011: Per-collection reader/writer lock and threadpool offload
@@ -20,13 +21,13 @@ writes must be exclusive, and the asyncio event loop must never wait on a lock.
 
 ## Acceptance criteria
 
-- [ ] Each `ManagedCollection` owns a `readerwriterlock.rwlock.RWLockFair`.
-- [ ] `await managed.read(fn)` runs `fn(handle)` via `run_in_threadpool` inside
+- [x] Each `ManagedCollection` owns a `readerwriterlock.rwlock.RWLockFair`.
+- [x] `await managed.read(fn)` runs `fn(handle)` via `run_in_threadpool` inside
       `gen_rlock()`; `await managed.write(fn)` does the same inside `gen_wlock()`.
-- [ ] The lock is acquired inside the worker thread, not on the event loop.
-- [ ] Both helpers raise `CollectionUnavailableError` (503) when the handle is
+- [x] The lock is acquired inside the worker thread, not on the event loop.
+- [x] Both helpers raise `CollectionUnavailableError` (503) when the handle is
       `None`.
-- [ ] Collection-level endpoints that call manager methods directly (create, list,
+- [x] Collection-level endpoints that call manager methods directly (create, list,
       info, drop) are also dispatched with `run_in_threadpool`.
 
 ## Notes
@@ -39,3 +40,9 @@ writes must be exclusive, and the asyncio event loop must never wait on a lock.
 - Adds the `readerwriterlock` runtime dependency (typed as missing-imports in mypy).
 - The default threadpool size bounds concurrent engine calls; revisit if it
   becomes a bottleneck with a single worker.
+
+## Resolution
+
+Implemented `ManagedCollection.read`/`write` in `manager.py` with the lock taken
+inside the threadpool worker. Stats reads in `list()`/`info()` also use the shared
+lock.
