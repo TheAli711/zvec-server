@@ -5,7 +5,7 @@
 Specs, tickets, and how they flow into each other are described in
 [specs/README.md](specs/README.md).
 
-**7 specs · 25 tickets** — 0 in-progress · 0 todo · 0 backlog · 25 done · 0 wontfix
+**7 specs · 30 tickets** — 0 in-progress · 5 todo · 0 backlog · 25 done · 0 wontfix
 
 ## Board
 
@@ -13,9 +13,15 @@ Specs, tickets, and how they flow into each other are described in
 
 _None._
 
-### Todo (0)
+### Todo (5)
 
-_None._
+| Ticket | Title | Spec | Type | Priority | Release |
+| --- | --- | --- | --- | --- | --- |
+| [ZS-026](tickets/ZS-026-bench-datasets.md) | Benchmark specs, datasets, and brute-force ground truth | [SPEC-007](specs/SPEC-007-benchmark-suite.md) | feature | P1 | v0.1.1 |
+| [ZS-027](tickets/ZS-027-bench-runners.md) | Engine, in-process, and HTTP runner tiers | [SPEC-007](specs/SPEC-007-benchmark-suite.md) | feature | P1 | v0.1.1 |
+| [ZS-028](tickets/ZS-028-bench-harness.md) | Benchmark harness and metrics: recall@k, latency, QPS, RSS | [SPEC-007](specs/SPEC-007-benchmark-suite.md) | feature | P1 | v0.1.1 |
+| [ZS-029](tickets/ZS-029-bench-cli-and-reports.md) | Benchmark CLI, scenarios, and reports | [SPEC-007](specs/SPEC-007-benchmark-suite.md) | feature | P1 | v0.1.1 |
+| [ZS-030](tickets/ZS-030-vdbbench-adapter.md) | VectorDBBench REST adapter | [SPEC-007](specs/SPEC-007-benchmark-suite.md) | feature | P2 | v0.1.1 |
 
 ### Backlog (0)
 
@@ -66,4 +72,4 @@ _None._
 | [SPEC-004](specs/SPEC-004-vector-search.md) | Vector similarity search | implemented | v0.1.0 | 2/2 |
 | [SPEC-005](specs/SPEC-005-api-key-auth.md) | Optional API-key authentication | implemented | v0.1.0 | 2/2 |
 | [SPEC-006](specs/SPEC-006-packaging-and-docs.md) | Container image, documentation, and examples | implemented | v0.1.0 | 4/4 |
-| [SPEC-007](specs/SPEC-007-benchmark-suite.md) | Benchmark suite with overhead decomposition | draft | v0.1.1 | 0/0 |
+| [SPEC-007](specs/SPEC-007-benchmark-suite.md) | Benchmark suite with overhead decomposition | accepted | v0.1.1 | 0/5 |

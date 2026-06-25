@@ -1,7 +1,7 @@
 ---
 id: SPEC-007
 title: Benchmark suite with overhead decomposition
-status: draft
+status: accepted
 created: 2026-06-25
 release: v0.1.1
 ---
@@ -216,3 +216,11 @@ constructing the client without the package raises a clear `ImportError`.
   memory.
 - VectorDBBench's client API differs between `v0.0.20` and `main`. The client must
   accept both.
+
+## Tickets
+
+- ZS-026 — Benchmark specs, datasets, and brute-force ground truth
+- ZS-027 — Engine, in-process, and HTTP runner tiers
+- ZS-028 — Benchmark harness and metrics: recall@k, latency, QPS, RSS
+- ZS-029 — Benchmark CLI, scenarios, and reports
+- ZS-030 — VectorDBBench REST adapter
