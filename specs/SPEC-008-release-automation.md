@@ -1,7 +1,7 @@
 ---
 id: SPEC-008
 title: Release automation and GHCR image publishing
-status: draft
+status: accepted
 created: 2026-06-26
 release: v0.1.1
 ---
@@ -206,3 +206,10 @@ Under `set -euo pipefail`, in order:
 - **Back-fill builds the working tree.** `publish-image.sh` builds whatever is checked
   out. To back-fill a tag, check out that tag first. The version-mismatch warning is
   the only guard.
+
+## Tickets
+
+- ZS-031 — Release workflow: test, build, and push the image to GHCR
+- ZS-032 — scripts/release.sh: tag and create the GitHub Release
+- ZS-033 — scripts/publish-image.sh manual publish fallback
+- ZS-034 — Document the release process
