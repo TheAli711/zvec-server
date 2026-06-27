@@ -4,7 +4,7 @@ title: scripts/publish-image.sh manual publish fallback
 spec: SPEC-008
 type: feature
 priority: P2
-status: todo
+status: in-progress
 release: v0.1.1
 created: 2026-06-26
 ---

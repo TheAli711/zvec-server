@@ -4,7 +4,7 @@ title: VectorDBBench REST adapter
 spec: SPEC-007
 type: feature
 priority: P2
-status: todo
+status: in-progress
 release: v0.1.1
 created: 2026-06-25
 ---

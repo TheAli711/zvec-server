@@ -5,15 +5,11 @@
 Specs, tickets, and how they flow into each other are described in
 [specs/README.md](specs/README.md).
 
-**8 specs · 34 tickets** — 0 in-progress · 9 todo · 0 backlog · 25 done · 0 wontfix
+**8 specs · 34 tickets** — 9 in-progress · 0 todo · 0 backlog · 25 done · 0 wontfix
 
 ## Board
 
-### In progress (0)
-
-_None._
-
-### Todo (9)
+### In progress (9)
 
 | Ticket | Title | Spec | Type | Priority | Release |
 | --- | --- | --- | --- | --- | --- |
@@ -26,6 +22,10 @@ _None._
 | [ZS-034](tickets/ZS-034-release-docs.md) | Document the release process | [SPEC-008](specs/SPEC-008-release-automation.md) | docs | P1 | v0.1.1 |
 | [ZS-030](tickets/ZS-030-vdbbench-adapter.md) | VectorDBBench REST adapter | [SPEC-007](specs/SPEC-007-benchmark-suite.md) | feature | P2 | v0.1.1 |
 | [ZS-033](tickets/ZS-033-publish-image-script.md) | scripts/publish-image.sh manual publish fallback | [SPEC-008](specs/SPEC-008-release-automation.md) | feature | P2 | v0.1.1 |
+
+### Todo (0)
+
+_None._
 
 ### Backlog (0)
 

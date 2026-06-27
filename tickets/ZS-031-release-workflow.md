@@ -4,7 +4,7 @@ title: Release workflow: test, build, and push the image to GHCR
 spec: SPEC-008
 type: feature
 priority: P0
-status: todo
+status: in-progress
 release: v0.1.1
 created: 2026-06-26
 ---

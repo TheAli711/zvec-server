@@ -4,7 +4,7 @@ title: Benchmark CLI, scenarios, and reports
 spec: SPEC-007
 type: feature
 priority: P1
-status: todo
+status: in-progress
 release: v0.1.1
 created: 2026-06-25
 ---
