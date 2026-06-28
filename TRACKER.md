@@ -5,7 +5,7 @@
 Specs, tickets, and how they flow into each other are described in
 [specs/README.md](specs/README.md).
 
-**8 specs · 34 tickets** — 9 in-progress · 0 todo · 0 backlog · 25 done · 0 wontfix
+**8 specs · 35 tickets** — 9 in-progress · 0 todo · 1 backlog · 25 done · 0 wontfix
 
 ## Board
 
@@ -27,9 +27,11 @@ Specs, tickets, and how they flow into each other are described in
 
 _None._
 
-### Backlog (0)
+### Backlog (1)
 
-_None._
+| Ticket | Title | Spec | Type | Priority | Release |
+| --- | --- | --- | --- | --- | --- |
+| [ZS-040](tickets/ZS-040-mmap-empty-ids.md) | Search returns empty ids after optimize with mmap enabled | [SPEC-004](specs/SPEC-004-vector-search.md) | bug | P1 | v0.2.0 |
 
 ### Done (25)
 
@@ -73,7 +75,7 @@ _None._
 | [SPEC-001](specs/SPEC-001-server-foundation.md) | Server foundation: app factory, configuration, errors, and health | implemented | v0.1.0 | 7/7 |
 | [SPEC-002](specs/SPEC-002-collection-management.md) | Collection management and metadata store | implemented | v0.1.0 | 6/6 |
 | [SPEC-003](specs/SPEC-003-document-operations.md) | Document operations | implemented | v0.1.0 | 4/4 |
-| [SPEC-004](specs/SPEC-004-vector-search.md) | Vector similarity search | implemented | v0.1.0 | 2/2 |
+| [SPEC-004](specs/SPEC-004-vector-search.md) | Vector similarity search | implemented | v0.1.0 | 2/3 |
 | [SPEC-005](specs/SPEC-005-api-key-auth.md) | Optional API-key authentication | implemented | v0.1.0 | 2/2 |
 | [SPEC-006](specs/SPEC-006-packaging-and-docs.md) | Container image, documentation, and examples | implemented | v0.1.0 | 4/4 |
 | [SPEC-007](specs/SPEC-007-benchmark-suite.md) | Benchmark suite with overhead decomposition | accepted | v0.1.1 | 0/5 |
