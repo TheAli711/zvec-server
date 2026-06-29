@@ -1,7 +1,7 @@
 ---
 id: SPEC-007
 title: Benchmark suite with overhead decomposition
-status: accepted
+status: implemented
 created: 2026-06-25
 release: v0.1.1
 ---

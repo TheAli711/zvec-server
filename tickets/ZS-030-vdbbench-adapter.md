@@ -4,9 +4,10 @@ title: VectorDBBench REST adapter
 spec: SPEC-007
 type: feature
 priority: P2
-status: in-progress
+status: done
 release: v0.1.1
 created: 2026-06-25
+closed: 2026-06-29
 ---
 
 # ZS-030: VectorDBBench REST adapter
@@ -21,19 +22,19 @@ Track A's job.
 
 ## Acceptance criteria
 
-- [ ] `benchmarks/vdbbench/zvec_rest_client.py` defines `ZvecRest`, `ZvecRestConfig`
+- [x] `benchmarks/vdbbench/zvec_rest_client.py` defines `ZvecRest`, `ZvecRestConfig`
       (`host`, `port`, `timeout=600`), and `ZvecRestHNSWConfig` (`metric_type`,
       `M=15`, `efConstruction=200`, `ef=180`).
-- [ ] The client creates an `hnsw` `VECTOR_FP32` collection with an indexed `INT64`
+- [x] The client creates an `hnsw` `VECTOR_FP32` collection with an indexed `INT64`
       `id` field. It inserts through `/docs/insert` using string ids, runs flush and
       then optimize in `optimize()`, and returns int ids from `search_embedding`.
-- [ ] `filters={"id": X}` becomes the filter `id >= X`. With no filter, the client
+- [x] `filters={"id": X}` becomes the filter `id >= X`. With no filter, the client
       sends `null`.
-- [ ] Signatures accept both VectorDBBench `v0.0.20` and `main`: `**kwargs`,
+- [x] Signatures accept both VectorDBBench `v0.0.20` and `main`: `**kwargs`,
       `optimize(data_size=...)`, and `payload_profile`.
-- [ ] The module imports without `vectordb_bench` installed. Constructing
+- [x] The module imports without `vectordb_bench` installed. Constructing
       `ZvecRest` without it raises an `ImportError` that points to the README.
-- [ ] `benchmarks/vdbbench/README.md` covers installing in a separate venv, starting
+- [x] `benchmarks/vdbbench/README.md` covers installing in a separate venv, starting
       the server, registering the classes on a `TaskConfig` at runtime, the Cohere
       1M/10M cases, and filtered cases.
 
@@ -48,3 +49,10 @@ Track A's job.
   ship it to worker processes.
 - Map `L2`, `COSINE`, and `IP` to `l2`, `cosine`, and `ip`, and reject anything else.
   `need_normalize_cosine()` returns `False`.
+
+## Resolution
+
+Added the `benchmarks/vdbbench/` package and its README. Track B always creates
+`VECTOR_FP32` collections. zvec.org's published Cohere runs use engine settings that
+the REST create-collection body cannot express, so absolute QPS and memory can differ
+from their figures even when recall matches. The README states this caveat.

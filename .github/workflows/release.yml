@@ -1,0 +1,101 @@
+name: Release
+
+# Build and publish a versioned, production Docker image to the GitHub Container
+# Registry (GHCR) for every published GitHub Release created from a version tag
+# (e.g. v0.1.0). Authentication uses the built-in GITHUB_TOKEN — no long-lived
+# personal access tokens are required or stored.
+on:
+  release:
+    types: [published]
+
+# Never run two publishes for the same release ref at once, but don't cancel an
+# in-flight publish if the event somehow fires twice.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  IMAGE: ghcr.io/theali711/zvec-server
+
+jobs:
+  # Gate the release on the test suite: a release must never publish an image
+  # built from code that fails the tests.
+  test:
+    name: test (py${{ matrix.python-version }})
+    # Only act on version tags (v*); non-version releases publish nothing.
+    if: startsWith(github.event.release.tag_name, 'v')
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --extra dev --python ${{ matrix.python-version }}
+
+      - name: Test (pytest)
+        run: uv run pytest
+
+  publish:
+    name: build & publish image
+    needs: test
+    # Same guard as the test job: only version tags (v*) are published.
+    if: startsWith(github.event.release.tag_name, 'v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write # required to push images to GHCR
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Derive image tags and labels
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE }}
+          # Tags derived from the git tag (refs/tags/vX.Y.Z):
+          #   - v{{version}}      -> full version, always (incl. pre-releases), e.g. v0.1.0
+          #   - v{{major}}.{{minor}} -> the major/minor line, stable releases only, e.g. v0.1
+          #   - latest            -> handled by flavor below (stable releases only)
+          tags: |
+            type=semver,pattern=v{{version}}
+            type=semver,pattern=v{{major}}.{{minor}}
+          # latest=auto tags `latest` only for non-pre-release versions, so the
+          # tag always points at the most recent stable release.
+          flavor: |
+            latest=auto
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          # Push a plain single-platform image (no attestation manifest list) so
+          # `docker pull` works across the widest range of runtimes.
+          provenance: false

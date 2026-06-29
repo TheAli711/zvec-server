@@ -8,6 +8,30 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- **Automated Docker image publishing to GHCR.** A `Release` GitHub Actions
+  workflow runs the test suite and, on every published release tagged `v*`,
+  builds and pushes a production image to `ghcr.io/theali711/zvec-server`. Images
+  are tagged with the full version (`vX.Y.Z`), the major/minor line (`vX.Y`), and
+  `latest` for the most recent stable release. Authentication uses the built-in
+  `GITHUB_TOKEN` (no long-lived personal access tokens). The README documents
+  pulling a specific version and running the published image with a mounted data
+  volume and `ZVEC_SERVER_*` environment variables.
+- **Benchmarking suite** under `benchmarks/` (optional `bench` extra:
+  `uv sync --extra bench`). Decomposes server overhead across three tiers that
+  run the same workload through progressively more of the stack — `engine`
+  (native Zvec SDK, the floor), `inproc` (Pydantic + `ManagedCollection` lock +
+  adapter, no socket), and `http` (real uvicorn subprocess over loopback) — so
+  the server-logic tax (`inproc − engine`) and transport tax (`http − inproc`)
+  are measured separately. Reports recall@k against brute-force ground truth,
+  latency percentiles, QPS, RSS, and HTTP payload sizes, emitting JSON plus a
+  markdown report and plots. Tiered scenarios (`smoke` → `sift1m` →
+  `cohere1m`/`cohere10m`) and a VectorDBBench REST adapter
+  (`benchmarks/vdbbench/`, manual install) for zvec.org-comparable numbers.
+  Additive only — no changes to the runtime server. Not wired into CI gates
+  (lint-only; tests require the `bench` extra).
+
 ## [0.1.0] - 2026-06-24
 
 Initial release: a lightweight, storage-focused HTTP server that exposes the

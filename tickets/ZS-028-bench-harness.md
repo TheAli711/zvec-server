@@ -4,9 +4,10 @@ title: Benchmark harness and metrics: recall@k, latency, QPS, RSS
 spec: SPEC-007
 type: feature
 priority: P1
-status: in-progress
+status: done
 release: v0.1.1
 created: 2026-06-25
+closed: 2026-06-29
 ---
 
 # ZS-028: Benchmark harness and metrics: recall@k, latency, QPS, RSS
@@ -21,20 +22,20 @@ deltas between tiers mean nothing.
 
 ## Acceptance criteria
 
-- [ ] `measure_ingest` loads the corpus in `ingest_batch` chunks and then optimizes.
+- [x] `measure_ingest` loads the corpus in `ingest_batch` chunks and then optimizes.
       It times both phases and samples peak RSS.
-- [ ] `measure_search` computes recall@k once per (topk, ef, nprobe, filter,
+- [x] `measure_search` computes recall@k once per (topk, ef, nprobe, filter,
       include_vector), using up to 1000 queries. It then runs the warmup and a
       closed-loop window with `concurrency` threads. QPS is completed queries
       divided by the wall-clock window.
-- [ ] `metrics.py` provides `recall_at_k` and `summarize_latencies` (count, mean, and
+- [x] `metrics.py` provides `recall_at_k` and `summarize_latencies` (count, mean, and
       p50/p90/p95/p99/max, in ms). Its `RssSampler` polls psutil every 100 ms in a
       background thread and does nothing when no PID is given.
-- [ ] `results.py` defines `RunResult`, `TierResult`, `IngestResult`, `SearchResult`,
+- [x] `results.py` defines `RunResult`, `TierResult`, `IngestResult`, `SearchResult`,
       and `EnvInfo`. `capture_env()` records the host, platform, CPU, RAM, Python and
       Zvec versions, git commit, query threads, and mmap setting.
-- [ ] `run_tier` calls `teardown` even when a phase raises.
-- [ ] Unit tests cover recall (partial, perfect, truncated k, empty input), the
+- [x] `run_tier` calls `teardown` even when a phase raises.
+- [x] Unit tests cover recall (partial, perfect, truncated k, empty input), the
       latency percentiles, and the sampler with no PID.
 
 ## Notes
@@ -47,3 +48,11 @@ deltas between tiers mean nothing.
   fields become `None`; if zvec is missing, its version becomes `"unavailable"`.
 - Warmup runs on the calling thread before the pool starts. Inside the window, each
   thread sends its next query as soon as the previous one returns.
+
+## Resolution
+
+Added `benchmarks/harness.py`, `metrics.py`, `results.py`, and
+`tests/benchmarks/test_metrics.py`. The recall pass now skips empty ids. With mmap
+on, Zvec 0.5.0 could fail to resolve a few freshly optimized docs and return `""`.
+The harness tolerates this rather than failing, and recall dips slightly for the
+affected queries.

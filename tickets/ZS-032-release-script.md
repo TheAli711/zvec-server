@@ -4,9 +4,10 @@ title: scripts/release.sh: tag and create the GitHub Release
 spec: SPEC-008
 type: feature
 priority: P1
-status: in-progress
+status: done
 release: v0.1.1
 created: 2026-06-26
+closed: 2026-06-29
 ---
 
 # ZS-032: scripts/release.sh: tag and create the GitHub Release
@@ -21,20 +22,20 @@ commit, or a tag that doesn't match `__version__`.
 
 ## Acceptance criteria
 
-- [ ] The tag must match `vMAJOR.MINOR.PATCH`, optionally followed by a
+- [x] The tag must match `vMAJOR.MINOR.PATCH`, optionally followed by a
       `-prerelease` suffix. Any other tag is rejected.
-- [ ] The script aborts if `git` or `gh` is missing, if `gh` is not authenticated, if
+- [x] The script aborts if `git` or `gh` is missing, if `gh` is not authenticated, if
       the tree is dirty, if `__version__` differs from the tag, if the branch differs
       from its upstream after `git fetch`, or if a Release for the tag already
       exists. When the branch is not `main`, it prints a warning and continues.
-- [ ] It creates an annotated tag, or reuses one that already exists locally, and
+- [x] It creates an annotated tag, or reuses one that already exists locally, and
       pushes the tag before it creates the Release.
-- [ ] It uses the `## [X.Y.Z]` section of `CHANGELOG.md` as the release notes. If
+- [x] It uses the `## [X.Y.Z]` section of `CHANGELOG.md` as the release notes. If
       that section is missing, it passes `--generate-notes` instead.
-- [ ] For suffixed tags it adds `--prerelease`, unless the caller already passed
+- [x] For suffixed tags it adds `--prerelease`, unless the caller already passed
       `--prerelease` or `--latest`. Extra flags such as `--draft` are forwarded to
       `gh release create`.
-- [ ] At the end it prints the `gh run watch` command and the image reference.
+- [x] At the end it prints the `gh run watch` command and the image reference.
 
 ## Notes
 
@@ -45,3 +46,8 @@ commit, or a tag that doesn't match `__version__`.
 - The tag is pushed before the Release is created. If the Release step fails, rerun
   the script; it reuses the tag.
 - Pre-release tags publish only the `vX.Y.Z-...` image (ZS-031).
+
+## Resolution
+
+Added `scripts/release.sh` as specified. The branch check only warns; every other
+check stops the script with an error that states which condition failed.
