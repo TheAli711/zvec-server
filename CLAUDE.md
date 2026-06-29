@@ -119,13 +119,50 @@ and tests:**
 - Add a `CHANGELOG.md` entry under `[Unreleased]` for any user-facing change, and
   update `README.md` / `docs/` / `examples/` when the API, config, or behavior
   changes.
-- **Releases publish Docker images.** Publishing a GitHub Release on a `v*` tag
-  (e.g. `v0.1.0`) triggers `.github/workflows/release.yml`, which runs the tests
-  then builds and pushes a production image to `ghcr.io/theali711/zvec-server`
-  (tags: full `vX.Y.Z`, `vX.Y`, and `latest` for stable). Auth is the built-in
-  `GITHUB_TOKEN` — no PATs. Keep `__version__` in sync with the tag you release.
+- Releases are tag-driven and publish a Docker image to GHCR — see
+  **Releasing** below. Keep `__version__` in sync with the release tag.
 - Filter strings are passed through to Zvec verbatim (SQL-like: single `=`,
   single-quoted strings, `AND`/`OR`/`IN`/`BETWEEN`/`LIKE`).
+
+## Releasing
+
+Releases are **tag-driven**. Publishing a GitHub Release on a `v*` tag triggers
+`.github/workflows/release.yml`, which runs the test suite (Python 3.12 + 3.13)
+then builds and pushes a production image to `ghcr.io/theali711/zvec-server`,
+tagged `vX.Y.Z`, `vX.Y`, and `latest` (the `vX.Y` / `latest` tags are applied
+only for stable, non-pre-release versions). Auth is the built-in `GITHUB_TOKEN`
+— never a PAT.
+
+To cut release `vX.Y.Z`, in order:
+
+1. Bump `__version__` in `src/zvec_server/__init__.py` to `X.Y.Z` (single source
+   of truth; the tag must match it or `scripts/release.sh` aborts).
+2. In `CHANGELOG.md`, move the `[Unreleased]` entries under a new
+   `## [X.Y.Z] - <YYYY-MM-DD>` heading and update the link refs at the bottom
+   (repoint `[Unreleased]` to compare from the new tag; add an `[X.Y.Z]` line).
+3. Bump any version-pinned examples in `README.md` (the Docker pull/run snippets)
+   if you want them to track the new release.
+4. Run the quality gates (`uv sync --extra dev` first if tools are missing):
+   `uv run ruff check && uv run ruff format --check && uv run mypy && uv run pytest`.
+5. Commit (`release: vX.Y.Z`) and push to `main`.
+6. Run `scripts/release.sh vX.Y.Z`. It validates a clean, in-sync tree and the
+   version match, pushes the tag, and creates the GitHub Release (notes pulled
+   from the matching `CHANGELOG.md` section) — which triggers the publish workflow.
+7. Watch it: `gh run watch $(gh run list --workflow=release.yml --limit=1 --json databaseId --jq '.[0].databaseId') --exit-status`.
+
+Notes / gotchas:
+
+- `scripts/release.sh` needs the GitHub CLI (`gh`), authenticated; it targets
+  `main` and refuses a dirty or out-of-sync tree.
+- `scripts/publish-image.sh [vX.Y.Z]` is the manual fallback: builds
+  `linux/amd64` locally and pushes (run `docker login ghcr.io` first). Use it to
+  back-fill a tag predating the workflow, or when CI is down.
+- A `release` event runs the workflow file **from the tag's commit**, so a tag
+  must point at a commit that already contains `release.yml`.
+- First publish only: the GHCR package is created **private** — set it Public in
+  the package settings so users can `docker pull` anonymously.
+- Shell scripts must stay safe under macOS's **bash 3.2** (e.g. guard empty-array
+  expansion under `set -u`).
 
 ## Keep this file current
 
