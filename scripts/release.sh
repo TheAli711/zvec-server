@@ -97,8 +97,9 @@ else
 fi
 
 # Auto-mark pre-release tags (vX.Y.Z-...) as GitHub pre-releases unless the
-# caller already passed a (pre)release flag.
-if [[ "$IS_PRERELEASE" -eq 1 && ! " ${EXTRA_ARGS[*]} " =~ " --prerelease " && ! " ${EXTRA_ARGS[*]} " =~ " --latest " ]]; then
+# caller already passed a (pre)release flag. ${arr[*]:-} keeps this safe for an
+# empty array under `set -u` on bash 3.2 (macOS default).
+if [[ "$IS_PRERELEASE" -eq 1 && ! " ${EXTRA_ARGS[*]:-} " =~ " --prerelease " && ! " ${EXTRA_ARGS[*]:-} " =~ " --latest " ]]; then
   EXTRA_ARGS+=(--prerelease)
 fi
 
@@ -108,7 +109,9 @@ if gh release view "$TAG" >/dev/null 2>&1; then
 fi
 
 echo "creating GitHub Release $TAG ..."
-gh release create "$TAG" --title "$TAG" "${NOTES_ARGS[@]}" "${EXTRA_ARGS[@]}"
+# ${arr[@]+"${arr[@]}"} avoids an 'unbound variable' error for an empty array
+# under `set -u` on bash 3.2 (the version shipped with macOS).
+gh release create "$TAG" --title "$TAG" "${NOTES_ARGS[@]}" ${EXTRA_ARGS[@]+"${EXTRA_ARGS[@]}"}
 
 echo
 echo "Done. Release $TAG published."
