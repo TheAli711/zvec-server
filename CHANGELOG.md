@@ -8,6 +8,11 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- `scripts/release.sh` no longer aborts with an "unbound variable" error on bash
+  3.2 (the version shipped with macOS) when run without extra flags.
+
 ## [0.1.1] - 2026-06-29
 
 ### Added

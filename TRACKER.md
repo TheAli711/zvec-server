@@ -5,7 +5,7 @@
 Specs, tickets, and how they flow into each other are described in
 [specs/README.md](specs/README.md).
 
-**8 specs · 35 tickets** — 1 in-progress · 0 todo · 1 backlog · 33 done · 0 wontfix
+**8 specs · 36 tickets** — 1 in-progress · 0 todo · 1 backlog · 34 done · 0 wontfix
 
 ## Board
 
@@ -25,7 +25,16 @@ _None._
 | --- | --- | --- | --- | --- | --- |
 | [ZS-040](tickets/ZS-040-mmap-empty-ids.md) | Search returns empty ids after optimize with mmap enabled | [SPEC-004](specs/SPEC-004-vector-search.md) | bug | P1 | v0.2.0 |
 
-### Done (33)
+### Done (34)
+
+<details>
+<summary>v0.1.2 — 1 tickets</summary>
+
+| Ticket | Title | Spec | Type | Priority | Release |
+| --- | --- | --- | --- | --- | --- |
+| [ZS-035](tickets/ZS-035-release-sh-bash-3-2.md) | release.sh aborts with an unbound variable error on bash 3.2 | [SPEC-008](specs/SPEC-008-release-automation.md) | bug | P1 | v0.1.2 |
+
+</details>
 
 <details>
 <summary>v0.1.1 — 8 tickets</summary>
@@ -87,4 +96,4 @@ _None._
 | [SPEC-005](specs/SPEC-005-api-key-auth.md) | Optional API-key authentication | implemented | v0.1.0 | 2/2 |
 | [SPEC-006](specs/SPEC-006-packaging-and-docs.md) | Container image, documentation, and examples | implemented | v0.1.0 | 4/4 |
 | [SPEC-007](specs/SPEC-007-benchmark-suite.md) | Benchmark suite with overhead decomposition | implemented | v0.1.1 | 5/5 |
-| [SPEC-008](specs/SPEC-008-release-automation.md) | Release automation and GHCR image publishing | accepted | v0.1.1 | 3/4 |
+| [SPEC-008](specs/SPEC-008-release-automation.md) | Release automation and GHCR image publishing | accepted | v0.1.1 | 4/5 |
