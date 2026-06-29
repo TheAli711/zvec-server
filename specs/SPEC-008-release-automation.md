@@ -1,7 +1,7 @@
 ---
 id: SPEC-008
 title: Release automation and GHCR image publishing
-status: accepted
+status: implemented
 created: 2026-06-26
 release: v0.1.1
 ---
