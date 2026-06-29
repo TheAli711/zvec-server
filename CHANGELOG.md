@@ -8,6 +8,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-06-29
+
 ### Added
 
 - **Automated Docker image publishing to GHCR.** A `Release` GitHub Actions
@@ -75,5 +77,6 @@ Initial release: a lightweight, storage-focused HTTP server that exposes the
   coverage, pre-commit hooks, and a GitHub Actions CI pipeline (test matrix over
   Python 3.12/3.13 plus a Docker build).
 
-[Unreleased]: https://github.com/TheAli711/zvec-server/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/TheAli711/zvec-server/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/TheAli711/zvec-server/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/TheAli711/zvec-server/releases/tag/v0.1.0
