@@ -6,6 +6,8 @@
 # which is bind-mounted to ./data on the host so it survives container restarts.
 services:
   zvec-server:
+    # Builds the image from source. To run a published release instead, remove
+    # the `build:` block and set `image: ghcr.io/theali711/zvec-server:v0.1.0`.
     build:
       context: .
       dockerfile: Dockerfile

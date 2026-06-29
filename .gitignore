@@ -29,6 +29,10 @@ data/
 *.db-shm
 logs/
 
+# Benchmarks: results + downloaded/cached datasets
+benchmarks/results/
+benchmarks/.datasets/
+
 # Env / secrets
 .env
 .env.local

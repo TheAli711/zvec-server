@@ -100,6 +100,49 @@ docs in the same PR:
 6. Address review feedback. Keep the PR focused; prefer several small PRs over one
    large one.
 
+## Releasing
+
+Releases are tag-driven. Publishing a GitHub Release for a version tag (`v*`)
+triggers [`.github/workflows/release.yml`](./.github/workflows/release.yml),
+which runs the test suite and pushes a production image to
+`ghcr.io/theali711/zvec-server` (tagged `vX.Y.Z`, `vX.Y`, and `latest` for stable
+releases) using the built-in `GITHUB_TOKEN` — no personal access tokens.
+
+To cut a release (requires the [GitHub CLI](https://cli.github.com), `gh`):
+
+```bash
+# 1. Bump the single-sourced version and commit it.
+#    Edit src/zvec_server/__init__.py: __version__ = "0.1.1"
+#    Move the CHANGELOG [Unreleased] entries under a new [0.1.1] heading.
+git commit -am "release: v0.1.1"
+git push origin main
+
+# 2. Tag + create the GitHub Release (this triggers the publish workflow).
+scripts/release.sh v0.1.1
+```
+
+`scripts/release.sh` validates that the tag matches `__version__`, requires a
+clean tree in sync with `origin`, pushes the tag, and creates the Release using
+the matching `CHANGELOG.md` section as the notes. Pre-release tags
+(`vX.Y.Z-rc.1`) are marked as GitHub pre-releases and only get the `vX.Y.Z` image
+tag (no `vX.Y` / `latest`).
+
+**Backfilling an image manually** (e.g. `v0.1.0`, whose tag predates the
+workflow, so re-releasing it would not run the workflow) or a break-glass publish
+when CI is down:
+
+```bash
+# Log in to GHCR once (no PAT needed if you use gh):
+gh auth refresh -h github.com -s write:packages
+gh auth token | docker login ghcr.io -u TheAli711 --password-stdin
+
+scripts/publish-image.sh v0.1.0   # builds linux/amd64 and pushes all tags
+```
+
+On the **first** publish, the GHCR package is private — set it to Public under
+GitHub → your profile → Packages → `zvec-server` → Package settings so users can
+`docker pull` without authenticating.
+
 ## Reporting bugs
 
 Open a [bug report](./.github/ISSUE_TEMPLATE/bug_report.md) with steps to

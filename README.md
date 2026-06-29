@@ -1,8 +1,10 @@
 # Zvec Server
 
 [![CI](https://github.com/TheAli711/zvec-server/actions/workflows/ci.yml/badge.svg)](https://github.com/TheAli711/zvec-server/actions/workflows/ci.yml)
+[![Release](https://github.com/TheAli711/zvec-server/actions/workflows/release.yml/badge.svg)](https://github.com/TheAli711/zvec-server/actions/workflows/release.yml)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](./LICENSE)
 [![Python](https://img.shields.io/badge/python-3.12%20%7C%203.13-blue.svg)](https://www.python.org/)
+[![GHCR](https://img.shields.io/badge/ghcr.io-theali711%2Fzvec--server-blue?logo=docker)](https://github.com/TheAli711/zvec-server/pkgs/container/zvec-server)
 
 A lightweight, storage-focused HTTP server for the
 [Zvec](https://github.com/alibaba/zvec) vector database. It exposes a clean REST
@@ -40,7 +42,9 @@ Zvec library in-process.
 - Per-collection reader/writer locking with blocking work offloaded to a
   threadpool, so the event loop stays responsive.
 - Structured JSON (or human-readable console) logging; configurable via env.
-- Container-ready: multi-stage `Dockerfile` and `docker-compose.yml`.
+- Container-ready: multi-stage `Dockerfile`, `docker-compose.yml`, and
+  versioned, production images published to GHCR
+  (`ghcr.io/theali711/zvec-server`) on every release.
 
 ## Quickstart
 
@@ -64,14 +68,60 @@ uv run uvicorn zvec_server.app:create_app --factory --host 0.0.0.0 --port 8000
 The server listens on `http://0.0.0.0:8000` and persists data under `./data`.
 Interactive API docs are available at `http://localhost:8000/docs`.
 
+### Run with Docker (published image)
+
+Production images are published to the GitHub Container Registry (GHCR) on every
+release — no need to build from source. Pull a **specific version** (recommended
+for production so deployments are reproducible):
+
+```bash
+docker pull ghcr.io/theali711/zvec-server:v0.1.0
+```
+
+Available tags for `ghcr.io/theali711/zvec-server`:
+
+| Tag        | Points to                                          | Example  |
+| ---------- | -------------------------------------------------- | -------- |
+| `vX.Y.Z`   | An exact release (immutable once published).       | `v0.1.0` |
+| `vX.Y`     | The latest patch on a major/minor line.            | `v0.1`   |
+| `latest`   | The most recent **stable** release (no pre-releases). | `latest` |
+
+Run the server with a mounted data volume (so collections and the SQLite
+metadata DB survive container restarts) and configuration via environment
+variables:
+
+```bash
+docker run -d \
+  --name zvec-server \
+  -p 8000:8000 \
+  -v "$(pwd)/data:/data" \
+  -e ZVEC_SERVER_LOG_FORMAT=console \
+  -e ZVEC_SERVER_AUTH_ENABLED=true \
+  -e ZVEC_SERVER_API_KEY="$(openssl rand -hex 32)" \
+  ghcr.io/theali711/zvec-server:v0.1.0
+```
+
+The image stores all state under `/data` (its `ZVEC_SERVER_DATA_DIR`); the
+`-v` flag bind-mounts the host's `./data` there. Any `ZVEC_SERVER_*` setting from
+[Configuration](#configuration) can be passed with `-e`. The image runs as a
+non-root user with a single Uvicorn worker (see the
+[architecture notes](#architecture-overview)) and ships a `/healthz`
+healthcheck. Verify it is up:
+
+```bash
+curl http://localhost:8000/healthz   # {"status":"ok"}
+```
+
 ### Run with Docker Compose
 
 ```bash
 docker compose up --build
 ```
 
-This builds the image, mounts `./data` for persistence, and exposes the server on
-`http://localhost:8000`.
+This builds the image from source, mounts `./data` for persistence, and exposes
+the server on `http://localhost:8000`. To run the published image instead of
+building, set `image: ghcr.io/theali711/zvec-server:v0.1.0` and drop the `build:`
+section in `docker-compose.yml`.
 
 ### Smoke test
 
@@ -231,6 +281,9 @@ standards.
 - [docs/CONFIGURATION.md](./docs/CONFIGURATION.md) — every config variable.
 - [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) — internals and concurrency model.
 - [examples/](./examples) — runnable Python and curl end-to-end walkthroughs.
+- [benchmarks/](./benchmarks) — performance benchmarks that decompose server
+  overhead (engine vs in-process vs over-HTTP) and a VectorDBBench adapter for
+  zvec.org-comparable numbers.
 
 ## License
 

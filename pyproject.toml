@@ -39,6 +39,17 @@ dev = [
     "ruff>=0.7",
     "mypy>=1.13",
 ]
+# Benchmarking suite (benchmarks/). Lightweight; pulls numpy/httpx/plots only.
+# Track B (the VectorDBBench REST adapter) is intentionally NOT listed here:
+# VectorDBBench is a heavy dependency installed manually — see
+# benchmarks/vdbbench/README.md.
+bench = [
+    "numpy>=2.0",
+    "httpx>=0.27",
+    "psutil>=6.0",
+    "h5py>=3.11",
+    "matplotlib>=3.9",
+]
 
 [project.scripts]
 zvec-server = "zvec_server.__main__:main"
@@ -65,7 +76,8 @@ select = ["E", "F", "I", "UP", "B", "C4", "SIM", "RUF"]
 ignore = ["B008"]  # FastAPI uses function calls (Depends/Query) in argument defaults
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["B011"]
+# E402: benchmark tests import after a `pytest.importorskip` guard.
+"tests/**" = ["B011", "E402"]
 
 [tool.mypy]
 python_version = "3.12"
@@ -88,6 +100,9 @@ ignore_missing_imports = true
 testpaths = ["tests"]
 addopts = "-ra -q"
 filterwarnings = ["ignore::DeprecationWarning"]
+# Put the repo root on sys.path so the (non-installed) ``benchmarks`` package is
+# importable from its unit tests.
+pythonpath = ["."]
 
 [tool.coverage.run]
 source = ["zvec_server"]
