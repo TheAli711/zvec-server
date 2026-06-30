@@ -5,7 +5,7 @@
 Specs, tickets, and how they flow into each other are described in
 [specs/README.md](specs/README.md).
 
-**8 specs · 36 tickets** — 0 in-progress · 0 todo · 1 backlog · 35 done · 0 wontfix
+**8 specs · 37 tickets** — 0 in-progress · 1 todo · 1 backlog · 35 done · 0 wontfix
 
 ## Board
 
@@ -13,9 +13,11 @@ Specs, tickets, and how they flow into each other are described in
 
 _None._
 
-### Todo (0)
+### Todo (1)
 
-_None._
+| Ticket | Title | Spec | Type | Priority | Release |
+| --- | --- | --- | --- | --- | --- |
+| [ZS-036](tickets/ZS-036-unavailable-after-restart.md) | Collections stay unavailable after a rolling restart | [SPEC-002](specs/SPEC-002-collection-management.md) | bug | P0 | v0.1.2 |
 
 ### Backlog (1)
 
@@ -89,7 +91,7 @@ _None._
 | Spec | Title | Status | Release | Tickets done |
 | --- | --- | --- | --- | --- |
 | [SPEC-001](specs/SPEC-001-server-foundation.md) | Server foundation: app factory, configuration, errors, and health | implemented | v0.1.0 | 7/7 |
-| [SPEC-002](specs/SPEC-002-collection-management.md) | Collection management and metadata store | implemented | v0.1.0 | 6/6 |
+| [SPEC-002](specs/SPEC-002-collection-management.md) | Collection management and metadata store | implemented | v0.1.0 | 6/7 |
 | [SPEC-003](specs/SPEC-003-document-operations.md) | Document operations | implemented | v0.1.0 | 4/4 |
 | [SPEC-004](specs/SPEC-004-vector-search.md) | Vector similarity search | implemented | v0.1.0 | 2/3 |
 | [SPEC-005](specs/SPEC-005-api-key-auth.md) | Optional API-key authentication | implemented | v0.1.0 | 2/2 |
