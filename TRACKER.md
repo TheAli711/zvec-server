@@ -5,7 +5,7 @@
 Specs, tickets, and how they flow into each other are described in
 [specs/README.md](specs/README.md).
 
-**8 specs · 37 tickets** — 0 in-progress · 1 todo · 1 backlog · 35 done · 0 wontfix
+**9 specs · 37 tickets** — 0 in-progress · 1 todo · 1 backlog · 35 done · 0 wontfix
 
 ## Board
 
@@ -98,3 +98,4 @@ _None._
 | [SPEC-006](specs/SPEC-006-packaging-and-docs.md) | Container image, documentation, and examples | implemented | v0.1.0 | 4/4 |
 | [SPEC-007](specs/SPEC-007-benchmark-suite.md) | Benchmark suite with overhead decomposition | implemented | v0.1.1 | 5/5 |
 | [SPEC-008](specs/SPEC-008-release-automation.md) | Release automation and GHCR image publishing | implemented | v0.1.1 | 5/5 |
+| [SPEC-009](specs/SPEC-009-collection-recovery.md) | Self-healing recovery for unavailable collections | draft | v0.1.2 | 0/0 |
