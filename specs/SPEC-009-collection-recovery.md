@@ -1,7 +1,7 @@
 ---
 id: SPEC-009
 title: Self-healing recovery for unavailable collections
-status: draft
+status: accepted
 created: 2026-07-01
 release: v0.1.2
 ---
@@ -197,3 +197,9 @@ succeed. The API gains no endpoints and no fields.
   strict readiness mode is a possible follow-up.
 - **Log noise.** A collection that never recovers logs an exception every
   `max_delay`. That is a deliberate trade-off against failing silently.
+
+## Tickets
+
+- ZS-037 — Background recovery task with exponential backoff
+- ZS-038 — Recovery delay settings and docs
+- ZS-039 — Cancel recovery tasks on drop and shutdown

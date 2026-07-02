@@ -5,7 +5,7 @@
 Specs, tickets, and how they flow into each other are described in
 [specs/README.md](specs/README.md).
 
-**9 specs · 37 tickets** — 0 in-progress · 1 todo · 1 backlog · 35 done · 0 wontfix
+**9 specs · 40 tickets** — 0 in-progress · 4 todo · 1 backlog · 35 done · 0 wontfix
 
 ## Board
 
@@ -13,11 +13,14 @@ Specs, tickets, and how they flow into each other are described in
 
 _None._
 
-### Todo (1)
+### Todo (4)
 
 | Ticket | Title | Spec | Type | Priority | Release |
 | --- | --- | --- | --- | --- | --- |
 | [ZS-036](tickets/ZS-036-unavailable-after-restart.md) | Collections stay unavailable after a rolling restart | [SPEC-002](specs/SPEC-002-collection-management.md) | bug | P0 | v0.1.2 |
+| [ZS-037](tickets/ZS-037-recovery-task.md) | Background recovery task with exponential backoff | [SPEC-009](specs/SPEC-009-collection-recovery.md) | feature | P0 | v0.1.2 |
+| [ZS-039](tickets/ZS-039-recovery-cancel.md) | Cancel recovery tasks on drop and shutdown | [SPEC-009](specs/SPEC-009-collection-recovery.md) | feature | P0 | v0.1.2 |
+| [ZS-038](tickets/ZS-038-recovery-settings.md) | Recovery delay settings and docs | [SPEC-009](specs/SPEC-009-collection-recovery.md) | feature | P1 | v0.1.2 |
 
 ### Backlog (1)
 
@@ -98,4 +101,4 @@ _None._
 | [SPEC-006](specs/SPEC-006-packaging-and-docs.md) | Container image, documentation, and examples | implemented | v0.1.0 | 4/4 |
 | [SPEC-007](specs/SPEC-007-benchmark-suite.md) | Benchmark suite with overhead decomposition | implemented | v0.1.1 | 5/5 |
 | [SPEC-008](specs/SPEC-008-release-automation.md) | Release automation and GHCR image publishing | implemented | v0.1.1 | 5/5 |
-| [SPEC-009](specs/SPEC-009-collection-recovery.md) | Self-healing recovery for unavailable collections | draft | v0.1.2 | 0/0 |
+| [SPEC-009](specs/SPEC-009-collection-recovery.md) | Self-healing recovery for unavailable collections | accepted | v0.1.2 | 0/3 |
