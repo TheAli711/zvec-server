@@ -4,7 +4,7 @@ title: Recovery delay settings and docs
 spec: SPEC-009
 type: feature
 priority: P1
-status: todo
+status: in-progress
 release: v0.1.2
 created: 2026-07-02
 ---

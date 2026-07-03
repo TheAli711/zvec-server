@@ -4,7 +4,7 @@ title: Collections stay unavailable after a rolling restart
 spec: SPEC-002
 type: bug
 priority: P0
-status: todo
+status: in-progress
 release: v0.1.2
 created: 2026-06-30
 ---

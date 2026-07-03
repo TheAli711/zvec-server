@@ -5,15 +5,11 @@
 Specs, tickets, and how they flow into each other are described in
 [specs/README.md](specs/README.md).
 
-**9 specs · 40 tickets** — 0 in-progress · 4 todo · 1 backlog · 35 done · 0 wontfix
+**9 specs · 40 tickets** — 4 in-progress · 0 todo · 1 backlog · 35 done · 0 wontfix
 
 ## Board
 
-### In progress (0)
-
-_None._
-
-### Todo (4)
+### In progress (4)
 
 | Ticket | Title | Spec | Type | Priority | Release |
 | --- | --- | --- | --- | --- | --- |
@@ -21,6 +17,10 @@ _None._
 | [ZS-037](tickets/ZS-037-recovery-task.md) | Background recovery task with exponential backoff | [SPEC-009](specs/SPEC-009-collection-recovery.md) | feature | P0 | v0.1.2 |
 | [ZS-039](tickets/ZS-039-recovery-cancel.md) | Cancel recovery tasks on drop and shutdown | [SPEC-009](specs/SPEC-009-collection-recovery.md) | feature | P0 | v0.1.2 |
 | [ZS-038](tickets/ZS-038-recovery-settings.md) | Recovery delay settings and docs | [SPEC-009](specs/SPEC-009-collection-recovery.md) | feature | P1 | v0.1.2 |
+
+### Todo (0)
+
+_None._
 
 ### Backlog (1)
 
