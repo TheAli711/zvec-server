@@ -1,7 +1,7 @@
 ---
 id: SPEC-009
 title: Self-healing recovery for unavailable collections
-status: accepted
+status: implemented
 created: 2026-07-01
 release: v0.1.2
 ---

@@ -5,18 +5,13 @@
 Specs, tickets, and how they flow into each other are described in
 [specs/README.md](specs/README.md).
 
-**9 specs · 40 tickets** — 4 in-progress · 0 todo · 1 backlog · 35 done · 0 wontfix
+**9 specs · 40 tickets** — 0 in-progress · 0 todo · 1 backlog · 39 done · 0 wontfix
 
 ## Board
 
-### In progress (4)
+### In progress (0)
 
-| Ticket | Title | Spec | Type | Priority | Release |
-| --- | --- | --- | --- | --- | --- |
-| [ZS-036](tickets/ZS-036-unavailable-after-restart.md) | Collections stay unavailable after a rolling restart | [SPEC-002](specs/SPEC-002-collection-management.md) | bug | P0 | v0.1.2 |
-| [ZS-037](tickets/ZS-037-recovery-task.md) | Background recovery task with exponential backoff | [SPEC-009](specs/SPEC-009-collection-recovery.md) | feature | P0 | v0.1.2 |
-| [ZS-039](tickets/ZS-039-recovery-cancel.md) | Cancel recovery tasks on drop and shutdown | [SPEC-009](specs/SPEC-009-collection-recovery.md) | feature | P0 | v0.1.2 |
-| [ZS-038](tickets/ZS-038-recovery-settings.md) | Recovery delay settings and docs | [SPEC-009](specs/SPEC-009-collection-recovery.md) | feature | P1 | v0.1.2 |
+_None._
 
 ### Todo (0)
 
@@ -28,14 +23,18 @@ _None._
 | --- | --- | --- | --- | --- | --- |
 | [ZS-040](tickets/ZS-040-mmap-empty-ids.md) | Search returns empty ids after optimize with mmap enabled | [SPEC-004](specs/SPEC-004-vector-search.md) | bug | P1 | v0.2.0 |
 
-### Done (35)
+### Done (39)
 
 <details>
-<summary>v0.1.2 — 1 tickets</summary>
+<summary>v0.1.2 — 5 tickets</summary>
 
 | Ticket | Title | Spec | Type | Priority | Release |
 | --- | --- | --- | --- | --- | --- |
 | [ZS-035](tickets/ZS-035-release-sh-bash-3-2.md) | release.sh aborts with an unbound variable error on bash 3.2 | [SPEC-008](specs/SPEC-008-release-automation.md) | bug | P1 | v0.1.2 |
+| [ZS-036](tickets/ZS-036-unavailable-after-restart.md) | Collections stay unavailable after a rolling restart | [SPEC-002](specs/SPEC-002-collection-management.md) | bug | P0 | v0.1.2 |
+| [ZS-037](tickets/ZS-037-recovery-task.md) | Background recovery task with exponential backoff | [SPEC-009](specs/SPEC-009-collection-recovery.md) | feature | P0 | v0.1.2 |
+| [ZS-038](tickets/ZS-038-recovery-settings.md) | Recovery delay settings and docs | [SPEC-009](specs/SPEC-009-collection-recovery.md) | feature | P1 | v0.1.2 |
+| [ZS-039](tickets/ZS-039-recovery-cancel.md) | Cancel recovery tasks on drop and shutdown | [SPEC-009](specs/SPEC-009-collection-recovery.md) | feature | P0 | v0.1.2 |
 
 </details>
 
@@ -94,11 +93,11 @@ _None._
 | Spec | Title | Status | Release | Tickets done |
 | --- | --- | --- | --- | --- |
 | [SPEC-001](specs/SPEC-001-server-foundation.md) | Server foundation: app factory, configuration, errors, and health | implemented | v0.1.0 | 7/7 |
-| [SPEC-002](specs/SPEC-002-collection-management.md) | Collection management and metadata store | implemented | v0.1.0 | 6/7 |
+| [SPEC-002](specs/SPEC-002-collection-management.md) | Collection management and metadata store | implemented | v0.1.0 | 7/7 |
 | [SPEC-003](specs/SPEC-003-document-operations.md) | Document operations | implemented | v0.1.0 | 4/4 |
 | [SPEC-004](specs/SPEC-004-vector-search.md) | Vector similarity search | implemented | v0.1.0 | 2/3 |
 | [SPEC-005](specs/SPEC-005-api-key-auth.md) | Optional API-key authentication | implemented | v0.1.0 | 2/2 |
 | [SPEC-006](specs/SPEC-006-packaging-and-docs.md) | Container image, documentation, and examples | implemented | v0.1.0 | 4/4 |
 | [SPEC-007](specs/SPEC-007-benchmark-suite.md) | Benchmark suite with overhead decomposition | implemented | v0.1.1 | 5/5 |
 | [SPEC-008](specs/SPEC-008-release-automation.md) | Release automation and GHCR image publishing | implemented | v0.1.1 | 5/5 |
-| [SPEC-009](specs/SPEC-009-collection-recovery.md) | Self-healing recovery for unavailable collections | accepted | v0.1.2 | 0/3 |
+| [SPEC-009](specs/SPEC-009-collection-recovery.md) | Self-healing recovery for unavailable collections | implemented | v0.1.2 | 3/3 |

@@ -78,6 +78,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         store.connect()
         manager = CollectionManager(resolved, store)
         manager.load_all()
+        manager.start_recovery()
 
         app.state.settings = resolved
         app.state.store = store

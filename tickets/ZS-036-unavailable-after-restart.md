@@ -4,9 +4,10 @@ title: Collections stay unavailable after a rolling restart
 spec: SPEC-002
 type: bug
 priority: P0
-status: in-progress
+status: done
 release: v0.1.2
 created: 2026-06-30
+closed: 2026-07-08
 ---
 
 # ZS-036: Collections stay unavailable after a rolling restart
@@ -41,12 +42,12 @@ unavailable until B is restarted.
 
 ## Acceptance criteria
 
-- [ ] A collection that failed to open at startup becomes available without a restart
+- [x] A collection that failed to open at startup becomes available without a restart
       once the cause clears.
-- [ ] No request is needed to trigger the retry, and no request blocks waiting for
+- [x] No request is needed to trigger the retry, and no request blocks waiting for
       it.
-- [ ] Startup still succeeds when a collection cannot be opened.
-- [ ] A regression test simulates a transient outage at startup and asserts that the
+- [x] Startup still succeeds when a collection cannot be opened.
+- [x] A regression test simulates a transient outage at startup and asserts that the
       collection reopens.
 
 ## Notes
@@ -56,3 +57,10 @@ unavailable until B is restarted.
   non-blocking contract, so the fix needs its own design: SPEC-009.
 - Workaround until the fix ships: restart B after A has fully exited, and have the
   orchestrator stop the old instance before starting the new one.
+
+## Resolution
+
+Fixed by SPEC-009, shipped in v0.1.2. `CollectionManager.start_recovery()` now
+retries each unavailable collection in the background with exponential backoff
+(ZS-037, ZS-038, ZS-039). The regression test in `tests/unit/test_manager.py` moves
+the collection directory aside at startup and restores it after the first retry.

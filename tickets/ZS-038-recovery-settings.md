@@ -4,9 +4,10 @@ title: Recovery delay settings and docs
 spec: SPEC-009
 type: feature
 priority: P1
-status: in-progress
+status: done
 release: v0.1.2
 created: 2026-07-02
+closed: 2026-07-08
 ---
 
 # ZS-038: Recovery delay settings and docs
@@ -20,19 +21,19 @@ without anyone intervening.
 
 ## Acceptance criteria
 
-- [ ] `Settings.collection_recovery_initial_delay_seconds: float = 30.0` and
+- [x] `Settings.collection_recovery_initial_delay_seconds: float = 30.0` and
       `collection_recovery_max_delay_seconds: float = 300.0` are read from
       `ZVEC_SERVER_COLLECTION_RECOVERY_INITIAL_DELAY_SECONDS` and
       `ZVEC_SERVER_COLLECTION_RECOVERY_MAX_DELAY_SECONDS`.
-- [ ] `docs/CONFIGURATION.md` has a "Collection recovery" section with a table of both
+- [x] `docs/CONFIGURATION.md` has a "Collection recovery" section with a table of both
       settings. It explains the rolling-restart race and how `/readyz` reports
       unavailable collections in the meantime.
-- [ ] The configuration table in `README.md` lists both variables.
-- [ ] `.env.example` has a commented-out "Collection recovery" block with the
+- [x] The configuration table in `README.md` lists both variables.
+- [x] `.env.example` has a commented-out "Collection recovery" block with the
       defaults.
-- [ ] CHANGELOG has an Added entry. The registry invariant in CLAUDE.md now describes
+- [x] CHANGELOG has an Added entry. The registry invariant in CLAUDE.md now describes
       `start_recovery()`, the backoff settings, and cancellation.
-- [ ] Tests can shrink both delays through `Settings(...)`, so recovery tests run in
+- [x] Tests can shrink both delays through `Settings(...)`, so recovery tests run in
       milliseconds.
 
 ## Notes
@@ -44,3 +45,10 @@ without anyone intervening.
   question in SPEC-009.
 - Bumping the release version to 0.1.2 is release housekeeping and is not part of
   this ticket.
+
+## Resolution
+
+Added both settings to `config.py` and documented them in `docs/CONFIGURATION.md`,
+`README.md`, and `.env.example`, with a CHANGELOG entry under 0.1.2. The values are
+not range-checked. The sample `.env` in `docs/CONFIGURATION.md` uses shorter,
+illustrative delays (`1.0` / `60.0`) rather than the defaults.

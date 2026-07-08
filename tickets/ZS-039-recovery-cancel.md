@@ -4,9 +4,10 @@ title: Cancel recovery tasks on drop and shutdown
 spec: SPEC-009
 type: feature
 priority: P0
-status: in-progress
+status: done
 release: v0.1.2
 created: 2026-07-02
+closed: 2026-07-08
 ---
 
 # ZS-039: Cancel recovery tasks on drop and shutdown
@@ -21,14 +22,14 @@ so that no task outlives its collection or the process.
 
 ## Acceptance criteria
 
-- [ ] `drop(name)` pops the collection's entry from `_recovery_tasks` and cancels the
+- [x] `drop(name)` pops the collection's entry from `_recovery_tasks` and cancels the
       task. It does this under the manager lock, after removing the collection from
       the registry and from the metadata store.
-- [ ] `close()` cancels every pending task and clears `_recovery_tasks`, then runs
+- [x] `close()` cancels every pending task and clears `_recovery_tasks`, then runs
       `flush_all()`.
-- [ ] Awaiting a cancelled task raises `CancelledError`. No task retries after its
+- [x] Awaiting a cancelled task raises `CancelledError`. No task retries after its
       collection is dropped or after shutdown.
-- [ ] Tests: with a 10 s delay pending, `close()` cancels the task. `drop("docs")`
+- [x] Tests: with a 10 s delay pending, `close()` cancels the task. `drop("docs")`
       removes `docs` from `_recovery_tasks` and cancels the task.
 
 ## Notes
@@ -42,3 +43,10 @@ so that no task outlives its collection or the process.
 - `drop()` of an unavailable collection removes its directory with `rmtree`, so a task
   that ran after the drop would fail its open anyway. Cancelling keeps it from
   retrying forever.
+
+## Resolution
+
+Implemented in `CollectionManager.drop()` and `close()` in `manager.py`, with two unit
+tests in `tests/unit/test_manager.py`. Cancellation is fire-and-forget: neither method
+waits for the task to finish, and a reopen that is already running in a worker thread
+is not interrupted. The new tests called `drop()` directly on the event-loop thread.

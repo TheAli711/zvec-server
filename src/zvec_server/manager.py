@@ -3,7 +3,9 @@
 The :class:`CollectionManager` opens every registered collection once at startup
 and keeps the resulting handles in memory for the lifetime of the process. API
 requests resolve a collection from the registry in O(1) and never open or close
-it themselves.
+it themselves. A collection that fails to open at startup is retried in the
+background with exponential backoff (see :meth:`CollectionManager.start_recovery`)
+so it becomes available on its own, without a server restart.
 
 This module never imports :mod:`zvec`; all engine interaction goes through the
 adapter layer. Each collection carries a reader/writer lock so reads (search,
@@ -14,6 +16,7 @@ the event loop is never blocked.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import shutil
 import threading
@@ -118,6 +121,7 @@ class CollectionManager:
         self._store = store
         self._registry: dict[str, ManagedCollection] = {}
         self._lock = threading.Lock()
+        self._recovery_tasks: dict[str, asyncio.Task[None]] = {}
 
     # ------------------------------------------------------------------ startup
     def load_all(self) -> None:
@@ -232,6 +236,9 @@ class CollectionManager:
                     shutil.rmtree(directory, ignore_errors=True)
             self._store.delete(name)
             del self._registry[name]
+            task = self._recovery_tasks.pop(name, None)
+            if task is not None:
+                task.cancel()
             logger.info("Dropped collection", extra={"collection": name})
 
     # ---------------------------------------------------------------- accessors
@@ -250,6 +257,47 @@ class CollectionManager:
                 f"Collection '{name}' is registered but not open.", {"name": name}
             )
         return managed
+
+    # --------------------------------------------------------------- recovery
+    def start_recovery(self) -> None:
+        """Spawn a background retry task for every currently-unavailable collection.
+
+        Called once at startup, right after :meth:`load_all`. A collection can
+        fail to open because a prior process instance was still shutting down
+        and holding Zvec's on-disk lock (a rolling-restart race) — rather than
+        require a full server restart to recover, each unavailable collection
+        gets its own background task that retries the open with exponential
+        backoff until it succeeds, so collections become ready on their own
+        before traffic depends on them.
+        """
+        with self._lock:
+            managed_list = list(self._registry.values())
+        for managed in managed_list:
+            if not managed.available:
+                self._spawn_recovery_task(managed)
+
+    def _spawn_recovery_task(self, managed: ManagedCollection) -> None:
+        if managed.name in self._recovery_tasks:
+            return
+        task = asyncio.create_task(self._recover(managed), name=f"recover-{managed.name}")
+        self._recovery_tasks[managed.name] = task
+        task.add_done_callback(lambda _: self._recovery_tasks.pop(managed.name, None))
+
+    async def _recover(self, managed: ManagedCollection) -> None:
+        """Retry opening ``managed`` with exponential backoff until it succeeds."""
+        delay = self._settings.collection_recovery_initial_delay_seconds
+        max_delay = self._settings.collection_recovery_max_delay_seconds
+        while not managed.available:
+            await asyncio.sleep(delay)
+            reopened = await run_in_threadpool(self._open_record, managed.record)
+            if reopened.available:
+                managed.collection = reopened.collection
+                logger.info(
+                    "Recovered previously unavailable collection",
+                    extra={"collection": managed.name},
+                )
+                return
+            delay = min(delay * 2, max_delay)
 
     def list(self) -> CollectionListResponse:
         """Return a summary of every registered collection."""
@@ -301,6 +349,9 @@ class CollectionManager:
 
     def close(self) -> None:
         """Flush and release all collections (called at shutdown)."""
+        for task in self._recovery_tasks.values():
+            task.cancel()
+        self._recovery_tasks.clear()
         self.flush_all()
         with self._lock:
             self._registry.clear()

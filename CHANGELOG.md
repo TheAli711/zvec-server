@@ -8,6 +8,17 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-07-08
+
+### Added
+
+- Collections that fail to open at startup (e.g. a rolling-restart race where
+  the previous process instance still held Zvec's on-disk lock) now self-heal:
+  a background task retries the open with exponential backoff
+  (`ZVEC_SERVER_COLLECTION_RECOVERY_INITIAL_DELAY_SECONDS` /
+  `..._MAX_DELAY_SECONDS`, defaults `30.0` / `300.0`) until it succeeds, instead
+  of requiring a full server restart to recover.
+
 ### Fixed
 
 - `scripts/release.sh` no longer aborts with an "unbound variable" error on bash
@@ -82,6 +93,7 @@ Initial release: a lightweight, storage-focused HTTP server that exposes the
   coverage, pre-commit hooks, and a GitHub Actions CI pipeline (test matrix over
   Python 3.12/3.13 plus a Docker build).
 
-[Unreleased]: https://github.com/TheAli711/zvec-server/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/TheAli711/zvec-server/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/TheAli711/zvec-server/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/TheAli711/zvec-server/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/TheAli711/zvec-server/releases/tag/v0.1.0

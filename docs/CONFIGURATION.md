@@ -53,6 +53,21 @@ The engine is initialized exactly once per process at startup. The
 `ZVEC_SERVER_LOG_LEVEL` value is mapped to the corresponding Zvec log level (note
 that `WARNING` maps to Zvec's `WARN`).
 
+## Collection recovery
+
+| Variable                                                | Type  | Default | Description                                                    |
+| -------------------------------------------------------- | ----- | ------- | ---------------------------------------------------------------- |
+| `ZVEC_SERVER_COLLECTION_RECOVERY_INITIAL_DELAY_SECONDS` | float | `30.0`   | Initial backoff before the first retry of a collection that failed to open. |
+| `ZVEC_SERVER_COLLECTION_RECOVERY_MAX_DELAY_SECONDS`     | float | `300.0`  | Cap on the backoff delay (the interval doubles after each failed retry). |
+
+A collection can fail to open at startup — most commonly a rolling-restart race
+where the previous process instance is still shutting down and holding Zvec's
+on-disk lock. Rather than requiring a full server restart, each unavailable
+collection gets a background task that retries the open with exponential
+backoff until it succeeds, so the collection becomes ready on its own before
+any request needs it. `GET /readyz` reports how many collections are still
+unavailable in the meantime.
+
 ## Authentication
 
 Authentication is **off by default** and intentionally minimal in V1: a single
@@ -99,6 +114,8 @@ ZVEC_SERVER_ENABLE_MMAP=true
 # ZVEC_SERVER_ZVEC_MEMORY_LIMIT_MB=2048
 # ZVEC_SERVER_ZVEC_QUERY_THREADS=4
 # ZVEC_SERVER_ZVEC_OPTIMIZE_THREADS=2
+# ZVEC_SERVER_COLLECTION_RECOVERY_INITIAL_DELAY_SECONDS=1.0
+# ZVEC_SERVER_COLLECTION_RECOVERY_MAX_DELAY_SECONDS=60.0
 ZVEC_SERVER_AUTH_ENABLED=false
 # ZVEC_SERVER_API_KEY=change-me
 ```

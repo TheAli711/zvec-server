@@ -76,8 +76,18 @@ and tests:**
   vectors or document data into SQLite.
 - **In-memory registry, never per-request open/close.** `CollectionManager` opens
   each collection once at startup (`load_all()`) and keeps it in a process-local
-  registry. `get(name)` is an O(1) lookup. A missing on-disk dir marks the
-  collection *unavailable* (kept in registry) rather than crashing startup.
+  registry. `get(name)` is a plain O(1) lookup that raises immediately if the
+  collection isn't open — it never blocks a request to retry. A missing on-disk
+  dir (or any other open failure, e.g. a rolling restart racing a prior instance
+  for Zvec's on-disk lock) marks the collection *unavailable* (kept in registry)
+  rather than crashing startup. `start_recovery()` (called once, right after
+  `load_all()`) spawns a background `asyncio` task per unavailable collection
+  that retries the open with exponential backoff
+  (`collection_recovery_initial_delay_seconds` → `collection_recovery_max_delay_seconds`)
+  until it succeeds, so collections self-heal on their own before traffic needs
+  them — no restart required. `drop()` and `close()` cancel any in-flight
+  recovery task for a collection so it can't outlive the collection or the
+  process.
 - **Concurrency.** Each `ManagedCollection` owns a fair reader/writer lock. Reads
   (fetch/search) take a shared lock, writes (insert/upsert/update/delete/flush/
   optimize) take an exclusive lock. Blocking Zvec calls run in

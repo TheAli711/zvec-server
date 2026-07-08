@@ -75,14 +75,14 @@ release — no need to build from source. Pull a **specific version** (recommend
 for production so deployments are reproducible):
 
 ```bash
-docker pull ghcr.io/theali711/zvec-server:v0.1.1
+docker pull ghcr.io/theali711/zvec-server:v0.1.2
 ```
 
 Available tags for `ghcr.io/theali711/zvec-server`:
 
 | Tag        | Points to                                          | Example  |
 | ---------- | -------------------------------------------------- | -------- |
-| `vX.Y.Z`   | An exact release (immutable once published).       | `v0.1.1` |
+| `vX.Y.Z`   | An exact release (immutable once published).       | `v0.1.2` |
 | `vX.Y`     | The latest patch on a major/minor line.            | `v0.1`   |
 | `latest`   | The most recent **stable** release (no pre-releases). | `latest` |
 
@@ -98,7 +98,7 @@ docker run -d \
   -e ZVEC_SERVER_LOG_FORMAT=console \
   -e ZVEC_SERVER_AUTH_ENABLED=true \
   -e ZVEC_SERVER_API_KEY="$(openssl rand -hex 32)" \
-  ghcr.io/theali711/zvec-server:v0.1.1
+  ghcr.io/theali711/zvec-server:v0.1.2
 ```
 
 The image stores all state under `/data` (its `ZVEC_SERVER_DATA_DIR`); the
@@ -120,7 +120,7 @@ docker compose up --build
 
 This builds the image from source, mounts `./data` for persistence, and exposes
 the server on `http://localhost:8000`. To run the published image instead of
-building, set `image: ghcr.io/theali711/zvec-server:v0.1.1` and drop the `build:`
+building, set `image: ghcr.io/theali711/zvec-server:v0.1.2` and drop the `build:`
 section in `docker-compose.yml`.
 
 ### Smoke test
@@ -195,6 +195,8 @@ All variables use the `ZVEC_SERVER_` prefix and can be set via environment or a
 | `ZVEC_SERVER_ZVEC_QUERY_THREADS`    | int \| null   | auto                         | Zvec query thread count.                                 |
 | `ZVEC_SERVER_ZVEC_OPTIMIZE_THREADS` | int \| null   | auto                         | Zvec optimize thread count.                              |
 | `ZVEC_SERVER_ZVEC_LOG_DIR`          | path \| null  | none                         | Directory for Zvec engine logs.                          |
+| `ZVEC_SERVER_COLLECTION_RECOVERY_INITIAL_DELAY_SECONDS` | float | `30.0`         | Initial backoff before retrying a collection that failed to open. |
+| `ZVEC_SERVER_COLLECTION_RECOVERY_MAX_DELAY_SECONDS`     | float | `300.0`        | Backoff cap for collection-open retries.                 |
 | `ZVEC_SERVER_AUTH_ENABLED`          | bool          | `false`                      | Require an API key on every request (except health probes). |
 | `ZVEC_SERVER_API_KEY`               | str \| null   | none                         | Expected bearer key. Required when auth is enabled.      |
 
