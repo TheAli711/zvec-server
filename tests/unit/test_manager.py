@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import shutil
 from collections.abc import Iterator
 from pathlib import Path
@@ -16,7 +17,7 @@ from zvec_server.errors import (
     CollectionNotFoundError,
     CollectionUnavailableError,
 )
-from zvec_server.manager import CollectionManager
+from zvec_server.manager import CollectionManager, ManagedCollection
 from zvec_server.models.collections import CreateCollectionRequest, VectorFieldSpec
 
 
@@ -142,5 +143,178 @@ def test_load_all_marks_missing_unavailable(tmp_path: Path) -> None:
     assert manager2.info("docs").available is False
     with pytest.raises(CollectionUnavailableError):
         manager2.get("docs")
+    manager2.close()
+    store2.close()
+
+
+def test_start_recovery_reopens_when_directory_reappears(tmp_path: Path) -> None:
+    """A collection that failed to open at startup self-heals in the
+    background once its directory becomes available again, with no request
+    needed to trigger the retry."""
+    settings = Settings(
+        data_dir=tmp_path / "data",
+        collection_recovery_initial_delay_seconds=0.01,
+        collection_recovery_max_delay_seconds=0.05,
+    )
+    settings.ensure_directories()
+    assert settings.metadata_db_path is not None
+
+    store1 = MetadataStore(settings.metadata_db_path)
+    store1.connect()
+    manager1 = CollectionManager(settings, store1)
+    info = manager1.create(_request())
+    manager1.close()
+    store1.close()
+
+    # Simulate a transient outage (e.g. a rolling-restart lock race): the
+    # directory is briefly unavailable when this process starts up.
+    original = Path(info.path)
+    moved_aside = tmp_path / "docs-moved-aside"
+    shutil.move(str(original), str(moved_aside))
+
+    store2 = MetadataStore(settings.metadata_db_path)
+    store2.connect()
+    manager2 = CollectionManager(settings, store2)
+    manager2.load_all()
+    assert manager2.counts() == (0, 1)
+
+    async def _run() -> None:
+        manager2.start_recovery()
+        task = manager2._recovery_tasks["docs"]
+        # The underlying issue clears shortly after the first retry attempt.
+        await asyncio.sleep(0.02)
+        shutil.move(str(moved_aside), str(original))
+        await asyncio.wait_for(task, timeout=2.0)
+
+    asyncio.run(_run())
+
+    assert manager2.counts() == (1, 0)
+    assert manager2.get("docs").available is True
+    manager2.close()
+    store2.close()
+
+
+def test_start_recovery_retries_with_backoff(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The recovery task keeps retrying a still-broken collection (rather
+    than giving up after one attempt) and stops once it succeeds."""
+    settings = Settings(
+        data_dir=tmp_path / "data",
+        collection_recovery_initial_delay_seconds=0.01,
+        collection_recovery_max_delay_seconds=0.05,
+    )
+    settings.ensure_directories()
+    assert settings.metadata_db_path is not None
+
+    store1 = MetadataStore(settings.metadata_db_path)
+    store1.connect()
+    manager1 = CollectionManager(settings, store1)
+    info = manager1.create(_request())
+    manager1.close()
+    store1.close()
+
+    shutil.rmtree(info.path)
+
+    store2 = MetadataStore(settings.metadata_db_path)
+    store2.connect()
+    manager2 = CollectionManager(settings, store2)
+    manager2.load_all()
+
+    # Fail the first two open attempts and succeed on the third, so the test
+    # doesn't depend on real Zvec/filesystem timing to exercise the backoff.
+    calls = 0
+
+    def _flaky_open_record(record):  # type: ignore[no-untyped-def]
+        nonlocal calls
+        calls += 1
+        collection = object() if calls >= 3 else None
+        return ManagedCollection(record.name, collection, record)
+
+    monkeypatch.setattr(manager2, "_open_record", _flaky_open_record)
+
+    async def _run() -> None:
+        manager2.start_recovery()
+        task = manager2._recovery_tasks["docs"]
+        await asyncio.wait_for(task, timeout=2.0)
+
+    asyncio.run(_run())
+
+    assert calls == 3
+    assert manager2.counts() == (1, 0)
+    manager2.close()
+    store2.close()
+
+
+def test_close_cancels_pending_recovery_task(tmp_path: Path) -> None:
+    """Shutting down while a collection is still mid-recovery cancels the
+    background retry loop cleanly instead of leaking a task."""
+    settings = Settings(
+        data_dir=tmp_path / "data",
+        collection_recovery_initial_delay_seconds=10.0,
+        collection_recovery_max_delay_seconds=10.0,
+    )
+    settings.ensure_directories()
+    assert settings.metadata_db_path is not None
+
+    store1 = MetadataStore(settings.metadata_db_path)
+    store1.connect()
+    manager1 = CollectionManager(settings, store1)
+    info = manager1.create(_request())
+    manager1.close()
+    store1.close()
+
+    shutil.rmtree(info.path)
+
+    store2 = MetadataStore(settings.metadata_db_path)
+    store2.connect()
+    manager2 = CollectionManager(settings, store2)
+    manager2.load_all()
+
+    async def _run() -> None:
+        manager2.start_recovery()
+        task = manager2._recovery_tasks["docs"]
+        manager2.close()
+        with pytest.raises(asyncio.CancelledError):
+            await task
+
+    asyncio.run(_run())
+    store2.close()
+
+
+def test_drop_cancels_pending_recovery_task(tmp_path: Path) -> None:
+    """Dropping a collection that's still mid-recovery cancels its background
+    retry loop instead of leaking a task that retries forever."""
+    settings = Settings(
+        data_dir=tmp_path / "data",
+        collection_recovery_initial_delay_seconds=10.0,
+        collection_recovery_max_delay_seconds=10.0,
+    )
+    settings.ensure_directories()
+    assert settings.metadata_db_path is not None
+
+    store1 = MetadataStore(settings.metadata_db_path)
+    store1.connect()
+    manager1 = CollectionManager(settings, store1)
+    info = manager1.create(_request())
+    manager1.close()
+    store1.close()
+
+    shutil.rmtree(info.path)
+
+    store2 = MetadataStore(settings.metadata_db_path)
+    store2.connect()
+    manager2 = CollectionManager(settings, store2)
+    manager2.load_all()
+
+    async def _run() -> None:
+        manager2.start_recovery()
+        task = manager2._recovery_tasks["docs"]
+        manager2.drop("docs")
+        assert "docs" not in manager2._recovery_tasks
+        with pytest.raises(asyncio.CancelledError):
+            await task
+
+    asyncio.run(_run())
     manager2.close()
     store2.close()

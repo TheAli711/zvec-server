@@ -55,6 +55,14 @@ class Settings(BaseSettings):
     zvec_optimize_threads: int | None = None
     zvec_log_dir: Path | None = None
 
+    # --- Collection recovery ---
+    # A collection that fails to open at startup (e.g. a rolling-restart race
+    # over Zvec's on-disk lock) is retried in the background with exponential
+    # backoff, starting at ``collection_recovery_initial_delay_seconds`` and
+    # doubling up to ``collection_recovery_max_delay_seconds``, until it opens.
+    collection_recovery_initial_delay_seconds: float = 30.0
+    collection_recovery_max_delay_seconds: float = 300.0
+
     # --- Authentication ---
     # When ``auth_enabled`` is true, every request (except the health/readiness
     # probes) must send ``Authorization: Bearer <api_key>``. The key is supplied
