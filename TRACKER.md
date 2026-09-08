@@ -5,7 +5,7 @@
 Specs, tickets, and how they flow into each other are described in
 [specs/README.md](specs/README.md).
 
-**9 specs · 40 tickets** — 0 in-progress · 0 todo · 1 backlog · 39 done · 0 wontfix
+**10 specs · 40 tickets** — 0 in-progress · 0 todo · 1 backlog · 39 done · 0 wontfix
 
 ## Board
 
@@ -101,3 +101,4 @@ _None._
 | [SPEC-007](specs/SPEC-007-benchmark-suite.md) | Benchmark suite with overhead decomposition | implemented | v0.1.1 | 5/5 |
 | [SPEC-008](specs/SPEC-008-release-automation.md) | Release automation and GHCR image publishing | implemented | v0.1.1 | 5/5 |
 | [SPEC-009](specs/SPEC-009-collection-recovery.md) | Self-healing recovery for unavailable collections | implemented | v0.1.2 | 3/3 |
+| [SPEC-010](specs/SPEC-010-zvec-0-7-upgrade.md) | Upgrade to Zvec 0.7.0 | draft | v0.2.0 | 0/0 |
