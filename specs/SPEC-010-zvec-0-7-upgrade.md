@@ -1,7 +1,7 @@
 ---
 id: SPEC-010
 title: Upgrade to Zvec 0.7.0
-status: draft
+status: accepted
 created: 2026-09-08
 release: v0.2.0
 ---
@@ -191,3 +191,10 @@ Errors are unchanged: `404 collection_not_found`, `503 collection_unavailable`.
   under the lock. New lifecycle paths must follow the same rule.
 - **Version floor.** Deployments pinned to Zvec 0.5.x cannot take this release.
   The minor version bump (v0.2.0) signals this.
+
+## Tickets
+
+- ZS-041 — Require Zvec 0.7.0
+- ZS-042 — Close collection handles explicitly on shutdown
+- ZS-043 — Serve reads while optimize runs
+- ZS-044 — Document the Zvec 0.7.0 upgrade, explicit close, and optimize locking

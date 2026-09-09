@@ -5,7 +5,7 @@
 Specs, tickets, and how they flow into each other are described in
 [specs/README.md](specs/README.md).
 
-**10 specs · 40 tickets** — 0 in-progress · 0 todo · 1 backlog · 39 done · 0 wontfix
+**10 specs · 44 tickets** — 0 in-progress · 5 todo · 0 backlog · 39 done · 0 wontfix
 
 ## Board
 
@@ -13,15 +13,19 @@ Specs, tickets, and how they flow into each other are described in
 
 _None._
 
-### Todo (0)
-
-_None._
-
-### Backlog (1)
+### Todo (5)
 
 | Ticket | Title | Spec | Type | Priority | Release |
 | --- | --- | --- | --- | --- | --- |
+| [ZS-041](tickets/ZS-041-require-zvec-0-7-0.md) | Require Zvec 0.7.0 | [SPEC-010](specs/SPEC-010-zvec-0-7-upgrade.md) | chore | P0 | v0.2.0 |
 | [ZS-040](tickets/ZS-040-mmap-empty-ids.md) | Search returns empty ids after optimize with mmap enabled | [SPEC-004](specs/SPEC-004-vector-search.md) | bug | P1 | v0.2.0 |
+| [ZS-042](tickets/ZS-042-explicit-close.md) | Close collection handles explicitly on shutdown | [SPEC-010](specs/SPEC-010-zvec-0-7-upgrade.md) | feature | P1 | v0.2.0 |
+| [ZS-043](tickets/ZS-043-reads-during-optimize.md) | Serve reads while optimize runs | [SPEC-010](specs/SPEC-010-zvec-0-7-upgrade.md) | feature | P1 | v0.2.0 |
+| [ZS-044](tickets/ZS-044-zvec-0-7-docs.md) | Document the Zvec 0.7.0 upgrade, explicit close, and optimize locking | [SPEC-010](specs/SPEC-010-zvec-0-7-upgrade.md) | docs | P1 | v0.2.0 |
+
+### Backlog (0)
+
+_None._
 
 ### Done (39)
 
@@ -101,4 +105,4 @@ _None._
 | [SPEC-007](specs/SPEC-007-benchmark-suite.md) | Benchmark suite with overhead decomposition | implemented | v0.1.1 | 5/5 |
 | [SPEC-008](specs/SPEC-008-release-automation.md) | Release automation and GHCR image publishing | implemented | v0.1.1 | 5/5 |
 | [SPEC-009](specs/SPEC-009-collection-recovery.md) | Self-healing recovery for unavailable collections | implemented | v0.1.2 | 3/3 |
-| [SPEC-010](specs/SPEC-010-zvec-0-7-upgrade.md) | Upgrade to Zvec 0.7.0 | draft | v0.2.0 | 0/0 |
+| [SPEC-010](specs/SPEC-010-zvec-0-7-upgrade.md) | Upgrade to Zvec 0.7.0 | accepted | v0.2.0 | 0/4 |
