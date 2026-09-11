@@ -1,7 +1,7 @@
 ---
 id: SPEC-011
 title: Index quantization, RaBitQ indexes, and per-index search params
-status: draft
+status: accepted
 created: 2026-09-10
 release: v0.2.0
 ---
@@ -201,3 +201,13 @@ the breaking strictness change), and README key features.
   developers exercise only the 422 path.
 - **Cost of `is_linear`.** It forces a brute-force scan. It stays opt-in per query
   and is documented as exact but slow.
+
+## Tickets
+
+- ZS-045 — Vector quantization for hnsw, flat, and ivf indexes
+- ZS-046 — use_soar for ivf indexes
+- ZS-047 — Reject unknown vector index params instead of ignoring them
+- ZS-048 — hnsw_rabitq and ivf_rabitq index types
+- ZS-049 — Search params for every index type
+- ZS-050 — Restart tests for quantized and SOAR ivf collections
+- ZS-051 — Document quantization, RaBitQ, and search params
