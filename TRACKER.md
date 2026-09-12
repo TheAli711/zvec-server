@@ -5,7 +5,7 @@
 Specs, tickets, and how they flow into each other are described in
 [specs/README.md](specs/README.md).
 
-**11 specs · 51 tickets** — 0 in-progress · 12 todo · 0 backlog · 39 done · 0 wontfix
+**12 specs · 51 tickets** — 0 in-progress · 12 todo · 0 backlog · 39 done · 0 wontfix
 
 ## Board
 
@@ -114,3 +114,4 @@ _None._
 | [SPEC-009](specs/SPEC-009-collection-recovery.md) | Self-healing recovery for unavailable collections | implemented | v0.1.2 | 3/3 |
 | [SPEC-010](specs/SPEC-010-zvec-0-7-upgrade.md) | Upgrade to Zvec 0.7.0 | accepted | v0.2.0 | 0/4 |
 | [SPEC-011](specs/SPEC-011-index-and-search-options.md) | Index quantization, RaBitQ indexes, and per-index search params | accepted | v0.2.0 | 0/7 |
+| [SPEC-012](specs/SPEC-012-group-by-search.md) | Group-by search | draft | v0.2.0 | 0/0 |
