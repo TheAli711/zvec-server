@@ -1,7 +1,7 @@
 ---
 id: SPEC-012
 title: Group-by search
-status: draft
+status: accepted
 created: 2026-09-12
 release: v0.2.0
 ---
@@ -194,3 +194,9 @@ simple: `/search` stays a flat `results` list and this route always returns `gro
   data to search. The server pre-validates `group_by` against the schema, but a
   malformed filter on an empty collection may return no groups instead of `400`; we
   accept that rather than parse filters ourselves (they pass through verbatim).
+
+## Tickets
+
+- ZS-052 — Group-by search endpoint
+- ZS-053 — Group-by honors include_vector and output_fields
+- ZS-054 — Document group-by search
