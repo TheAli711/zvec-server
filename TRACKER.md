@@ -5,7 +5,7 @@
 Specs, tickets, and how they flow into each other are described in
 [specs/README.md](specs/README.md).
 
-**13 specs · 57 tickets** — 0 in-progress · 18 todo · 0 backlog · 39 done · 0 wontfix
+**14 specs · 57 tickets** — 0 in-progress · 18 todo · 0 backlog · 39 done · 0 wontfix
 
 ## Board
 
@@ -122,3 +122,4 @@ _None._
 | [SPEC-011](specs/SPEC-011-index-and-search-options.md) | Index quantization, RaBitQ indexes, and per-index search params | accepted | v0.2.0 | 0/7 |
 | [SPEC-012](specs/SPEC-012-group-by-search.md) | Group-by search | accepted | v0.2.0 | 0/3 |
 | [SPEC-013](specs/SPEC-013-ndjson-export.md) | Streaming NDJSON export | accepted | v0.2.0 | 0/3 |
+| [SPEC-014](specs/SPEC-014-quantization-benchmarks.md) | Quantization and optimize-load benchmarks | draft | v0.2.0 | 0/0 |
