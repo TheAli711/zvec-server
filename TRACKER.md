@@ -5,7 +5,7 @@
 Specs, tickets, and how they flow into each other are described in
 [specs/README.md](specs/README.md).
 
-**13 specs · 54 tickets** — 0 in-progress · 15 todo · 0 backlog · 39 done · 0 wontfix
+**13 specs · 57 tickets** — 0 in-progress · 18 todo · 0 backlog · 39 done · 0 wontfix
 
 ## Board
 
@@ -13,7 +13,7 @@ Specs, tickets, and how they flow into each other are described in
 
 _None._
 
-### Todo (15)
+### Todo (18)
 
 | Ticket | Title | Spec | Type | Priority | Release |
 | --- | --- | --- | --- | --- | --- |
@@ -29,9 +29,12 @@ _None._
 | [ZS-051](tickets/ZS-051-index-options-docs.md) | Document quantization, RaBitQ, and search params | [SPEC-011](specs/SPEC-011-index-and-search-options.md) | docs | P1 | v0.2.0 |
 | [ZS-052](tickets/ZS-052-group-by-endpoint.md) | Group-by search endpoint | [SPEC-012](specs/SPEC-012-group-by-search.md) | feature | P1 | v0.2.0 |
 | [ZS-054](tickets/ZS-054-group-by-docs.md) | Document group-by search | [SPEC-012](specs/SPEC-012-group-by-search.md) | docs | P1 | v0.2.0 |
+| [ZS-055](tickets/ZS-055-export-endpoint.md) | Streaming NDJSON export endpoint | [SPEC-013](specs/SPEC-013-ndjson-export.md) | feature | P1 | v0.2.0 |
+| [ZS-057](tickets/ZS-057-export-docs.md) | Document streaming export | [SPEC-013](specs/SPEC-013-ndjson-export.md) | docs | P1 | v0.2.0 |
 | [ZS-046](tickets/ZS-046-ivf-use-soar.md) | use_soar for ivf indexes | [SPEC-011](specs/SPEC-011-index-and-search-options.md) | feature | P2 | v0.2.0 |
 | [ZS-050](tickets/ZS-050-index-options-restart-tests.md) | Restart tests for quantized and SOAR ivf collections | [SPEC-011](specs/SPEC-011-index-and-search-options.md) | test | P2 | v0.2.0 |
 | [ZS-053](tickets/ZS-053-group-by-output-tests.md) | Group-by honors include_vector and output_fields | [SPEC-012](specs/SPEC-012-group-by-search.md) | test | P2 | v0.2.0 |
+| [ZS-056](tickets/ZS-056-new-routes-auth-tests.md) | Auth coverage for the export and group-by routes | [SPEC-013](specs/SPEC-013-ndjson-export.md) | test | P2 | v0.2.0 |
 
 ### Backlog (0)
 
@@ -118,4 +121,4 @@ _None._
 | [SPEC-010](specs/SPEC-010-zvec-0-7-upgrade.md) | Upgrade to Zvec 0.7.0 | accepted | v0.2.0 | 0/4 |
 | [SPEC-011](specs/SPEC-011-index-and-search-options.md) | Index quantization, RaBitQ indexes, and per-index search params | accepted | v0.2.0 | 0/7 |
 | [SPEC-012](specs/SPEC-012-group-by-search.md) | Group-by search | accepted | v0.2.0 | 0/3 |
-| [SPEC-013](specs/SPEC-013-ndjson-export.md) | Streaming NDJSON export | draft | v0.2.0 | 0/0 |
+| [SPEC-013](specs/SPEC-013-ndjson-export.md) | Streaming NDJSON export | accepted | v0.2.0 | 0/3 |

@@ -1,7 +1,7 @@
 ---
 id: SPEC-013
 title: Streaming NDJSON export
-status: draft
+status: accepted
 created: 2026-09-13
 release: v0.2.0
 ---
@@ -179,3 +179,9 @@ lock does not order it against exports; see the maintenance risk below.
   how the ASGI server surfaces a client disconnect to the streaming generator.
 - **Payload size.** Vectors dominate the output as JSON arrays; exports of large,
   high-dimensional collections are slow and large. Acceptable for a backup path.
+
+## Tickets
+
+- ZS-055 — Streaming NDJSON export endpoint
+- ZS-056 — Auth coverage for the export and group-by routes
+- ZS-057 — Document streaming export
