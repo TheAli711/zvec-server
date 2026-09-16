@@ -5,7 +5,7 @@
 Specs, tickets, and how they flow into each other are described in
 [specs/README.md](specs/README.md).
 
-**14 specs · 57 tickets** — 0 in-progress · 18 todo · 0 backlog · 39 done · 0 wontfix
+**14 specs · 61 tickets** — 0 in-progress · 22 todo · 0 backlog · 39 done · 0 wontfix
 
 ## Board
 
@@ -13,7 +13,7 @@ Specs, tickets, and how they flow into each other are described in
 
 _None._
 
-### Todo (18)
+### Todo (22)
 
 | Ticket | Title | Spec | Type | Priority | Release |
 | --- | --- | --- | --- | --- | --- |
@@ -31,10 +31,14 @@ _None._
 | [ZS-054](tickets/ZS-054-group-by-docs.md) | Document group-by search | [SPEC-012](specs/SPEC-012-group-by-search.md) | docs | P1 | v0.2.0 |
 | [ZS-055](tickets/ZS-055-export-endpoint.md) | Streaming NDJSON export endpoint | [SPEC-013](specs/SPEC-013-ndjson-export.md) | feature | P1 | v0.2.0 |
 | [ZS-057](tickets/ZS-057-export-docs.md) | Document streaming export | [SPEC-013](specs/SPEC-013-ndjson-export.md) | docs | P1 | v0.2.0 |
+| [ZS-061](tickets/ZS-061-quantization-tradeoffs-docs.md) | Report measured quantization trade-offs in the docs | [SPEC-014](specs/SPEC-014-quantization-benchmarks.md) | docs | P1 | v0.2.0 |
 | [ZS-046](tickets/ZS-046-ivf-use-soar.md) | use_soar for ivf indexes | [SPEC-011](specs/SPEC-011-index-and-search-options.md) | feature | P2 | v0.2.0 |
 | [ZS-050](tickets/ZS-050-index-options-restart-tests.md) | Restart tests for quantized and SOAR ivf collections | [SPEC-011](specs/SPEC-011-index-and-search-options.md) | test | P2 | v0.2.0 |
 | [ZS-053](tickets/ZS-053-group-by-output-tests.md) | Group-by honors include_vector and output_fields | [SPEC-012](specs/SPEC-012-group-by-search.md) | test | P2 | v0.2.0 |
 | [ZS-056](tickets/ZS-056-new-routes-auth-tests.md) | Auth coverage for the export and group-by routes | [SPEC-013](specs/SPEC-013-ndjson-export.md) | test | P2 | v0.2.0 |
+| [ZS-058](tickets/ZS-058-bench-quantize-flags.md) | --quantize and --rotate benchmark flags | [SPEC-014](specs/SPEC-014-quantization-benchmarks.md) | feature | P2 | v0.2.0 |
+| [ZS-059](tickets/ZS-059-bench-quant-sweep.md) | quant subcommand to sweep quantization variants | [SPEC-014](specs/SPEC-014-quantization-benchmarks.md) | feature | P2 | v0.2.0 |
+| [ZS-060](tickets/ZS-060-bench-optimize-load.md) | optimize-load subcommand: search latency during optimize | [SPEC-014](specs/SPEC-014-quantization-benchmarks.md) | feature | P2 | v0.2.0 |
 
 ### Backlog (0)
 
@@ -122,4 +126,4 @@ _None._
 | [SPEC-011](specs/SPEC-011-index-and-search-options.md) | Index quantization, RaBitQ indexes, and per-index search params | accepted | v0.2.0 | 0/7 |
 | [SPEC-012](specs/SPEC-012-group-by-search.md) | Group-by search | accepted | v0.2.0 | 0/3 |
 | [SPEC-013](specs/SPEC-013-ndjson-export.md) | Streaming NDJSON export | accepted | v0.2.0 | 0/3 |
-| [SPEC-014](specs/SPEC-014-quantization-benchmarks.md) | Quantization and optimize-load benchmarks | draft | v0.2.0 | 0/0 |
+| [SPEC-014](specs/SPEC-014-quantization-benchmarks.md) | Quantization and optimize-load benchmarks | accepted | v0.2.0 | 0/4 |

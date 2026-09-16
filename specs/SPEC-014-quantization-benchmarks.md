@@ -1,7 +1,7 @@
 ---
 id: SPEC-014
 title: Quantization and optimize-load benchmarks
-status: draft
+status: accepted
 created: 2026-09-15
 release: v0.2.0
 ---
@@ -165,3 +165,10 @@ uv run python -m benchmarks optimize-load --scenario smoke --tier http --concurr
   adapter calls. If it drifts from the server (as it can when SPEC-010 changes
   locking), `optimize-load` on `inproc` would measure the wrong thing; the `http`
   tier is the reference.
+
+## Tickets
+
+- ZS-058 — --quantize and --rotate benchmark flags
+- ZS-059 — quant subcommand to sweep quantization variants
+- ZS-060 — optimize-load subcommand: search latency during optimize
+- ZS-061 — Report measured quantization trade-offs in the docs
