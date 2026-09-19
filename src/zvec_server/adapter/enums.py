@@ -47,6 +47,10 @@ SCALAR_DATA_TYPES: frozenset[str] = frozenset(
 # Supported vector index kinds (lowercase API tokens).
 INDEX_TYPES: frozenset[str] = frozenset({"hnsw", "flat", "ivf"})
 
+# Vector quantization types accepted in index ``params`` (lowercase API tokens).
+# RaBitQ is exposed as its own index types rather than a quantize option.
+QUANTIZE_TYPES: frozenset[str] = frozenset({"fp16", "int8", "int4"})
+
 # Convenience metric aliases accepted in addition to Zvec's own names.
 _METRIC_ALIASES: dict[str, str] = {
     "DOT": "IP",
@@ -78,6 +82,17 @@ def parse_metric_type(name: str) -> zvec.MetricType:
             {"valid": sorted(zvec.MetricType.__members__)},
         )
     return member
+
+
+def parse_quantize_type(name: object) -> zvec.QuantizeType:
+    """Resolve a quantization token (``fp16`` / ``int8`` / ``int4``) to ``zvec.QuantizeType``."""
+    key = name.lower() if isinstance(name, str) else ""
+    if key not in QUANTIZE_TYPES:
+        raise SchemaValidationError(
+            f"Unknown quantize type {name!r}",
+            {"valid": sorted(QUANTIZE_TYPES)},
+        )
+    return zvec.QuantizeType.__members__[key.upper()]
 
 
 def validate_index_type(name: str) -> str:

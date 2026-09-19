@@ -82,6 +82,44 @@ def test_build_schema_flat() -> None:
     assert "m" not in index and "n_list" not in index
 
 
+@pytest.mark.parametrize("index", ["hnsw", "flat", "ivf"])
+@pytest.mark.parametrize("quantize", ["fp16", "int8", "INT4"])
+def test_build_schema_quantization(index: str, quantize: str) -> None:
+    schema = schema_mapper.build_collection_schema(
+        "c",
+        [
+            VectorFieldSpec(
+                name="emb",
+                dim=8,
+                index=index,
+                params={"quantize_type": quantize, "enable_rotate": True},
+            )
+        ],
+        [],
+    )
+    vectors, _ = col_adapter.schema_to_dicts(schema)
+    index_param = vectors[0]["index_param"]
+    assert index_param["quantize_type"] == quantize.upper()
+    assert index_param["quantizer_param"] == {"enable_rotate": True}
+
+
+@pytest.mark.parametrize(
+    "params",
+    [
+        {"quantize_type": "int2"},
+        {"quantize_type": "rabitq"},
+        {"quantize_type": 8},
+        {"quantize_type": "int8", "enable_rotate": "yes"},
+        {"enable_rotate": True},
+    ],
+)
+def test_bad_quantization_params_raise(params: dict[str, object]) -> None:
+    with pytest.raises(SchemaValidationError):
+        schema_mapper.build_collection_schema(
+            "c", [VectorFieldSpec(name="emb", dim=8, params=params)], []
+        )
+
+
 def test_scalar_indexed_attaches_invert_index() -> None:
     schema = schema_mapper.build_collection_schema(
         "c",

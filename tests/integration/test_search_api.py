@@ -120,3 +120,29 @@ def test_persistence_reload(settings: Settings, collection_body: dict[str, Any])
         )
         assert search.status_code == 200
         assert any(r["id"] == "a" for r in search.json()["results"])
+
+
+def test_quantized_collection_roundtrip(
+    client: TestClient, collection_body: dict[str, Any], sample_docs: list[dict[str, Any]]
+) -> None:
+    collection_body["vectors"][0]["params"] = {"quantize_type": "int8", "enable_rotate": True}
+    created = client.post("/collections", json=collection_body)
+    assert created.status_code == 201, created.text
+    index_param = created.json()["vectors"][0]["index_param"]
+    assert index_param["quantize_type"] == "INT8"
+
+    name = collection_body["name"]
+    _seed(client, name, sample_docs)
+    assert client.post(f"/collections/{name}/optimize").status_code == 200
+    response = client.post(
+        f"/collections/{name}/search",
+        json={"queries": [{"field": "embedding", "vector": [0.1, 0.2, 0.3, 0.4]}], "topk": 3},
+    )
+    assert response.status_code == 200, response.text
+    assert response.json()["results"][0]["id"] == "a"
+
+
+def test_bad_quantize_type_returns_422(client: TestClient, collection_body: dict[str, Any]) -> None:
+    collection_body["vectors"][0]["params"] = {"quantize_type": "int2"}
+    response = client.post("/collections", json=collection_body)
+    assert response.status_code == 422, response.text
