@@ -170,6 +170,22 @@ def test_bad_index_param_type_raises() -> None:
         )
 
 
+@pytest.mark.parametrize(
+    ("index", "params"),
+    [
+        ("hnsw", {"quantize": "int8"}),
+        ("hnsw", {"n_list": 8}),
+        ("flat", {"m": 16}),
+        ("ivf", {"ef_construction": 100}),
+    ],
+)
+def test_unknown_index_params_raise(index: str, params: dict[str, object]) -> None:
+    with pytest.raises(SchemaValidationError, match="Unknown parameter"):
+        schema_mapper.build_collection_schema(
+            "c", [VectorFieldSpec(name="emb", dim=4, index=index, params=params)], []
+        )
+
+
 def test_primary_vector_info() -> None:
     req = CreateCollectionRequest(
         name="c",
