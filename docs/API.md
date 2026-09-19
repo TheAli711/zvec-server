@@ -151,6 +151,19 @@ Optional per-index tuning goes in `vectors[].params`:
 | `ivf`  | `n_list`, `n_iters`               |
 | `flat` | (none)                             |
 
+**Quantization** (`hnsw`, `flat`, `ivf`): add `quantize_type` — `fp16`, `int8`,
+or `int4` — so the index searches over compressed vectors (roughly 2×, 4×, and
+8× smaller than FP32), trading a little recall for a smaller, faster index.
+`enable_rotate: true` applies a random rotation before quantizing, which usually
+recovers recall (most visibly for `int4`). The original full-precision vectors
+are still stored, so fetch returns them unchanged — disk use therefore shrinks
+by less than the ratios above.
+
+```json
+{ "name": "embedding", "dim": 768, "index": "hnsw",
+  "params": { "m": 16, "quantize_type": "int8", "enable_rotate": true } }
+```
+
 **Metrics** (for `vectors[].metric`): `cosine` (default), `ip` (inner product),
 `l2` (Euclidean). Aliases such as `dot` / `inner_product` and `euclidean` are
 accepted.

@@ -5,7 +5,7 @@
 Specs, tickets, and how they flow into each other are described in
 [specs/README.md](specs/README.md).
 
-**14 specs · 61 tickets** — 0 in-progress · 17 todo · 0 backlog · 44 done · 0 wontfix
+**14 specs · 61 tickets** — 0 in-progress · 16 todo · 0 backlog · 45 done · 0 wontfix
 
 ## Board
 
@@ -13,11 +13,10 @@ Specs, tickets, and how they flow into each other are described in
 
 _None._
 
-### Todo (17)
+### Todo (16)
 
 | Ticket | Title | Spec | Type | Priority | Release |
 | --- | --- | --- | --- | --- | --- |
-| [ZS-045](tickets/ZS-045-vector-quantization.md) | Vector quantization for hnsw, flat, and ivf indexes | [SPEC-011](specs/SPEC-011-index-and-search-options.md) | feature | P1 | v0.2.0 |
 | [ZS-047](tickets/ZS-047-strict-index-params.md) | Reject unknown vector index params instead of ignoring them | [SPEC-011](specs/SPEC-011-index-and-search-options.md) | bug | P1 | v0.2.0 |
 | [ZS-048](tickets/ZS-048-rabitq-indexes.md) | hnsw_rabitq and ivf_rabitq index types | [SPEC-011](specs/SPEC-011-index-and-search-options.md) | feature | P1 | v0.2.0 |
 | [ZS-049](tickets/ZS-049-per-index-search-params.md) | Search params for every index type | [SPEC-011](specs/SPEC-011-index-and-search-options.md) | feature | P1 | v0.2.0 |
@@ -39,10 +38,10 @@ _None._
 
 _None._
 
-### Done (44)
+### Done (45)
 
 <details>
-<summary>v0.2.0 — 5 tickets</summary>
+<summary>v0.2.0 — 6 tickets</summary>
 
 | Ticket | Title | Spec | Type | Priority | Release |
 | --- | --- | --- | --- | --- | --- |
@@ -51,6 +50,7 @@ _None._
 | [ZS-042](tickets/ZS-042-explicit-close.md) | Close collection handles explicitly on shutdown | [SPEC-010](specs/SPEC-010-zvec-0-7-upgrade.md) | feature | P1 | v0.2.0 |
 | [ZS-043](tickets/ZS-043-reads-during-optimize.md) | Serve reads while optimize runs | [SPEC-010](specs/SPEC-010-zvec-0-7-upgrade.md) | feature | P1 | v0.2.0 |
 | [ZS-044](tickets/ZS-044-zvec-0-7-docs.md) | Document the Zvec 0.7.0 upgrade, explicit close, and optimize locking | [SPEC-010](specs/SPEC-010-zvec-0-7-upgrade.md) | docs | P1 | v0.2.0 |
+| [ZS-045](tickets/ZS-045-vector-quantization.md) | Vector quantization for hnsw, flat, and ivf indexes | [SPEC-011](specs/SPEC-011-index-and-search-options.md) | feature | P1 | v0.2.0 |
 
 </details>
 
@@ -131,7 +131,7 @@ _None._
 | [SPEC-008](specs/SPEC-008-release-automation.md) | Release automation and GHCR image publishing | implemented | v0.1.1 | 5/5 |
 | [SPEC-009](specs/SPEC-009-collection-recovery.md) | Self-healing recovery for unavailable collections | implemented | v0.1.2 | 3/3 |
 | [SPEC-010](specs/SPEC-010-zvec-0-7-upgrade.md) | Upgrade to Zvec 0.7.0 | implemented | v0.2.0 | 4/4 |
-| [SPEC-011](specs/SPEC-011-index-and-search-options.md) | Index quantization, RaBitQ indexes, and per-index search params | accepted | v0.2.0 | 0/7 |
+| [SPEC-011](specs/SPEC-011-index-and-search-options.md) | Index quantization, RaBitQ indexes, and per-index search params | accepted | v0.2.0 | 1/7 |
 | [SPEC-012](specs/SPEC-012-group-by-search.md) | Group-by search | accepted | v0.2.0 | 0/3 |
 | [SPEC-013](specs/SPEC-013-ndjson-export.md) | Streaming NDJSON export | accepted | v0.2.0 | 0/3 |
 | [SPEC-014](specs/SPEC-014-quantization-benchmarks.md) | Quantization and optimize-load benchmarks | accepted | v0.2.0 | 0/4 |

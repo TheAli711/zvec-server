@@ -8,6 +8,11 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- Vector quantization: `hnsw`, `flat`, and `ivf` indexes accept
+  `params.quantize_type` (`fp16` / `int8` / `int4`) and `params.enable_rotate`.
+
 ### Changed
 
 - Requires **Zvec 0.7.0** (was 0.5.0). Picks up upstream fixes for crash
