@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import random
 import shutil
 import threading
 from collections.abc import AsyncGenerator, Iterator
@@ -507,3 +508,45 @@ def test_recovery_does_not_resurrect_a_dropped_collection(tmp_path: Path) -> Non
     asyncio.run(asyncio.wait_for(manager._recover(managed), timeout=2))
     assert managed.collection is None
     store.close()
+
+
+@pytest.mark.parametrize("action", ["drop", "close"])
+def test_drop_or_close_waits_for_a_running_optimize(
+    manager: CollectionManager, action: str
+) -> None:
+    """Optimize holds only the shared lock; drop()/close() must wait for it to
+    finish (not fail or deadlock), and a queued optimize then fails cleanly."""
+    req = _request(dim=32)
+    req.vectors[0].index = "hnsw"
+    manager.create(req)
+    managed = manager.get("docs")
+    rng = random.Random(0)
+
+    async def _run() -> None:
+        for start in range(0, 20_000, 1000):
+            docs = [
+                DocIn(id=str(i), vectors={"embedding": [rng.random() for _ in range(32)]})
+                for i in range(start, start + 1000)
+            ]
+            await managed.write(lambda c, docs=docs: operations.insert(c, docs))
+
+        optimizing = asyncio.create_task(managed.maintain(zcol.optimize_collection))
+        await asyncio.sleep(0.05)  # let optimize take the shared lock
+        if action == "drop":
+            stopping = asyncio.create_task(asyncio.to_thread(manager.drop, "docs"))
+        else:
+            stopping = asyncio.create_task(asyncio.to_thread(manager.close))
+        await asyncio.sleep(0.05)
+        queued = asyncio.create_task(managed.maintain(zcol.optimize_collection))
+        await asyncio.sleep(0.05)
+        # The race is real: optimize is still running and the stop is waiting on it.
+        assert not optimizing.done()
+        assert not stopping.done()
+
+        await asyncio.wait_for(optimizing, timeout=60)
+        await asyncio.wait_for(stopping, timeout=60)
+        with pytest.raises(CollectionUnavailableError):
+            await queued
+
+    asyncio.run(_run())
+    assert managed.collection is None
