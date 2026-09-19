@@ -79,8 +79,9 @@ def _bool_param(params: dict[str, Any], key: str) -> bool | None:
 def _quantize_kwargs(params: dict[str, Any]) -> dict[str, Any]:
     """Translate ``quantize_type`` / ``enable_rotate`` into index-param kwargs.
 
-    ``enable_rotate`` applies a random rotation before quantizing, which spreads
-    variance across dimensions and improves recall (most visibly for ``int4``).
+    ``enable_rotate`` applies a random rotation before quantizing. Whether it
+    helps recall is data-dependent (it hurt ``int4`` on SIFT1M), so it is off
+    unless requested.
     """
     kwargs: dict[str, Any] = {}
     if "quantize_type" in params:
