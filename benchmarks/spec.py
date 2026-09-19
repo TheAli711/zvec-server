@@ -48,18 +48,21 @@ class CollectionSpec:
     # IVF build params
     n_list: int | None = None
     n_iters: int | None = None
+    # Quantization (hnsw / flat / ivf): "fp16" | "int8" | "int4", plus an
+    # optional random rotation before quantizing.
+    quantize_type: str | None = None
+    enable_rotate: bool = False
     # Optional scalar fields (only needed for filtered-search scenarios).
     scalar_fields: tuple[ScalarFieldSpec, ...] = field(default_factory=tuple)
     vector_field: str = "embedding"
-    # Memory-mapped storage. Benchmarks default to False for clean, trustworthy
-    # recall: zvec 0.5.0 has an mmap forward-store bug that can drop a few
-    # freshly-optimized results (returning empty ids). The production server
-    # defaults to True -- run the CLI with ``--mmap`` to benchmark that config.
+    # Memory-mapped storage. Benchmarks default to False (historically because
+    # of a zvec 0.5.x mmap bug, fixed in 0.7.0). The production server defaults
+    # to True -- run the CLI with ``--mmap`` to benchmark that config.
     enable_mmap: bool = False
 
-    def index_params(self) -> dict[str, int] | None:
+    def index_params(self) -> dict[str, int | str | bool] | None:
         """Build the engine ``params`` dict for the vector field, or ``None``."""
-        params: dict[str, int] = {}
+        params: dict[str, int | str | bool] = {}
         if self.index == "hnsw":
             if self.m is not None:
                 params["m"] = self.m
@@ -70,4 +73,8 @@ class CollectionSpec:
                 params["n_list"] = self.n_list
             if self.n_iters is not None:
                 params["n_iters"] = self.n_iters
+        if self.quantize_type is not None:
+            params["quantize_type"] = self.quantize_type
+            if self.enable_rotate:
+                params["enable_rotate"] = True
         return params or None

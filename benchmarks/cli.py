@@ -107,6 +107,11 @@ def run(args: argparse.Namespace) -> int:
     if args.mmap is not None:
         spec = dataclasses.replace(scenario.spec, enable_mmap=args.mmap)
         scenario = scenarios.Scenario(**{**scenario.__dict__, "spec": spec})
+    if args.quantize is not None:
+        spec = dataclasses.replace(
+            scenario.spec, quantize_type=args.quantize, enable_rotate=args.rotate
+        )
+        scenario = scenarios.Scenario(**{**scenario.__dict__, "spec": spec})
 
     tiers = [t.strip() for t in args.tiers.split(",") if t.strip()]
     print(f"Loading dataset for scenario '{scenario.name}' ...", flush=True)
@@ -175,6 +180,15 @@ def main(argv: list[str] | None = None) -> int:
     )
     run_p.add_argument(
         "--measure-seconds", type=float, default=None, help="override per-cell measurement window"
+    )
+    run_p.add_argument(
+        "--quantize",
+        choices=("fp16", "int8", "int4"),
+        default=None,
+        help="quantize the vector index (default: none, full FP32)",
+    )
+    run_p.add_argument(
+        "--rotate", action="store_true", help="random rotation before quantizing (with --quantize)"
     )
     run_p.set_defaults(func=run)
 

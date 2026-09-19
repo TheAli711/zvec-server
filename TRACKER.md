@@ -5,7 +5,7 @@
 Specs, tickets, and how they flow into each other are described in
 [specs/README.md](specs/README.md).
 
-**14 specs · 65 tickets** — 0 in-progress · 7 todo · 0 backlog · 58 done · 0 wontfix
+**14 specs · 65 tickets** — 0 in-progress · 6 todo · 0 backlog · 59 done · 0 wontfix
 
 ## Board
 
@@ -13,7 +13,7 @@ Specs, tickets, and how they flow into each other are described in
 
 _None._
 
-### Todo (7)
+### Todo (6)
 
 | Ticket | Title | Spec | Type | Priority | Release |
 | --- | --- | --- | --- | --- | --- |
@@ -21,7 +21,6 @@ _None._
 | [ZS-054](tickets/ZS-054-group-by-docs.md) | Document group-by search | [SPEC-012](specs/SPEC-012-group-by-search.md) | docs | P1 | v0.2.0 |
 | [ZS-057](tickets/ZS-057-export-docs.md) | Document streaming export | [SPEC-013](specs/SPEC-013-ndjson-export.md) | docs | P1 | v0.2.0 |
 | [ZS-061](tickets/ZS-061-quantization-tradeoffs-docs.md) | Report measured quantization trade-offs in the docs | [SPEC-014](specs/SPEC-014-quantization-benchmarks.md) | docs | P1 | v0.2.0 |
-| [ZS-058](tickets/ZS-058-bench-quantize-flags.md) | --quantize and --rotate benchmark flags | [SPEC-014](specs/SPEC-014-quantization-benchmarks.md) | feature | P2 | v0.2.0 |
 | [ZS-059](tickets/ZS-059-bench-quant-sweep.md) | quant subcommand to sweep quantization variants | [SPEC-014](specs/SPEC-014-quantization-benchmarks.md) | feature | P2 | v0.2.0 |
 | [ZS-060](tickets/ZS-060-bench-optimize-load.md) | optimize-load subcommand: search latency during optimize | [SPEC-014](specs/SPEC-014-quantization-benchmarks.md) | feature | P2 | v0.2.0 |
 
@@ -29,10 +28,10 @@ _None._
 
 _None._
 
-### Done (58)
+### Done (59)
 
 <details>
-<summary>v0.2.0 — 19 tickets</summary>
+<summary>v0.2.0 — 20 tickets</summary>
 
 | Ticket | Title | Spec | Type | Priority | Release |
 | --- | --- | --- | --- | --- | --- |
@@ -51,6 +50,7 @@ _None._
 | [ZS-053](tickets/ZS-053-group-by-output-tests.md) | Group-by honors include_vector and output_fields | [SPEC-012](specs/SPEC-012-group-by-search.md) | test | P2 | v0.2.0 |
 | [ZS-055](tickets/ZS-055-export-endpoint.md) | Streaming NDJSON export endpoint | [SPEC-013](specs/SPEC-013-ndjson-export.md) | feature | P1 | v0.2.0 |
 | [ZS-056](tickets/ZS-056-new-routes-auth-tests.md) | Auth coverage for the export and group-by routes | [SPEC-013](specs/SPEC-013-ndjson-export.md) | test | P2 | v0.2.0 |
+| [ZS-058](tickets/ZS-058-bench-quantize-flags.md) | --quantize and --rotate benchmark flags | [SPEC-014](specs/SPEC-014-quantization-benchmarks.md) | feature | P2 | v0.2.0 |
 | [ZS-062](tickets/ZS-062-collection-name-length.md) | Collection names outside 3-64 characters are misreported as 409 | [SPEC-002](specs/SPEC-002-collection-management.md) | bug | P1 | v0.2.0 |
 | [ZS-063](tickets/ZS-063-drop-waits-for-inflight.md) | Drop does not wait for in-flight requests; queued requests hit a dead handle | [SPEC-002](specs/SPEC-002-collection-management.md) | bug | P0 | v0.2.0 |
 | [ZS-064](tickets/ZS-064-recovery-resurrects-dropped.md) | Background recovery can resurrect a dropped collection | [SPEC-009](specs/SPEC-009-collection-recovery.md) | bug | P1 | v0.2.0 |
@@ -138,4 +138,4 @@ _None._
 | [SPEC-011](specs/SPEC-011-index-and-search-options.md) | Index quantization, RaBitQ indexes, and per-index search params | accepted | v0.2.0 | 6/7 |
 | [SPEC-012](specs/SPEC-012-group-by-search.md) | Group-by search | accepted | v0.2.0 | 2/3 |
 | [SPEC-013](specs/SPEC-013-ndjson-export.md) | Streaming NDJSON export | accepted | v0.2.0 | 3/4 |
-| [SPEC-014](specs/SPEC-014-quantization-benchmarks.md) | Quantization and optimize-load benchmarks | accepted | v0.2.0 | 0/4 |
+| [SPEC-014](specs/SPEC-014-quantization-benchmarks.md) | Quantization and optimize-load benchmarks | accepted | v0.2.0 | 1/4 |
