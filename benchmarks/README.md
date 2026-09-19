@@ -41,6 +41,19 @@ uv run python -m benchmarks run --scenario smoke
 uv run python -m benchmarks list
 ```
 
+### Quantization sweep
+
+```bash
+# every variant on the engine tier (recall / QPS / disk / optimize time)
+uv run python -m benchmarks quant --scenario sift1m
+# server-process RSS in isolation, a subset of variants
+uv run python -m benchmarks quant --scenario sift1m --tier http --variants fp32,int8,int4+rot
+```
+
+Rebuilds the collection once per variant (`fp32`, `fp16`, `int8`, `int8+rot`,
+`int4`, `int4+rot`) and writes a side-by-side table (`quant-*.md`) with recall,
+Δrecall vs FP32, QPS, latency, on-disk size, optimize time, and peak RSS.
+
 Results land in `benchmarks/results/<scenario>-<timestamp>.json` (git-ignored),
 a `report.md` with tables, and `report.md`'s plots under `results/plots/`. A
 compact summary plus the **overhead-decomposition** table are printed to stdout.
