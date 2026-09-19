@@ -117,6 +117,12 @@ exception handlers registered in `errors.py` (e.g. `CollectionNotFoundError` →
 - **Explicit close on shutdown.** `CollectionManager.close()` flushes, then
   `close()`s each Zvec handle under its exclusive lock, releasing Zvec's on-disk
   lock immediately so a replacement instance (rolling restart) can open it.
+- **Export cursors.** `ManagedCollection.stream()` reads a Zvec snapshot
+  iterator in batches, taking the shared lock per batch (never across a
+  `yield`), so a slow client can't block writes. Zvec refuses to close or
+  destroy a collection while an iterator is open, so `drop()`/`close()` call
+  `close_cursors()` under the exclusive lock first; the stream then ends with an
+  in-band error line.
 - **Threadpool offload.** Zvec calls are blocking/CPU-bound, so they run inside
   `starlette.concurrency.run_in_threadpool`. The lock is acquired **inside** the
   threadpool thread, so the asyncio event loop is never blocked waiting on a

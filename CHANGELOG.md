@@ -14,6 +14,9 @@ and this project adheres to
   `params.quantize_type` (`fp16` / `int8` / `int4`) and `params.enable_rotate`.
 - `hnsw_rabitq` and `ivf_rabitq` index types (RaBitQ quantization; Linux
   x86_64 servers only — other platforms return `422`).
+- Streaming export: `GET /collections/{name}/export` streams a consistent
+  snapshot of every document as NDJSON (re-importable via `/docs/insert`),
+  without blocking writes.
 - Group-by search: `POST /collections/{name}/search/group-by` returns the best
   hits per value of a scalar field (e.g. top chunks per document).
 - Search `params` for every index type: `ef`, `radius`, `is_linear`,

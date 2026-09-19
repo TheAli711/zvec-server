@@ -12,6 +12,8 @@ stack own concurrency control.
 
 from __future__ import annotations
 
+import itertools
+from collections.abc import Iterator
 from typing import Literal
 
 import zvec
@@ -33,12 +35,13 @@ from zvec_server.models.vectors import (
     DeleteRequest,
     DeleteResponse,
     DocIn,
+    DocOut,
     FetchRequest,
     FetchResponse,
     WriteResponse,
 )
 
-__all__ = ["delete", "fetch", "group_search", "insert", "search"]
+__all__ = ["DocExport", "delete", "fetch", "group_search", "insert", "open_export", "search"]
 
 WriteMode = Literal["insert", "upsert", "update"]
 
@@ -223,3 +226,52 @@ def group_search(collection: zvec.Collection, req: GroupSearchRequest) -> GroupS
             for group in groups
         ]
     )
+
+
+class DocExport:
+    """A snapshot cursor over every document in a collection, read in batches.
+
+    Backed by Zvec's ``DocIterator``, which snapshots the collection when opened:
+    writes made afterwards are invisible to it, so the export is consistent even
+    though the caller releases the collection lock between batches. Zvec refuses
+    to close or destroy a collection while such an iterator is open, so the owner
+    must :meth:`close` it first.
+    """
+
+    def __init__(self, iterator: Iterator[zvec.Doc], include_vector: bool) -> None:
+        self._iterator = iterator
+        self._include_vector = include_vector
+
+    def next_batch(self, size: int) -> list[DocOut]:
+        """Return up to ``size`` more documents; an empty list means exhausted."""
+        try:
+            docs = list(itertools.islice(self._iterator, size))
+        except Exception as exc:
+            raise ZvecOperationError(f"Failed to read documents for export: {exc}") from exc
+        return [doc_mapper.from_zvec_doc(doc, include_vector=self._include_vector) for doc in docs]
+
+    def close(self) -> None:
+        """Release the snapshot (idempotent)."""
+        self._iterator.close()  # type: ignore[attr-defined]  # zvec DocIterator
+
+
+def open_export(
+    collection: zvec.Collection,
+    output_fields: list[str] | None,
+    include_vector: bool,
+) -> DocExport:
+    """Open a snapshot export cursor over ``collection``.
+
+    Raises:
+        InvalidArgumentError: If ``output_fields`` names an unknown field.
+        ZvecOperationError: For any other engine failure.
+    """
+    try:
+        iterator = collection.iter_docs(output_fields=output_fields, include_vector=include_vector)
+    except ZvecServerError:
+        raise
+    except ValueError as exc:
+        raise InvalidArgumentError(f"Invalid export request: {exc}") from exc
+    except Exception as exc:
+        raise ZvecOperationError(f"Failed to open export: {exc}") from exc
+    return DocExport(iterator, include_vector)

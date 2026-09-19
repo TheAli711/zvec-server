@@ -5,11 +5,12 @@ from __future__ import annotations
 import asyncio
 import shutil
 import threading
-from collections.abc import Iterator
+from collections.abc import AsyncIterator, Iterator
 from pathlib import Path
 
 import pytest
 
+from zvec_server.adapter import operations
 from zvec_server.adapter.runtime import init_zvec
 from zvec_server.config import Settings
 from zvec_server.db.metadata import MetadataStore
@@ -20,6 +21,7 @@ from zvec_server.errors import (
 )
 from zvec_server.manager import CollectionManager, ManagedCollection
 from zvec_server.models.collections import CreateCollectionRequest, VectorFieldSpec
+from zvec_server.models.vectors import DocIn, DocOut
 
 
 @pytest.fixture(autouse=True)
@@ -416,3 +418,59 @@ def test_drop_waits_for_in_flight_reads_and_fails_queued_ones(
         manager.get("docs")
     with pytest.raises(CollectionNotFoundError):
         manager.drop("docs")
+
+
+def _docs(start: int, count: int) -> list[DocIn]:
+    return [
+        DocIn(id=str(i), vectors={"embedding": [0.1, 0.2, 0.3, 0.4]}) for i in range(start, count)
+    ]
+
+
+def _export(managed: ManagedCollection, batch_size: int = 3) -> AsyncIterator[list[DocOut]]:
+    return managed.stream(lambda c: operations.open_export(c, None, False), batch_size)
+
+
+def test_stream_is_a_snapshot_and_releases_the_lock_between_batches(
+    manager: CollectionManager,
+) -> None:
+    manager.create(_request())
+    managed = manager.get("docs")
+
+    async def _run() -> list[str]:
+        await managed.write(lambda c: operations.insert(c, _docs(0, 10)))
+        stream = _export(managed)
+        ids = [doc.id for doc in await anext(stream)]
+        # A write mid-stream doesn't block on the export and isn't seen by it.
+        await asyncio.wait_for(managed.write(lambda c: operations.insert(c, _docs(10, 15))), 2)
+        async for batch in stream:
+            ids.extend(doc.id for doc in batch)
+        return ids
+
+    ids = asyncio.run(_run())
+    assert sorted(ids, key=int) == [str(i) for i in range(10)]
+    assert managed.cursors == set()
+
+
+@pytest.mark.parametrize("action", ["drop", "close"])
+def test_stream_is_cut_off_cleanly_by_drop_or_close(
+    manager: CollectionManager, action: str
+) -> None:
+    """Zvec refuses to close/destroy with an open iterator; the manager releases
+    export cursors first, and the stream then reports the collection as gone."""
+    manager.create(_request())
+    managed = manager.get("docs")
+
+    async def _run() -> None:
+        await managed.write(lambda c: operations.insert(c, _docs(0, 10)))
+        stream = _export(managed)
+        assert len(await anext(stream)) == 3
+        if action == "drop":
+            await asyncio.to_thread(manager.drop, "docs")
+        else:
+            await asyncio.to_thread(manager.close)
+        with pytest.raises(CollectionUnavailableError):
+            await anext(stream)
+
+    asyncio.run(_run())
+    assert managed.collection is None
+    assert managed.cursors == set()

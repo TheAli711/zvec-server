@@ -21,9 +21,9 @@ import asyncio
 import json
 import shutil
 import threading
-from collections.abc import Callable
+from collections.abc import AsyncIterator, Callable
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any, Protocol, TypeVar
 
 from readerwriterlock import rwlock
 from starlette.concurrency import run_in_threadpool
@@ -55,6 +55,18 @@ logger = get_logger(__name__)
 T = TypeVar("T")
 
 
+class Cursor(Protocol[T]):
+    """A snapshot reader over a collection (e.g. an export), consumed in batches."""
+
+    def next_batch(self, size: int) -> list[T]:
+        """Return up to ``size`` more items; an empty list means exhausted."""
+        ...
+
+    def close(self) -> None:
+        """Release the cursor (must be idempotent)."""
+        ...
+
+
 class ManagedCollection:
     """A registered collection plus its concurrency primitives.
 
@@ -66,6 +78,9 @@ class ManagedCollection:
         rwlock: Per-collection fair reader/writer lock.
         maintenance_lock: Serializes maintenance (optimize) runs on this collection.
         dropped: Set once :meth:`CollectionManager.drop` has destroyed it.
+        cursors: Open snapshot cursors (exports). Zvec refuses to close or
+            destroy a collection while one is open, so drop/close release them
+            first, under the exclusive lock.
     """
 
     def __init__(self, name: str, collection: Any, record: CollectionRecord) -> None:
@@ -75,6 +90,8 @@ class ManagedCollection:
         self.rwlock = rwlock.RWLockFair()
         self.maintenance_lock = threading.Lock()
         self.dropped = False
+        self.cursors: set[Cursor[Any]] = set()
+        self._cursors_lock = threading.Lock()
 
     @property
     def available(self) -> bool:
@@ -122,6 +139,62 @@ class ManagedCollection:
                 return fn(self._require_open())
 
         return await run_in_threadpool(_locked)
+
+    async def stream(
+        self, open_cursor: Callable[[Any], Cursor[T]], batch_size: int
+    ) -> AsyncIterator[list[T]]:
+        """Yield batches from a snapshot cursor opened over the collection.
+
+        The shared lock is held only while opening the cursor and while reading
+        each batch — never across a ``yield`` — so a slow client can't block
+        writes for the whole stream. The cursor's snapshot keeps the output
+        consistent regardless. If the collection is dropped or closed mid-stream,
+        the next batch raises :class:`CollectionUnavailableError`.
+        """
+        self._require_open()
+
+        def _open() -> Cursor[T]:
+            with self.rwlock.gen_rlock():
+                cursor = open_cursor(self._require_open())
+                with self._cursors_lock:
+                    self.cursors.add(cursor)
+                return cursor
+
+        cursor = await run_in_threadpool(_open)
+
+        def _next() -> list[T]:
+            with self.rwlock.gen_rlock():
+                with self._cursors_lock:
+                    alive = cursor in self.cursors
+                if not alive:
+                    raise CollectionUnavailableError(
+                        f"Collection '{self.name}' was closed or dropped during the stream.",
+                        {"name": self.name},
+                    )
+                return cursor.next_batch(batch_size)
+
+        try:
+            while batch := await run_in_threadpool(_next):
+                yield batch
+        finally:
+            self._release_cursor(cursor)
+
+    def _release_cursor(self, cursor: Cursor[Any]) -> None:
+        with self._cursors_lock:
+            if cursor not in self.cursors:
+                return  # already released by close_cursors()
+            self.cursors.discard(cursor)
+            cursor.close()
+
+    def close_cursors(self) -> None:
+        """Close every open cursor. Callers must hold the exclusive lock."""
+        with self._cursors_lock:
+            cursors, self.cursors = self.cursors, set()
+            for cursor in cursors:
+                try:
+                    cursor.close()
+                except Exception:
+                    logger.exception("Error closing cursor", extra={"collection": self.name})
 
     def _require_open(self) -> Any:
         if self.collection is None:
@@ -258,6 +331,7 @@ class CollectionManager:
         with managed.rwlock.gen_wlock():
             if managed.dropped:  # a concurrent drop got here first
                 raise CollectionNotFoundError(f"Collection '{name}' not found.", {"name": name})
+            managed.close_cursors()
             if managed.available:
                 zcol.destroy_collection(managed.collection)
             else:
@@ -398,6 +472,7 @@ class CollectionManager:
             self._registry.clear()
         for managed in managed_list:
             with managed.rwlock.gen_wlock():
+                managed.close_cursors()
                 collection, managed.collection = managed.collection, None
                 if collection is None:
                     continue
