@@ -7,7 +7,7 @@
 services:
   zvec-server:
     # Builds the image from source. To run a published release instead, remove
-    # the `build:` block and set `image: ghcr.io/theali711/zvec-server:v0.1.1`.
+    # the `build:` block and set `image: ghcr.io/theali711/zvec-server:v0.2.0`.
     build:
       context: .
       dockerfile: Dockerfile

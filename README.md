@@ -82,15 +82,15 @@ release — no need to build from source. Pull a **specific version** (recommend
 for production so deployments are reproducible):
 
 ```bash
-docker pull ghcr.io/theali711/zvec-server:v0.1.2
+docker pull ghcr.io/theali711/zvec-server:v0.2.0
 ```
 
 Available tags for `ghcr.io/theali711/zvec-server`:
 
 | Tag        | Points to                                          | Example  |
 | ---------- | -------------------------------------------------- | -------- |
-| `vX.Y.Z`   | An exact release (immutable once published).       | `v0.1.2` |
-| `vX.Y`     | The latest patch on a major/minor line.            | `v0.1`   |
+| `vX.Y.Z`   | An exact release (immutable once published).       | `v0.2.0` |
+| `vX.Y`     | The latest patch on a major/minor line.            | `v0.2`   |
 | `latest`   | The most recent **stable** release (no pre-releases). | `latest` |
 
 Run the server with a mounted data volume (so collections and the SQLite
@@ -105,7 +105,7 @@ docker run -d \
   -e ZVEC_SERVER_LOG_FORMAT=console \
   -e ZVEC_SERVER_AUTH_ENABLED=true \
   -e ZVEC_SERVER_API_KEY="$(openssl rand -hex 32)" \
-  ghcr.io/theali711/zvec-server:v0.1.2
+  ghcr.io/theali711/zvec-server:v0.2.0
 ```
 
 The image stores all state under `/data` (its `ZVEC_SERVER_DATA_DIR`); the
@@ -127,7 +127,7 @@ docker compose up --build
 
 This builds the image from source, mounts `./data` for persistence, and exposes
 the server on `http://localhost:8000`. To run the published image instead of
-building, set `image: ghcr.io/theali711/zvec-server:v0.1.2` and drop the `build:`
+building, set `image: ghcr.io/theali711/zvec-server:v0.2.0` and drop the `build:`
 section in `docker-compose.yml`.
 
 ### Smoke test
