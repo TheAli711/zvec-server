@@ -54,6 +54,25 @@ Rebuilds the collection once per variant (`fp32`, `fp16`, `int8`, `int8+rot`,
 `int4`, `int4+rot`) and writes a side-by-side table (`quant-*.md`) with recall,
 Δrecall vs FP32, QPS, latency, on-disk size, optimize time, and peak RSS.
 
+### Search latency during optimize
+
+```bash
+uv run python -m benchmarks optimize-load --scenario smoke --tier http --concurrency 4
+```
+
+Ingests without optimizing, measures a baseline search window, then keeps
+searching while `optimize` runs and compares QPS / p50 / p99 / max latency. Use
+it to check that optimize does not block reads. Smoke, http tier, c=4, on an
+Apple M-series laptop:
+
+| server | queries during optimize | max latency |
+| --- | ---: | ---: |
+| v0.1.2 (exclusive lock, zvec 0.5.0) | 8 in 2.1 s | 2,112 ms |
+| shared-lock optimize (zvec 0.7.0) | 2,609 in 1.5 s | 19 ms |
+
+QPS still drops while optimize runs — that is optimize competing for CPU (the
+lock-free `engine` tier shows the same drop), not blocking.
+
 Results land in `benchmarks/results/<scenario>-<timestamp>.json` (git-ignored),
 a `report.md` with tables, and `report.md`'s plots under `results/plots/`. A
 compact summary plus the **overhead-decomposition** table are printed to stdout.

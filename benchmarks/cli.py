@@ -166,6 +166,12 @@ def _run_quant(args: argparse.Namespace) -> int:
     return run_quant(args)
 
 
+def _run_optimize_load(args: argparse.Namespace) -> int:
+    from benchmarks.optimize_load import run_optimize_load
+
+    return run_optimize_load(args)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="benchmarks", description="Zvec Server benchmarks")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -214,6 +220,22 @@ def main(argv: list[str] | None = None) -> int:
     quant_p.add_argument("--mmap", action=argparse.BooleanOptionalAction, default=None)
     quant_p.add_argument("--measure-seconds", type=float, default=None)
     quant_p.set_defaults(func=_run_quant)
+
+    load_p = sub.add_parser(
+        "optimize-load", help="measure search latency while optimize runs (vs a baseline)"
+    )
+    load_p.add_argument("--scenario", default="smoke", help=f"one of {scenarios.SCENARIO_NAMES}")
+    load_p.add_argument("--tier", default="http", choices=ALL_TIERS, help="tier to measure")
+    load_p.add_argument("--concurrency", type=int, default=4, help="concurrent search clients")
+    load_p.add_argument("--ef", type=int, default=None, help="HNSW ef (default: scenario's first)")
+    load_p.add_argument(
+        "--baseline-seconds", type=float, default=3.0, help="baseline window length"
+    )
+    load_p.add_argument("--hdf5", default=None, help="ann-benchmarks HDF5 path (cohere scenarios)")
+    load_p.add_argument("--out", default=str(DEFAULT_OUT), help="results output directory")
+    load_p.add_argument("--query-threads", type=int, default=None, help="ZVEC query thread count")
+    load_p.add_argument("--mmap", action=argparse.BooleanOptionalAction, default=None)
+    load_p.set_defaults(func=_run_optimize_load)
 
     list_p = sub.add_parser("list", help="list available scenarios")
     list_p.set_defaults(func=lambda _a: (print("\n".join(scenarios.SCENARIO_NAMES)), 0)[1])
