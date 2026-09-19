@@ -10,8 +10,9 @@ so it becomes available on its own, without a server restart.
 This module never imports :mod:`zvec`; all engine interaction goes through the
 adapter layer. Each collection carries a reader/writer lock so reads (search,
 fetch, stats) run concurrently while writes (insert/upsert/update/delete) are
-exclusive. Blocking engine work is offloaded to a threadpool inside the lock so
-the event loop is never blocked.
+exclusive; optimize holds the shared lock so reads continue during it. Blocking
+engine work is offloaded to a threadpool inside the lock so the event loop is
+never blocked.
 """
 
 from __future__ import annotations
@@ -63,6 +64,7 @@ class ManagedCollection:
             the collection is registered but could not be opened on disk.
         record: The persisted metadata record.
         rwlock: Per-collection fair reader/writer lock.
+        maintenance_lock: Serializes maintenance (optimize) runs on this collection.
     """
 
     def __init__(self, name: str, collection: Any, record: CollectionRecord) -> None:
@@ -70,6 +72,7 @@ class ManagedCollection:
         self.collection = collection
         self.record = record
         self.rwlock = rwlock.RWLockFair()
+        self.maintenance_lock = threading.Lock()
 
     @property
     def available(self) -> bool:
@@ -95,6 +98,22 @@ class ManagedCollection:
 
         def _locked() -> T:
             with self.rwlock.gen_wlock():
+                return fn(collection)
+
+        return await run_in_threadpool(_locked)
+
+    async def maintain(self, fn: Callable[[Any], T]) -> T:
+        """Run a maintenance ``fn(collection)`` (e.g. optimize) in a worker thread.
+
+        Zvec (>= 0.7) serves reads while optimize runs, so maintenance takes only
+        the *shared* lock — searches and fetches keep flowing, while writes,
+        flush, and shutdown still wait for it. A dedicated mutex keeps two
+        maintenance runs on the same collection from overlapping.
+        """
+        collection = self._require_open()
+
+        def _locked() -> T:
+            with self.maintenance_lock, self.rwlock.gen_rlock():
                 return fn(collection)
 
         return await run_in_threadpool(_locked)

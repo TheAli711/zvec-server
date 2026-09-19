@@ -5,15 +5,14 @@
 Specs, tickets, and how they flow into each other are described in
 [specs/README.md](specs/README.md).
 
-**14 specs · 61 tickets** — 2 in-progress · 17 todo · 0 backlog · 42 done · 0 wontfix
+**14 specs · 61 tickets** — 1 in-progress · 17 todo · 0 backlog · 43 done · 0 wontfix
 
 ## Board
 
-### In progress (2)
+### In progress (1)
 
 | Ticket | Title | Spec | Type | Priority | Release |
 | --- | --- | --- | --- | --- | --- |
-| [ZS-043](tickets/ZS-043-reads-during-optimize.md) | Serve reads while optimize runs | [SPEC-010](specs/SPEC-010-zvec-0-7-upgrade.md) | feature | P1 | v0.2.0 |
 | [ZS-044](tickets/ZS-044-zvec-0-7-docs.md) | Document the Zvec 0.7.0 upgrade, explicit close, and optimize locking | [SPEC-010](specs/SPEC-010-zvec-0-7-upgrade.md) | docs | P1 | v0.2.0 |
 
 ### Todo (17)
@@ -42,16 +41,17 @@ Specs, tickets, and how they flow into each other are described in
 
 _None._
 
-### Done (42)
+### Done (43)
 
 <details>
-<summary>v0.2.0 — 3 tickets</summary>
+<summary>v0.2.0 — 4 tickets</summary>
 
 | Ticket | Title | Spec | Type | Priority | Release |
 | --- | --- | --- | --- | --- | --- |
 | [ZS-040](tickets/ZS-040-mmap-empty-ids.md) | Search returns empty ids after optimize with mmap enabled | [SPEC-004](specs/SPEC-004-vector-search.md) | bug | P1 | v0.2.0 |
 | [ZS-041](tickets/ZS-041-require-zvec-0-7-0.md) | Require Zvec 0.7.0 | [SPEC-010](specs/SPEC-010-zvec-0-7-upgrade.md) | chore | P0 | v0.2.0 |
 | [ZS-042](tickets/ZS-042-explicit-close.md) | Close collection handles explicitly on shutdown | [SPEC-010](specs/SPEC-010-zvec-0-7-upgrade.md) | feature | P1 | v0.2.0 |
+| [ZS-043](tickets/ZS-043-reads-during-optimize.md) | Serve reads while optimize runs | [SPEC-010](specs/SPEC-010-zvec-0-7-upgrade.md) | feature | P1 | v0.2.0 |
 
 </details>
 
@@ -131,7 +131,7 @@ _None._
 | [SPEC-007](specs/SPEC-007-benchmark-suite.md) | Benchmark suite with overhead decomposition | implemented | v0.1.1 | 5/5 |
 | [SPEC-008](specs/SPEC-008-release-automation.md) | Release automation and GHCR image publishing | implemented | v0.1.1 | 5/5 |
 | [SPEC-009](specs/SPEC-009-collection-recovery.md) | Self-healing recovery for unavailable collections | implemented | v0.1.2 | 3/3 |
-| [SPEC-010](specs/SPEC-010-zvec-0-7-upgrade.md) | Upgrade to Zvec 0.7.0 | accepted | v0.2.0 | 2/4 |
+| [SPEC-010](specs/SPEC-010-zvec-0-7-upgrade.md) | Upgrade to Zvec 0.7.0 | accepted | v0.2.0 | 3/4 |
 | [SPEC-011](specs/SPEC-011-index-and-search-options.md) | Index quantization, RaBitQ indexes, and per-index search params | accepted | v0.2.0 | 0/7 |
 | [SPEC-012](specs/SPEC-012-group-by-search.md) | Group-by search | accepted | v0.2.0 | 0/3 |
 | [SPEC-013](specs/SPEC-013-ndjson-export.md) | Streaming NDJSON export | accepted | v0.2.0 | 0/3 |
