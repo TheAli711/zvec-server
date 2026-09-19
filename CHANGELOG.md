@@ -12,6 +12,8 @@ and this project adheres to
 
 - Vector quantization: `hnsw`, `flat`, and `ivf` indexes accept
   `params.quantize_type` (`fp16` / `int8` / `int4`) and `params.enable_rotate`.
+  Benchmark first: on SIFT1M it cost disk, memory, and recall without a speed
+  gain (see `docs/API.md`).
 - `hnsw_rabitq` and `ivf_rabitq` index types (RaBitQ quantization; Linux
   x86_64 servers only — other platforms return `422`).
 - Streaming export: `GET /collections/{name}/export` streams a consistent

@@ -142,10 +142,10 @@ Provide dtypes by name (case-sensitive, as Zvec defines them).
 ## Index types & metrics
 
 **Index types** (for `vectors[].index`): `hnsw` (default), `flat`, `ivf`,
-`hnsw_rabitq`, `ivf_rabitq`. The RaBitQ variants store vectors with RaBitQ
-binary quantization (very compact, good recall with reranking) and are only
-available when the **server** runs on Linux x86_64 (the published Docker image
-does); elsewhere creating one returns `422`.
+`hnsw_rabitq`, `ivf_rabitq`. The RaBitQ variants use RaBitQ quantization and
+are only available when the **server** runs on Linux x86_64 (the published
+Docker image does); elsewhere creating one returns `422`. They have not been
+benchmarked here yet — see the quantization note below.
 
 Optional per-index tuning goes in `vectors[].params`:
 
@@ -157,13 +157,19 @@ Optional per-index tuning goes in `vectors[].params`:
 | `hnsw_rabitq` | `m`, `ef_construction`, `total_bits`, `num_clusters`, `sample_count` |
 | `ivf_rabitq`  | `n_list`, `total_bits`, `sample_count` |
 
-**Quantization** (`hnsw`, `flat`, `ivf`): add `quantize_type` — `fp16`, `int8`,
-or `int4` — so the index searches over compressed vectors (roughly 2×, 4×, and
-8× smaller than FP32), trading a little recall for a smaller, faster index.
-`enable_rotate: true` applies a random rotation before quantizing, which usually
-recovers recall (most visibly for `int4`). The original full-precision vectors
-are still stored, so fetch returns them unchanged — disk use therefore shrinks
-by less than the ratios above.
+**Quantization** (`hnsw`, `flat`, `ivf`): `quantize_type` — `fp16`, `int8`,
+or `int4` — makes the index search over quantized vectors; `enable_rotate: true`
+applies a random rotation before quantizing. Zvec keeps the original
+full-precision vectors alongside (fetch returns them unchanged), so the
+quantized index is **additional** storage, not a replacement.
+
+> **Measure before adopting.** On SIFT1M (1M × 128) with Zvec 0.7.0 — server
+> defaults, mmap on — every quantized variant used *more* disk and memory than
+> FP32 and was no faster: `fp16` kept recall (0.995) at +37% disk / +35% RSS;
+> `int8` lost ~1 point of recall@10 at +20% disk / +23% RSS; `int4` lost ~28
+> points, and rotation made `int4` *worse* (0.54). Results may differ for
+> higher-dimensional embeddings. Run the quantization sweep on your own data:
+> `python -m benchmarks quant` (see `benchmarks/README.md`).
 
 ```json
 { "name": "embedding", "dim": 768, "index": "hnsw",

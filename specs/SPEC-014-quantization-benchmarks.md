@@ -1,7 +1,7 @@
 ---
 id: SPEC-014
 title: Quantization and optimize-load benchmarks
-status: accepted
+status: implemented
 created: 2026-09-15
 release: v0.2.0
 ---

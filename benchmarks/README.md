@@ -54,6 +54,22 @@ Rebuilds the collection once per variant (`fp32`, `fp16`, `int8`, `int8+rot`,
 `int4`, `int4+rot`) and writes a side-by-side table (`quant-*.md`) with recall,
 Δrecall vs FP32, QPS, latency, on-disk size, optimize time, and peak RSS.
 
+SIFT1M, Zvec 0.7.0, HNSW `M=16`, recall@10 at `ef=200` (Apple M-series laptop):
+
+| variant | disk | server RSS (http, mmap) | recall@10 | engine QPS (c=16) |
+| --- | ---: | ---: | ---: | ---: |
+| fp32 | 688 MB | ~980 MB | 0.996 | 13.0k |
+| fp16 | 945 MB | ~1,320 MB | 0.995 | 14.3k |
+| int8 | 822 MB | ~1,205 MB | 0.987 | 13.1k |
+| int8+rot | 822 MB | — | 0.980 | 12.0k |
+| int4 | 762 MB | — | 0.714 | 10.9k |
+| int4+rot | 762 MB | — | 0.541 | 12.5k |
+
+Zvec stores the quantized index *in addition to* the full-precision vectors, so
+quantization raised disk and memory here instead of lowering them, and rotation
+hurt `int4`. Re-run on your own (especially higher-dimensional) data before
+enabling it.
+
 ### Search latency during optimize
 
 ```bash
