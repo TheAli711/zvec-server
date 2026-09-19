@@ -112,8 +112,11 @@ class InprocRunner:
         assert self._managed is not None
         from zvec_server.adapter import collections as zcol
 
+        # Mirror the server: flush is a write; optimize is maintenance (shared lock
+        # + per-collection mutex, see ManagedCollection.maintain), so reads proceed.
         with self._managed.rwlock.gen_wlock():
             zcol.flush_collection(self._managed.collection)
+        with self._managed.maintenance_lock, self._managed.rwlock.gen_rlock():
             zcol.optimize_collection(self._managed.collection)
 
     # ------------------------------------------------------------------- queries
