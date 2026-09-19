@@ -5,15 +5,11 @@
 Specs, tickets, and how they flow into each other are described in
 [specs/README.md](specs/README.md).
 
-**14 specs · 61 tickets** — 0 in-progress · 22 todo · 0 backlog · 39 done · 0 wontfix
+**14 specs · 61 tickets** — 5 in-progress · 17 todo · 0 backlog · 39 done · 0 wontfix
 
 ## Board
 
-### In progress (0)
-
-_None._
-
-### Todo (22)
+### In progress (5)
 
 | Ticket | Title | Spec | Type | Priority | Release |
 | --- | --- | --- | --- | --- | --- |
@@ -22,6 +18,11 @@ _None._
 | [ZS-042](tickets/ZS-042-explicit-close.md) | Close collection handles explicitly on shutdown | [SPEC-010](specs/SPEC-010-zvec-0-7-upgrade.md) | feature | P1 | v0.2.0 |
 | [ZS-043](tickets/ZS-043-reads-during-optimize.md) | Serve reads while optimize runs | [SPEC-010](specs/SPEC-010-zvec-0-7-upgrade.md) | feature | P1 | v0.2.0 |
 | [ZS-044](tickets/ZS-044-zvec-0-7-docs.md) | Document the Zvec 0.7.0 upgrade, explicit close, and optimize locking | [SPEC-010](specs/SPEC-010-zvec-0-7-upgrade.md) | docs | P1 | v0.2.0 |
+
+### Todo (17)
+
+| Ticket | Title | Spec | Type | Priority | Release |
+| --- | --- | --- | --- | --- | --- |
 | [ZS-045](tickets/ZS-045-vector-quantization.md) | Vector quantization for hnsw, flat, and ivf indexes | [SPEC-011](specs/SPEC-011-index-and-search-options.md) | feature | P1 | v0.2.0 |
 | [ZS-047](tickets/ZS-047-strict-index-params.md) | Reject unknown vector index params instead of ignoring them | [SPEC-011](specs/SPEC-011-index-and-search-options.md) | bug | P1 | v0.2.0 |
 | [ZS-048](tickets/ZS-048-rabitq-indexes.md) | hnsw_rabitq and ivf_rabitq index types | [SPEC-011](specs/SPEC-011-index-and-search-options.md) | feature | P1 | v0.2.0 |

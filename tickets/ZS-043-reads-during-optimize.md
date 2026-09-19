@@ -4,7 +4,7 @@ title: Serve reads while optimize runs
 spec: SPEC-010
 type: feature
 priority: P1
-status: todo
+status: in-progress
 release: v0.2.0
 created: 2026-09-09
 ---

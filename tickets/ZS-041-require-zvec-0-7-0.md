@@ -4,7 +4,7 @@ title: Require Zvec 0.7.0
 spec: SPEC-010
 type: chore
 priority: P0
-status: todo
+status: in-progress
 release: v0.2.0
 created: 2026-09-09
 ---

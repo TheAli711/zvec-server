@@ -4,7 +4,7 @@ title: Document the Zvec 0.7.0 upgrade, explicit close, and optimize locking
 spec: SPEC-010
 type: docs
 priority: P1
-status: todo
+status: in-progress
 release: v0.2.0
 created: 2026-09-09
 ---

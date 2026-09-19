@@ -4,7 +4,7 @@ title: Search returns empty ids after optimize with mmap enabled
 spec: SPEC-004
 type: bug
 priority: P1
-status: todo
+status: in-progress
 release: v0.2.0
 created: 2026-06-28
 ---
