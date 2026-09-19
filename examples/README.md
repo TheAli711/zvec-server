@@ -2,8 +2,9 @@
 
 Runnable, end-to-end walkthroughs of the Zvec Server REST API. Both examples
 perform the same flow: create a collection, insert documents, run a similarity
-search with a SQL-like filter, fetch a document by id, update it, delete one, and
-finally drop the collection.
+search with a SQL-like filter, run a group-by search, fetch a document by id,
+export every document as NDJSON, update one, delete one, and finally drop the
+collection.
 
 > The server stores **client-supplied vectors only** — it does not generate
 > embeddings. The vectors in these examples are small (4-dim) and hand-written
