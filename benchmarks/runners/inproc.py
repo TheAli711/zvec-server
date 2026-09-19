@@ -20,7 +20,7 @@ from pathlib import Path
 
 import numpy as np
 
-from benchmarks.runners.base import SearchOutcome
+from benchmarks.runners.base import SearchOutcome, server_query_params
 from benchmarks.spec import CollectionSpec
 from zvec_server.adapter import operations
 from zvec_server.adapter.runtime import init_zvec
@@ -112,8 +112,11 @@ class InprocRunner:
         assert self._managed is not None
         from zvec_server.adapter import collections as zcol
 
+        # Mirror the server: flush is a write; optimize is maintenance (shared lock
+        # + per-collection mutex, see ManagedCollection.maintain), so reads proceed.
         with self._managed.rwlock.gen_wlock():
             zcol.flush_collection(self._managed.collection)
+        with self._managed.maintenance_lock, self._managed.rwlock.gen_rlock():
             zcol.optimize_collection(self._managed.collection)
 
     # ------------------------------------------------------------------- queries
@@ -128,7 +131,7 @@ class InprocRunner:
         include_vector: bool = False,
     ) -> SearchOutcome:
         assert self._managed is not None and self._spec is not None
-        params: dict[str, int] | None = {"ef": ef} if ef is not None else None
+        params = server_query_params(self._spec.index, ef=ef, nprobe=nprobe)
         query = QuerySpec(field=self._spec.vector_field, vector=vector.tolist(), params=params)
         req = SearchRequest(
             queries=[query],

@@ -4,9 +4,10 @@ title: Serve reads while optimize runs
 spec: SPEC-010
 type: feature
 priority: P1
-status: todo
+status: done
 release: v0.2.0
 created: 2026-09-09
+closed: 2026-09-19
 ---
 
 # ZS-043: Serve reads while optimize runs
@@ -20,16 +21,16 @@ the shared lock. A per-collection mutex will keep two optimizes from overlapping
 
 ## Acceptance criteria
 
-- [ ] `ManagedCollection.maintain(fn)` runs `fn` in a worker thread while holding a
+- [x] `ManagedCollection.maintain(fn)` runs `fn` in a worker thread while holding a
       per-collection `maintenance_lock` and then the shared read lock, in that
       order.
-- [ ] The optimize route calls `managed.maintain(optimize_collection)` instead of
+- [x] The optimize route calls `managed.maintain(optimize_collection)` instead of
       `managed.write(...)`. The response stays
       `200 {"message": "Collection '<name>' optimized."}`.
-- [ ] A read on the collection completes while a maintenance call is running. A
+- [x] A read on the collection completes while a maintenance call is running. A
       write stays pending until it finishes.
-- [ ] Concurrent optimize calls on one collection are serialized.
-- [ ] Shutdown still waits for a running optimize, because it takes the exclusive
+- [x] Concurrent optimize calls on one collection are serialized.
+- [x] Shutdown still waits for a running optimize, because it takes the exclusive
       lock.
 
 ## Notes
@@ -43,3 +44,11 @@ the shared lock. A per-collection mutex will keep two optimizes from overlapping
   results do not depend on how long a real optimize takes.
 - Risk: under `RWLockFair`, a writer queued behind optimize can hold back later
   readers. Accept this for now and note it in SPEC-010.
+
+## Resolution
+
+Added `maintenance_lock` and `maintain()` to `ManagedCollection`. The optimize
+endpoint now uses them, and a unit test shows reads proceed while writes wait. A
+later test confirmed that `drop()` and `close()` both wait for a running optimize,
+not failing or deadlocking. An optimize queued behind them then fails cleanly with
+`CollectionUnavailableError`.

@@ -4,9 +4,10 @@ title: Close collection handles explicitly on shutdown
 spec: SPEC-010
 type: feature
 priority: P1
-status: todo
+status: done
 release: v0.2.0
 created: 2026-09-09
+closed: 2026-09-19
 ---
 
 # ZS-042: Close collection handles explicitly on shutdown
@@ -22,16 +23,16 @@ deliberately during shutdown.
 
 ## Acceptance criteria
 
-- [ ] `adapter/collections.py` exposes `close_collection(collection)`, which wraps
+- [x] `adapter/collections.py` exposes `close_collection(collection)`, which wraps
       `collection.close()` and maps engine failures to `ZvecOperationError`.
-- [ ] `manager.close()` closes every open handle under that collection's exclusive
+- [x] `manager.close()` closes every open handle under that collection's exclusive
       lock, after flushing and after cancelling recovery tasks.
-- [ ] Each entry's handle is set to `None` before it is closed. A lingering
+- [x] Each entry's handle is set to `None` before it is closed. A lingering
       reference reports `available == False`, and `read()`/`write()` on it raise
       `CollectionUnavailableError` (503).
-- [ ] A second manager on the same data directory can `load_all()` right after
+- [x] A second manager on the same data directory can `load_all()` right after
       the first one closes, with every collection available.
-- [ ] A close failure on one collection is logged and does not stop shutdown.
+- [x] A close failure on one collection is logged and does not stop shutdown.
 
 ## Notes
 
@@ -43,3 +44,10 @@ deliberately during shutdown.
 - Unavailable entries (`collection is None`) are skipped. There is nothing to close.
 - Unit test: create, keep a reference, close, assert the reference is unavailable,
   then reopen the same directory from a fresh manager and store.
+
+## Resolution
+
+Added `close_collection` to the adapter and extended `CollectionManager.close()`. It
+snapshots and clears the registry, then, under each entry's exclusive lock, detaches
+the handle and closes it, logging any failure. A unit test covers the stale
+reference (503) and an immediate reopen by a second manager.

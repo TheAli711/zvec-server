@@ -142,21 +142,25 @@ class EngineRunner:
 
     def _build_index_param(self, spec: CollectionSpec, metric: zvec.MetricType) -> object:
         """Build the native vector index param for ``spec.index``."""
+        quant: dict[str, object] = {}
+        if spec.quantize_type is not None:
+            quant["quantize_type"] = zvec.QuantizeType.__members__[spec.quantize_type.upper()]
+            quant["quantizer_param"] = zvec.QuantizerParam(enable_rotate=spec.enable_rotate)
         if spec.index == "hnsw":
-            kwargs: dict[str, int] = {}
+            kwargs: dict[str, object] = dict(quant)
             if spec.m is not None:
                 kwargs["m"] = spec.m
             if spec.ef_construction is not None:
                 kwargs["ef_construction"] = spec.ef_construction
             return zvec.HnswIndexParam(metric_type=metric, **kwargs)
         if spec.index == "ivf":
-            kwargs = {}
+            kwargs = dict(quant)
             if spec.n_list is not None:
                 kwargs["n_list"] = spec.n_list
             if spec.n_iters is not None:
                 kwargs["n_iters"] = spec.n_iters
             return zvec.IVFIndexParam(metric_type=metric, **kwargs)
-        return zvec.FlatIndexParam(metric_type=metric)
+        return zvec.FlatIndexParam(metric_type=metric, **quant)
 
     def _build_query_param(self, *, ef: int | None, nprobe: int | None) -> object | None:
         """Build the per-query search param matching the collection's index, or ``None``."""

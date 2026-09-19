@@ -3,12 +3,16 @@
 from __future__ import annotations
 
 import asyncio
+import random
 import shutil
-from collections.abc import Iterator
+import threading
+from collections.abc import AsyncGenerator, Iterator
 from pathlib import Path
 
 import pytest
 
+from zvec_server.adapter import collections as zcol
+from zvec_server.adapter import operations
 from zvec_server.adapter.runtime import init_zvec
 from zvec_server.config import Settings
 from zvec_server.db.metadata import MetadataStore
@@ -19,6 +23,7 @@ from zvec_server.errors import (
 )
 from zvec_server.manager import CollectionManager, ManagedCollection
 from zvec_server.models.collections import CreateCollectionRequest, VectorFieldSpec
+from zvec_server.models.vectors import DocIn, DocOut
 
 
 @pytest.fixture(autouse=True)
@@ -318,3 +323,230 @@ def test_drop_cancels_pending_recovery_task(tmp_path: Path) -> None:
     asyncio.run(_run())
     manager2.close()
     store2.close()
+
+
+def test_close_releases_handles_for_reopen(tmp_path: Path) -> None:
+    """close() releases each Zvec handle (and its on-disk lock) immediately,
+    even while something still references the managed entry, so another
+    manager can open the same collections straight away."""
+    settings = Settings(data_dir=tmp_path / "data")
+    settings.ensure_directories()
+    assert settings.metadata_db_path is not None
+
+    store1 = MetadataStore(settings.metadata_db_path)
+    store1.connect()
+    manager1 = CollectionManager(settings, store1)
+    manager1.create(_request())
+    lingering = manager1.get("docs")
+    manager1.close()
+    store1.close()
+
+    assert lingering.available is False
+    with pytest.raises(CollectionUnavailableError):
+        asyncio.run(lingering.read(lambda c: c))
+
+    store2 = MetadataStore(settings.metadata_db_path)
+    store2.connect()
+    manager2 = CollectionManager(settings, store2)
+    manager2.load_all()
+    assert manager2.counts() == (1, 0)
+    manager2.close()
+    store2.close()
+
+
+def test_maintain_allows_reads_but_blocks_writes(manager: CollectionManager) -> None:
+    """Maintenance (optimize) holds only the shared lock: reads proceed while it
+    runs, writes wait until it finishes."""
+    manager.create(_request())
+    managed = manager.get("docs")
+    started = threading.Event()
+    release = threading.Event()
+
+    def _maintenance(_: object) -> str:
+        started.set()
+        release.wait(timeout=5)
+        return "maintained"
+
+    async def _run() -> None:
+        maintenance = asyncio.create_task(managed.maintain(_maintenance))
+        await asyncio.to_thread(started.wait, 5)
+
+        assert await asyncio.wait_for(managed.read(lambda _: "read"), timeout=2) == "read"
+
+        write = asyncio.create_task(managed.write(lambda _: "written"))
+        await asyncio.sleep(0.2)
+        assert not write.done()
+
+        release.set()
+        assert await maintenance == "maintained"
+        assert await asyncio.wait_for(write, timeout=2) == "written"
+
+    asyncio.run(_run())
+
+
+def test_drop_waits_for_in_flight_reads_and_fails_queued_ones(
+    manager: CollectionManager,
+) -> None:
+    """drop() waits for in-flight operations, and requests that queued behind it
+    fail cleanly instead of touching the destroyed handle."""
+    manager.create(_request())
+    managed = manager.get("docs")
+    started = threading.Event()
+    release = threading.Event()
+
+    def _slow_read(_: object) -> str:
+        started.set()
+        release.wait(timeout=5)
+        return "read"
+
+    async def _run() -> None:
+        reading = asyncio.create_task(managed.read(_slow_read))
+        await asyncio.to_thread(started.wait, 5)
+        dropping = asyncio.create_task(asyncio.to_thread(manager.drop, "docs"))
+        await asyncio.sleep(0.2)
+        assert not dropping.done()  # blocked behind the in-flight read
+        queued = asyncio.create_task(managed.write(lambda _: "written"))
+        await asyncio.sleep(0.1)
+
+        release.set()
+        assert await reading == "read"
+        await dropping
+        with pytest.raises(CollectionUnavailableError):
+            await queued
+
+    asyncio.run(_run())
+    assert managed.dropped is True
+    with pytest.raises(CollectionNotFoundError):
+        manager.get("docs")
+    with pytest.raises(CollectionNotFoundError):
+        manager.drop("docs")
+
+
+def _docs(start: int, count: int) -> list[DocIn]:
+    return [
+        DocIn(id=str(i), vectors={"embedding": [0.1, 0.2, 0.3, 0.4]}) for i in range(start, count)
+    ]
+
+
+def _export(managed: ManagedCollection, batch_size: int = 3) -> AsyncGenerator[list[DocOut], None]:
+    return managed.stream(lambda c: operations.open_export(c, None, False), batch_size)
+
+
+def test_stream_is_a_snapshot_and_releases_the_lock_between_batches(
+    manager: CollectionManager,
+) -> None:
+    manager.create(_request())
+    managed = manager.get("docs")
+
+    async def _run() -> list[str]:
+        await managed.write(lambda c: operations.insert(c, _docs(0, 10)))
+        stream = _export(managed)
+        ids = [doc.id for doc in await anext(stream)]
+        # A write mid-stream doesn't block on the export and isn't seen by it.
+        await asyncio.wait_for(managed.write(lambda c: operations.insert(c, _docs(10, 15))), 2)
+        async for batch in stream:
+            ids.extend(doc.id for doc in batch)
+        return ids
+
+    ids = asyncio.run(_run())
+    assert sorted(ids, key=int) == [str(i) for i in range(10)]
+    assert managed.cursors == set()
+
+
+@pytest.mark.parametrize("action", ["drop", "close"])
+def test_stream_is_cut_off_cleanly_by_drop_or_close(
+    manager: CollectionManager, action: str
+) -> None:
+    """Zvec refuses to close/destroy with an open iterator; the manager releases
+    export cursors first, and the stream then reports the collection as gone."""
+    manager.create(_request())
+    managed = manager.get("docs")
+
+    async def _run() -> None:
+        await managed.write(lambda c: operations.insert(c, _docs(0, 10)))
+        stream = _export(managed)
+        assert len(await anext(stream)) == 3
+        if action == "drop":
+            await asyncio.to_thread(manager.drop, "docs")
+        else:
+            await asyncio.to_thread(manager.close)
+        with pytest.raises(CollectionUnavailableError):
+            await anext(stream)
+
+    asyncio.run(_run())
+    assert managed.collection is None
+    assert managed.cursors == set()
+
+
+def test_recovery_does_not_resurrect_a_dropped_collection(tmp_path: Path) -> None:
+    """If drop() wins the race with an in-flight recovery open, the reopened
+    handle is discarded (and closed) instead of being attached."""
+    settings = Settings(
+        data_dir=tmp_path / "data",
+        collection_recovery_initial_delay_seconds=0.01,
+        collection_recovery_max_delay_seconds=0.01,
+    )
+    settings.ensure_directories()
+    assert settings.metadata_db_path is not None
+    store = MetadataStore(settings.metadata_db_path)
+    store.connect()
+    manager = CollectionManager(settings, store)
+    manager.create(_request())
+    manager.close()
+
+    manager.load_all()
+    managed = manager.get("docs")
+    zcol.close_collection(managed.collection)  # release Zvec's LOCK for the reopen
+    managed.collection = None
+    reopened = manager._open_record(managed.record)  # recovery's open succeeded...
+    assert reopened.available
+    managed.dropped = True  # ...but drop() ran before it could be attached
+
+    assert CollectionManager._adopt(managed, reopened.collection) is False
+    assert managed.collection is None
+    # The recovery loop itself also stops instead of retrying forever.
+    asyncio.run(asyncio.wait_for(manager._recover(managed), timeout=2))
+    assert managed.collection is None
+    store.close()
+
+
+@pytest.mark.parametrize("action", ["drop", "close"])
+def test_drop_or_close_waits_for_a_running_optimize(
+    manager: CollectionManager, action: str
+) -> None:
+    """Optimize holds only the shared lock; drop()/close() must wait for it to
+    finish (not fail or deadlock), and a queued optimize then fails cleanly."""
+    req = _request(dim=32)
+    req.vectors[0].index = "hnsw"
+    manager.create(req)
+    managed = manager.get("docs")
+    rng = random.Random(0)
+
+    async def _run() -> None:
+        for start in range(0, 20_000, 1000):
+            docs = [
+                DocIn(id=str(i), vectors={"embedding": [rng.random() for _ in range(32)]})
+                for i in range(start, start + 1000)
+            ]
+            await managed.write(lambda c, docs=docs: operations.insert(c, docs))
+
+        optimizing = asyncio.create_task(managed.maintain(zcol.optimize_collection))
+        await asyncio.sleep(0.05)  # let optimize take the shared lock
+        if action == "drop":
+            stopping = asyncio.create_task(asyncio.to_thread(manager.drop, "docs"))
+        else:
+            stopping = asyncio.create_task(asyncio.to_thread(manager.close))
+        await asyncio.sleep(0.05)
+        queued = asyncio.create_task(managed.maintain(zcol.optimize_collection))
+        await asyncio.sleep(0.05)
+        # The race is real: optimize is still running and the stop is waiting on it.
+        assert not optimizing.done()
+        assert not stopping.done()
+
+        await asyncio.wait_for(optimizing, timeout=60)
+        await asyncio.wait_for(stopping, timeout=60)
+        with pytest.raises(CollectionUnavailableError):
+            await queued
+
+    asyncio.run(_run())
+    assert managed.collection is None

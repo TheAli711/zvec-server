@@ -89,8 +89,17 @@ and tests:**
   recovery task for a collection so it can't outlive the collection or the
   process.
 - **Concurrency.** Each `ManagedCollection` owns a fair reader/writer lock. Reads
-  (fetch/search) take a shared lock, writes (insert/upsert/update/delete/flush/
-  optimize) take an exclusive lock. Blocking Zvec calls run in
+  (fetch/search) take a shared lock, writes (insert/upsert/update/delete/flush)
+  take an exclusive lock. `optimize` goes through `ManagedCollection.maintain()`:
+  shared lock + a per-collection maintenance mutex (Zvec >= 0.7 serves reads
+  during optimize). Shutdown (`manager.close()`) explicitly `close()`s every
+  handle under its exclusive lock — a closed handle is unusable, so the entry is
+  marked unavailable first. Handlers re-resolve the handle *inside* the lock
+  (`_require_open()`), so requests queued behind a drop/close fail cleanly.
+  Exports use `ManagedCollection.stream()`: shared lock per batch only, and the
+  open Zvec iterators are tracked because Zvec refuses to close/destroy a
+  collection while one is open — any new drop/close path must call
+  `close_cursors()` under the exclusive lock first. Blocking Zvec calls run in
   `run_in_threadpool`, with the lock acquired **inside** the worker thread so the
   event loop never blocks. Different collections never block each other.
 - **Single process / single worker.** Because the registry is in-process memory,

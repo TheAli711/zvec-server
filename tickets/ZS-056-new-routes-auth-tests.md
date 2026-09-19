@@ -4,9 +4,10 @@ title: Auth coverage for the export and group-by routes
 spec: SPEC-013
 type: test
 priority: P2
-status: todo
+status: done
 release: v0.2.0
 created: 2026-09-15
+closed: 2026-09-19
 ---
 
 # ZS-056: Auth coverage for the export and group-by routes
@@ -21,12 +22,12 @@ silently expose them (SPEC-013 R11).
 
 ## Acceptance criteria
 
-- [ ] One parametrized test covers `GET .../export` and `POST .../search/group-by`
+- [x] One parametrized test covers `GET .../export` and `POST .../search/group-by`
       on an auth-enabled app.
-- [ ] A request with no `Authorization` header returns `401`.
-- [ ] A request with a wrong bearer token returns `401`.
-- [ ] The same request with the correct key returns `200`.
-- [ ] The collection used by the test is created through the authenticated API, so
+- [x] A request with no `Authorization` header returns `401`.
+- [x] A request with a wrong bearer token returns `401`.
+- [x] The same request with the correct key returns `200`.
+- [x] The collection used by the test is created through the authenticated API, so
       the `200` case exercises the real handler rather than a `404`.
 
 ## Notes
@@ -37,3 +38,10 @@ silently expose them (SPEC-013 R11).
   returns an empty body; both are `200`, which is all this test needs.
 - Group-by belongs to SPEC-012, but its auth coverage is filed here so both new
   routes are covered in one place.
+
+## Resolution
+
+Added `test_new_routes_require_auth` to `tests/integration/test_auth.py`,
+parametrized over the export and group-by routes; it creates an `articles` collection
+with the valid key, then checks missing key, wrong key, and valid key. No production
+code changed.

@@ -29,7 +29,7 @@ import numpy as np
 
 from benchmarks.spec import CollectionSpec
 
-__all__ = ["Runner", "SearchOutcome"]
+__all__ = ["Runner", "SearchOutcome", "server_query_params"]
 
 
 @dataclass
@@ -90,3 +90,16 @@ class Runner(Protocol):
     def target_pid(self) -> int | None:
         """PID whose RSS reflects the engine's memory (subprocess for http)."""
         ...
+
+
+def server_query_params(index: str, *, ef: int | None, nprobe: int | None) -> dict[str, int] | None:
+    """Build the server's search ``params`` for ``index``, mirroring the engine tier.
+
+    The server rejects params the field's index doesn't support, so only the
+    knob that applies (``ef`` for HNSW, ``nprobe`` for IVF) is sent.
+    """
+    if index == "hnsw" and ef is not None:
+        return {"ef": ef}
+    if index == "ivf" and nprobe is not None:
+        return {"nprobe": nprobe}
+    return None

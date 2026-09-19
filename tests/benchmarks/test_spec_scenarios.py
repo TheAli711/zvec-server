@@ -24,6 +24,14 @@ def test_index_params_flat_is_none() -> None:
     assert CollectionSpec(name="c", dim=8, index="flat").index_params() is None
 
 
+@pytest.mark.parametrize("index", ["hnsw", "flat", "ivf"])
+def test_index_params_quantization(index: str) -> None:
+    spec = CollectionSpec(name="c", dim=8, index=index, quantize_type="int8", enable_rotate=True)
+    assert spec.index_params() == {"quantize_type": "int8", "enable_rotate": True}
+    plain = CollectionSpec(name="c", dim=8, index=index, quantize_type="fp16")
+    assert plain.index_params() == {"quantize_type": "fp16"}
+
+
 def test_spec_defaults_mmap_off() -> None:
     # Benchmarks default to mmap off for clean recall (zvec 0.5.0 quirk).
     assert CollectionSpec(name="c", dim=8).enable_mmap is False

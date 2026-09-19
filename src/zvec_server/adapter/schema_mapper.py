@@ -22,6 +22,34 @@ from zvec_server.models.collections import (
 __all__ = ["build_collection_schema", "primary_vector_info"]
 
 
+_QUANTIZE_PARAMS = frozenset({"quantize_type", "enable_rotate"})
+
+# Recognized ``params`` keys per index type. Anything else is rejected so a typo
+# (e.g. ``quantize`` for ``quantize_type``) can't silently build a different index.
+_INDEX_PARAMS: dict[str, frozenset[str]] = {
+    "hnsw": frozenset({"m", "ef_construction"}) | _QUANTIZE_PARAMS,
+    "ivf": frozenset({"n_list", "n_iters", "use_soar"}) | _QUANTIZE_PARAMS,
+    "flat": _QUANTIZE_PARAMS,
+    "hnsw_rabitq": frozenset(
+        {"m", "ef_construction", "total_bits", "num_clusters", "sample_count"}
+    ),
+    "ivf_rabitq": frozenset({"n_list", "total_bits", "sample_count"}),
+}
+
+# API param name -> Zvec kwarg, where they differ (kept uniform across IVF kinds).
+_KWARG_NAMES: dict[str, str] = {"ivf_rabitq.n_list": "nlist"}
+
+
+def _check_param_keys(index: str, params: dict[str, Any]) -> None:
+    """Reject ``params`` keys the index type does not recognize."""
+    unknown = sorted(set(params) - _INDEX_PARAMS[index])
+    if unknown:
+        raise SchemaValidationError(
+            f"Unknown parameter(s) for {index!r} index: {', '.join(unknown)}",
+            {"unknown": unknown, "valid": sorted(_INDEX_PARAMS[index])},
+        )
+
+
 def _int_param(params: dict[str, Any], key: str) -> int | None:
     """Read an optional positive-ish int parameter, validating its type."""
     if key not in params:
@@ -35,14 +63,49 @@ def _int_param(params: dict[str, Any], key: str) -> int | None:
     return value
 
 
+def _bool_param(params: dict[str, Any], key: str) -> bool | None:
+    """Read an optional boolean parameter, validating its type."""
+    if key not in params:
+        return None
+    value = params[key]
+    if not isinstance(value, bool):
+        raise SchemaValidationError(
+            f"Index parameter {key!r} must be a boolean",
+            {"got": repr(value)},
+        )
+    return value
+
+
+def _quantize_kwargs(params: dict[str, Any]) -> dict[str, Any]:
+    """Translate ``quantize_type`` / ``enable_rotate`` into index-param kwargs.
+
+    ``enable_rotate`` applies a random rotation before quantizing. Whether it
+    helps recall is data-dependent (it hurt ``int4`` on SIFT1M), so it is off
+    unless requested.
+    """
+    kwargs: dict[str, Any] = {}
+    if "quantize_type" in params:
+        kwargs["quantize_type"] = enums.parse_quantize_type(params["quantize_type"])
+    enable_rotate = _bool_param(params, "enable_rotate")
+    if enable_rotate is not None:
+        if "quantize_type" not in kwargs:
+            raise SchemaValidationError(
+                "Index parameter 'enable_rotate' requires 'quantize_type'",
+                {"params": sorted(params)},
+            )
+        kwargs["quantizer_param"] = zvec.QuantizerParam(enable_rotate=enable_rotate)
+    return kwargs
+
+
 def _build_vector_index_param(spec: VectorFieldSpec) -> Any:
     """Construct the right Zvec index-param object for a vector field."""
     index = enums.validate_index_type(spec.index)
     metric = enums.parse_metric_type(spec.metric)
     params = spec.params or {}
+    _check_param_keys(index, params)
 
     if index == "hnsw":
-        kwargs: dict[str, Any] = {"metric_type": metric}
+        kwargs: dict[str, Any] = {"metric_type": metric, **_quantize_kwargs(params)}
         m = _int_param(params, "m")
         if m is not None:
             kwargs["m"] = m
@@ -52,17 +115,30 @@ def _build_vector_index_param(spec: VectorFieldSpec) -> Any:
         return zvec.HnswIndexParam(**kwargs)
 
     if index == "ivf":
-        kwargs = {"metric_type": metric}
+        kwargs = {"metric_type": metric, **_quantize_kwargs(params)}
         n_list = _int_param(params, "n_list")
         if n_list is not None:
             kwargs["n_list"] = n_list
         n_iters = _int_param(params, "n_iters")
         if n_iters is not None:
             kwargs["n_iters"] = n_iters
+        use_soar = _bool_param(params, "use_soar")
+        if use_soar is not None:
+            kwargs["use_soar"] = use_soar
         return zvec.IVFIndexParam(**kwargs)
 
-    # flat: no tuning parameters beyond the metric.
-    return zvec.FlatIndexParam(metric_type=metric)
+    if index in ("hnsw_rabitq", "ivf_rabitq"):
+        # RaBitQ indexes quantize by construction; every param is an int.
+        kwargs = {"metric_type": metric}
+        for key in sorted(params):
+            value = _int_param(params, key)
+            kwargs[_KWARG_NAMES.get(f"{index}.{key}", key)] = value
+        if index == "hnsw_rabitq":
+            return zvec.HnswRabitqIndexParam(**kwargs)
+        return zvec.IvfRabitqIndexParam(**kwargs)
+
+    # flat: no tuning parameters beyond the metric and quantization.
+    return zvec.FlatIndexParam(metric_type=metric, **_quantize_kwargs(params))
 
 
 def _build_vector_schema(spec: VectorFieldSpec) -> zvec.VectorSchema:

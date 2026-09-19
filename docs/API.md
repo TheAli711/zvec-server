@@ -141,15 +141,40 @@ Provide dtypes by name (case-sensitive, as Zvec defines them).
 
 ## Index types & metrics
 
-**Index types** (for `vectors[].index`): `hnsw` (default), `flat`, `ivf`.
+**Index types** (for `vectors[].index`): `hnsw` (default), `flat`, `ivf`,
+`hnsw_rabitq`, `ivf_rabitq`. The RaBitQ variants use RaBitQ quantization and
+are only available when the **server** runs on Linux x86_64 (the published
+Docker image does); elsewhere creating one returns `422`. They have not been
+benchmarked here yet — see the quantization note below.
 
 Optional per-index tuning goes in `vectors[].params`:
 
 | Index  | Recognized params                  |
 | ------ | ---------------------------------- |
 | `hnsw` | `m`, `ef_construction`             |
-| `ivf`  | `n_list`, `n_iters`               |
+| `ivf`  | `n_list`, `n_iters`, `use_soar`    |
 | `flat` | (none)                             |
+| `hnsw_rabitq` | `m`, `ef_construction`, `total_bits`, `num_clusters`, `sample_count` |
+| `ivf_rabitq`  | `n_list`, `total_bits`, `sample_count` |
+
+**Quantization** (`hnsw`, `flat`, `ivf`): `quantize_type` — `fp16`, `int8`,
+or `int4` — makes the index search over quantized vectors; `enable_rotate: true`
+applies a random rotation before quantizing. Zvec keeps the original
+full-precision vectors alongside (fetch returns them unchanged), so the
+quantized index is **additional** storage, not a replacement.
+
+> **Measure before adopting.** On SIFT1M (1M × 128) with Zvec 0.7.0 — server
+> defaults, mmap on — every quantized variant used *more* disk and memory than
+> FP32 and was no faster: `fp16` kept recall (0.995) at +37% disk / +35% RSS;
+> `int8` lost ~1 point of recall@10 at +20% disk / +23% RSS; `int4` lost ~28
+> points, and rotation made `int4` *worse* (0.54). Results may differ for
+> higher-dimensional embeddings. Run the quantization sweep on your own data:
+> `python -m benchmarks quant` (see `benchmarks/README.md`).
+
+```json
+{ "name": "embedding", "dim": 768, "index": "hnsw",
+  "params": { "m": 16, "quantize_type": "int8", "enable_rotate": true } }
+```
 
 **Metrics** (for `vectors[].metric`): `cosine` (default), `ip` (inner product),
 `l2` (Euclidean). Aliases such as `dot` / `inner_product` and `euclidean` are
@@ -195,7 +220,7 @@ Create a collection.
 
 | Field             | Type                     | Required | Notes                                                |
 | ----------------- | ------------------------ | -------- | ---------------------------------------------------- |
-| `name`            | string                   | yes      | Matches `^[A-Za-z0-9_-]{1,128}$`.                    |
+| `name`            | string                   | yes      | Matches `^[A-Za-z0-9_-]{3,64}$`.                     |
 | `vectors`         | array of `VectorFieldSpec` | yes    | At least one.                                        |
 | `fields`          | array of `ScalarFieldSpec` | no     | Defaults to `[]`.                                    |
 | `options`         | object                   | no       | `{ "enable_mmap": bool }`.                           |
@@ -492,6 +517,38 @@ GET /collections/articles/docs/a1?include_vector=true
 }
 ```
 
+### `GET /collections/{name}/export`
+
+Stream **every** document as NDJSON (`application/x-ndjson`, one JSON object
+per line) — for backups, migrations, or re-indexing. Each line is shaped like a
+`DocIn` (`id`, `vectors`, `fields`; no `score`), so an export can be posted back
+to `/docs/insert` in batches unchanged.
+
+| Query param      | Type                  | Default | Notes                                   |
+| ---------------- | --------------------- | ------- | --------------------------------------- |
+| `include_vector` | bool                  | `true`  | Include vectors (needed to re-import).  |
+| `output_fields`  | string (repeatable)   | all     | Restrict scalar fields, e.g. `?output_fields=year`. |
+
+```bash
+curl -s localhost:8000/collections/articles/export > articles.ndjson
+```
+
+```
+{"id":"a1","vectors":{"embedding":[0.1,0.2,0.3,0.4]},"fields":{"category":"tech","year":2021}}
+{"id":"a2","vectors":{"embedding":[0.2,0.1,0.0,0.9]},"fields":{"category":"news","year":2019}}
+```
+
+- **Consistent snapshot.** The export reflects the collection as of the
+  request; writes made while it streams are not included, and are **not
+  blocked** by it (the collection lock is taken per batch, not for the whole
+  stream).
+- **Errors.** Bad input (unknown `output_fields`, missing collection) returns a
+  normal JSON error before streaming starts. If the export is cut short after
+  it has started — e.g. the collection is dropped or the server shuts down —
+  the **last line is an error envelope** (`{"error": {...}}`) instead of a
+  document. Check for it before treating an export as complete.
+- Order is unspecified.
+
 ---
 
 ## Search
@@ -518,7 +575,19 @@ an existing document `id` (exactly one per query).
 | `field`  | string                | Vector field to search.                |
 | `vector` | list of float \| null | Query vector.                          |
 | `id`     | string \| null        | Search by an existing document's vector. |
-| `params` | object \| null        | Query tuning, e.g. `{ "ef": 64 }` (hnsw). |
+| `params` | object \| null        | Query tuning for the field's index (below). |
+
+Query `params` by index type (unknown keys return `400`):
+
+| Index                  | Params                                                        |
+| ---------------------- | ------------------------------------------------------------- |
+| `hnsw`, `hnsw_rabitq`  | `ef` (int), `radius` (float), `is_linear` (bool), `is_using_refiner` (bool) |
+| `ivf`                  | `nprobe` (int)                                                |
+| `ivf_rabitq`           | `nprobe`, `radius`, `is_linear`, `is_using_refiner`, `scale_factor` (float) |
+| `flat`                 | none                                                          |
+
+`ef` / `nprobe` trade speed for recall; `is_linear: true` forces an exact
+brute-force scan; `radius` limits hits to a distance threshold.
 
 **Example request**
 
@@ -551,3 +620,46 @@ an existing document `id` (exactly one per query).
 
 > Results are a flat list of hits. For a single query they are ordered by score.
 > A malformed filter returns `400` (`invalid_argument`).
+
+### `POST /collections/{name}/search/group-by`
+
+Run **one** query, bucket hits by the value of a scalar field, and return the
+best `topk_per_group` hits from each of the best `group_count` groups. Typical
+RAG use: chunks stored with a `doc_id` field, grouped so one long document
+can't crowd every other document out of the results.
+
+| Field            | Type                    | Default | Notes                                      |
+| ---------------- | ----------------------- | ------- | ------------------------------------------ |
+| `query`          | `QuerySpec`             | —       | Same shape as a `search` query.            |
+| `group_by`       | string                  | —       | Scalar field defining the groups.          |
+| `group_count`    | int (1–1000)            | `10`    | Maximum groups returned.                   |
+| `topk_per_group` | int (1–1000)            | `3`     | Maximum hits per group.                    |
+| `filter`         | string \| null          | `null`  | SQL-like scalar filter.                    |
+| `include_vector` | bool                    | `false` | Include vectors in hits.                   |
+| `output_fields`  | array of string \| null | `null`  | Restrict returned scalar fields.           |
+
+**Example request**
+
+```json
+{
+  "query": { "field": "embedding", "vector": [0.12, 0.22, 0.29, 0.41] },
+  "group_by": "doc_id",
+  "group_count": 5,
+  "topk_per_group": 2
+}
+```
+
+**Response 200** (`GroupSearchResponse`)
+
+```json
+{
+  "groups": [
+    { "value": "doc-7", "results": [{ "id": "doc-7#3", "score": 0.011, "fields": { "doc_id": "doc-7" } }] },
+    { "value": "doc-2", "results": [{ "id": "doc-2#0", "score": 0.019, "fields": { "doc_id": "doc-2" } }] }
+  ]
+}
+```
+
+> Group `value`s are always strings (an `INT64` field's `3` comes back as
+> `"3"`), and documents with a null `group_by` value form a group with value
+> `""`. An unknown `group_by` field or a malformed filter returns `400`.

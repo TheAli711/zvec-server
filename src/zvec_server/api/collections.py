@@ -74,7 +74,10 @@ async def optimize_collection(
     name: str,
     manager: CollectionManager = Depends(get_manager),
 ) -> MessageResponse:
-    """Run background index optimization (segment merge / index build)."""
+    """Run index optimization (segment merge / index build).
+
+    Reads on the collection continue while it runs; writes wait for it.
+    """
     managed = manager.get(name)
-    await managed.write(zcol.optimize_collection)
+    await managed.maintain(zcol.optimize_collection)
     return MessageResponse(message=f"Collection '{name}' optimized.")

@@ -33,14 +33,21 @@ Zvec library in-process.
 ## Key features
 
 - REST API for collection lifecycle, document CRUD, fetch, and vector search.
+- **Group-by search** (top hits per value of a scalar field, e.g. per document)
+  and **streaming NDJSON export** of a consistent snapshot, re-importable as-is.
 - Multiple vector dtypes (`VECTOR_FP32`, `VECTOR_FP16`, `VECTOR_FP64`,
   `VECTOR_INT8`, sparse variants) and scalar field types.
-- Index types `hnsw` / `flat` / `ivf` and metrics `cosine` / `ip` / `l2`.
+- Index types `hnsw` / `flat` / `ivf` (plus `hnsw_rabitq` / `ivf_rabitq` on
+  Linux x86_64) and metrics `cosine` / `ip` / `l2`, with per-index build and
+  search tuning (`ef`, `nprobe`, `radius`, exact `is_linear` search, ...) and
+  opt-in quantization (`fp16` / `int8` / `int4` — benchmark first, see
+  [docs/API.md](./docs/API.md#index-types--metrics)).
 - SQL-like filtering on scalar fields for search and delete.
 - Optional **API-key authentication** (`Authorization: Bearer`), off by default
   and configured entirely via the environment.
 - Per-collection reader/writer locking with blocking work offloaded to a
-  threadpool, so the event loop stays responsive.
+  threadpool, so the event loop stays responsive; searches keep running during
+  `optimize` and exports never block writes.
 - Structured JSON (or human-readable console) logging; configurable via env.
 - Container-ready: multi-stage `Dockerfile`, `docker-compose.yml`, and
   versioned, production images published to GHCR
@@ -169,7 +176,9 @@ All document routes are under `/collections/{name}`.
 | POST   | `/collections/{name}/docs/delete`     | Delete by `ids` **or** `filter` (exactly one). Body: `DeleteRequest`. |
 | POST   | `/collections/{name}/docs/fetch`      | Fetch documents by ids. Body: `FetchRequest`.          |
 | GET    | `/collections/{name}/docs/{doc_id}`   | Fetch one document by id (404 if missing). Query: `include_vector`, `output_fields`. |
+| GET    | `/collections/{name}/export`          | Stream all documents as NDJSON (consistent snapshot). |
 | POST   | `/collections/{name}/search`          | Vector similarity search. Body: `SearchRequest`.       |
+| POST   | `/collections/{name}/search/group-by` | Search grouped by a scalar field (top hits per group). |
 
 > **Filters use Zvec's SQL-like syntax**, e.g. `category = 'tech' AND year > 2020`.
 > Use single `=` (not `==`), single-quote string literals, and operators

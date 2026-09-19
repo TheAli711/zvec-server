@@ -13,6 +13,7 @@ local ann-benchmarks-format file, or use Track B (VectorDBBench) for Cohere.
 
 from __future__ import annotations
 
+import shutil
 import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
@@ -94,7 +95,10 @@ def _download(url: str, dest: Path) -> Path:
     if dest.exists():
         return dest
     tmp = dest.with_suffix(dest.suffix + ".part")
-    urllib.request.urlretrieve(url, tmp)
+    # The ann-benchmarks mirror answers 403 to urllib's default User-Agent.
+    request = urllib.request.Request(url, headers={"User-Agent": "zvec-server-benchmarks"})
+    with urllib.request.urlopen(request) as response, tmp.open("wb") as out:
+        shutil.copyfileobj(response, out, length=1 << 20)
     tmp.rename(dest)
     return dest
 

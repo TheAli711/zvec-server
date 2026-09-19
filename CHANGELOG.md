@@ -8,6 +8,58 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- Vector quantization: `hnsw`, `flat`, and `ivf` indexes accept
+  `params.quantize_type` (`fp16` / `int8` / `int4`) and `params.enable_rotate`.
+  Benchmark first: on SIFT1M it cost disk, memory, and recall without a speed
+  gain (see `docs/API.md`).
+- `hnsw_rabitq` and `ivf_rabitq` index types (RaBitQ quantization; Linux
+  x86_64 servers only — other platforms return `422`).
+- Streaming export: `GET /collections/{name}/export` streams a consistent
+  snapshot of every document as NDJSON (re-importable via `/docs/insert`),
+  without blocking writes.
+- Group-by search: `POST /collections/{name}/search/group-by` returns the best
+  hits per value of a scalar field (e.g. top chunks per document).
+- Search `params` for every index type: `ef`, `radius`, `is_linear`,
+  `is_using_refiner` (hnsw / hnsw_rabitq), `nprobe` (ivf), plus `scale_factor`
+  (ivf_rabitq). Previously only HNSW `ef` was honored.
+- `ivf` indexes accept `params.use_soar` (SOAR spilling for better recall).
+
+### Changed
+
+- Unknown or mistyped search `params` now return `400` instead of being silently
+  ignored (e.g. `ef` on a `flat` or `ivf` field).
+- Unknown keys in a vector field's `params` are now rejected with `422` instead
+  of being silently ignored, so a typo can't quietly build a different index.
+- Requires **Zvec 0.7.0** (was 0.5.0). Picks up upstream fixes for crash
+  recovery, filter validation, query validation (`topk`, field names), and
+  mmap storage. Thread-pool CPU pinning is now off by default in Zvec, which
+  suits containers.
+- `POST /collections/{name}/optimize` no longer blocks reads: searches and
+  fetches on the collection continue while it runs (writes still wait).
+  Concurrent optimize calls on the same collection are serialized.
+- Shutdown now explicitly closes every collection, releasing Zvec's on-disk
+  lock immediately so a replacement instance in a rolling restart can open the
+  collections without waiting.
+
+### Fixed
+
+- A background recovery that reopened a collection just as it was dropped
+  could re-attach (and leak) the handle; it is now discarded and closed.
+- Dropping a collection now waits for in-flight requests on it, and requests
+  queued behind the drop (or behind shutdown) fail with `503`/`404` instead of
+  running against the destroyed handle.
+
+- Collection names are validated against Zvec's 3-64 character limit. Names
+  outside it previously passed validation, then failed in the engine and were
+  misreported as `409 collection_already_exists`; they now return `422`. Other
+  engine schema rejections also return `422` instead of `409`.
+
+- With `ZVEC_SERVER_ENABLE_MMAP=true` (the default), a few freshly-optimized
+  documents could come back from search with empty ids
+  (`Failed to find target chunk`). Fixed by the Zvec 0.7.0 upgrade.
+
 ## [0.1.2] - 2026-07-08
 
 ### Added

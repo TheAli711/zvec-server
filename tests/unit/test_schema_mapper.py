@@ -58,7 +58,11 @@ def test_build_schema_ivf_params_applied() -> None:
         "c",
         [
             VectorFieldSpec(
-                name="emb", dim=4, index="ivf", metric="l2", params={"n_list": 16, "n_iters": 7}
+                name="emb",
+                dim=4,
+                index="ivf",
+                metric="l2",
+                params={"n_list": 16, "n_iters": 7, "use_soar": True},
             )
         ],
         [],
@@ -68,6 +72,7 @@ def test_build_schema_ivf_params_applied() -> None:
     assert index["type"] == "IVF"
     assert index["n_list"] == 16
     assert index["n_iters"] == 7
+    assert index["use_soar"] is True
 
 
 def test_build_schema_flat() -> None:
@@ -80,6 +85,71 @@ def test_build_schema_flat() -> None:
     index = vectors[0]["index_param"]
     assert index["metric_type"] == "COSINE"
     assert "m" not in index and "n_list" not in index
+
+
+def test_build_schema_rabitq_params_applied() -> None:
+    schema = schema_mapper.build_collection_schema(
+        "c",
+        [
+            VectorFieldSpec(
+                name="a",
+                dim=64,
+                index="hnsw_rabitq",
+                params={"m": 24, "total_bits": 5, "num_clusters": 8},
+            ),
+            VectorFieldSpec(
+                name="b", dim=64, index="ivf_rabitq", params={"n_list": 32, "total_bits": 4}
+            ),
+        ],
+        [],
+    )
+    vectors, _ = col_adapter.schema_to_dicts(schema)
+    hnsw, ivf = (v["index_param"] for v in vectors)
+    assert (hnsw["type"], hnsw["m"], hnsw["total_bits"], hnsw["num_clusters"]) == (
+        "HNSW_RABITQ",
+        24,
+        5,
+        8,
+    )
+    assert (ivf["type"], ivf["nlist"], ivf["total_bits"]) == ("IVF_RABITQ", 32, 4)
+
+
+@pytest.mark.parametrize("index", ["hnsw", "flat", "ivf"])
+@pytest.mark.parametrize("quantize", ["fp16", "int8", "INT4"])
+def test_build_schema_quantization(index: str, quantize: str) -> None:
+    schema = schema_mapper.build_collection_schema(
+        "c",
+        [
+            VectorFieldSpec(
+                name="emb",
+                dim=8,
+                index=index,
+                params={"quantize_type": quantize, "enable_rotate": True},
+            )
+        ],
+        [],
+    )
+    vectors, _ = col_adapter.schema_to_dicts(schema)
+    index_param = vectors[0]["index_param"]
+    assert index_param["quantize_type"] == quantize.upper()
+    assert index_param["quantizer_param"] == {"enable_rotate": True}
+
+
+@pytest.mark.parametrize(
+    "params",
+    [
+        {"quantize_type": "int2"},
+        {"quantize_type": "rabitq"},
+        {"quantize_type": 8},
+        {"quantize_type": "int8", "enable_rotate": "yes"},
+        {"enable_rotate": True},
+    ],
+)
+def test_bad_quantization_params_raise(params: dict[str, object]) -> None:
+    with pytest.raises(SchemaValidationError):
+        schema_mapper.build_collection_schema(
+            "c", [VectorFieldSpec(name="emb", dim=8, params=params)], []
+        )
 
 
 def test_scalar_indexed_attaches_invert_index() -> None:
@@ -127,9 +197,25 @@ def test_bad_index_param_type_raises() -> None:
         )
 
 
+@pytest.mark.parametrize(
+    ("index", "params"),
+    [
+        ("hnsw", {"quantize": "int8"}),
+        ("hnsw", {"n_list": 8}),
+        ("flat", {"m": 16}),
+        ("ivf", {"ef_construction": 100}),
+    ],
+)
+def test_unknown_index_params_raise(index: str, params: dict[str, object]) -> None:
+    with pytest.raises(SchemaValidationError, match="Unknown parameter"):
+        schema_mapper.build_collection_schema(
+            "c", [VectorFieldSpec(name="emb", dim=4, index=index, params=params)], []
+        )
+
+
 def test_primary_vector_info() -> None:
     req = CreateCollectionRequest(
-        name="c",
+        name="coll",
         vectors=[
             VectorFieldSpec(name="first", dim=128),
             VectorFieldSpec(name="second", dim=64),

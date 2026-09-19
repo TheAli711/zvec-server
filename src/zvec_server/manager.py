@@ -10,8 +10,9 @@ so it becomes available on its own, without a server restart.
 This module never imports :mod:`zvec`; all engine interaction goes through the
 adapter layer. Each collection carries a reader/writer lock so reads (search,
 fetch, stats) run concurrently while writes (insert/upsert/update/delete) are
-exclusive. Blocking engine work is offloaded to a threadpool inside the lock so
-the event loop is never blocked.
+exclusive; optimize holds the shared lock so reads continue during it. Blocking
+engine work is offloaded to a threadpool inside the lock so the event loop is
+never blocked.
 """
 
 from __future__ import annotations
@@ -20,9 +21,9 @@ import asyncio
 import json
 import shutil
 import threading
-from collections.abc import Callable
+from collections.abc import AsyncGenerator, Callable
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any, Protocol, TypeVar
 
 from readerwriterlock import rwlock
 from starlette.concurrency import run_in_threadpool
@@ -54,6 +55,18 @@ logger = get_logger(__name__)
 T = TypeVar("T")
 
 
+class Cursor(Protocol[T]):
+    """A snapshot reader over a collection (e.g. an export), consumed in batches."""
+
+    def next_batch(self, size: int) -> list[T]:
+        """Return up to ``size`` more items; an empty list means exhausted."""
+        ...
+
+    def close(self) -> None:
+        """Release the cursor (must be idempotent)."""
+        ...
+
+
 class ManagedCollection:
     """A registered collection plus its concurrency primitives.
 
@@ -63,6 +76,11 @@ class ManagedCollection:
             the collection is registered but could not be opened on disk.
         record: The persisted metadata record.
         rwlock: Per-collection fair reader/writer lock.
+        maintenance_lock: Serializes maintenance (optimize) runs on this collection.
+        dropped: Set once :meth:`CollectionManager.drop` has destroyed it.
+        cursors: Open snapshot cursors (exports). Zvec refuses to close or
+            destroy a collection while one is open, so drop/close release them
+            first, under the exclusive lock.
     """
 
     def __init__(self, name: str, collection: Any, record: CollectionRecord) -> None:
@@ -70,6 +88,10 @@ class ManagedCollection:
         self.collection = collection
         self.record = record
         self.rwlock = rwlock.RWLockFair()
+        self.maintenance_lock = threading.Lock()
+        self.dropped = False
+        self.cursors: set[Cursor[Any]] = set()
+        self._cursors_lock = threading.Lock()
 
     @property
     def available(self) -> bool:
@@ -81,23 +103,98 @@ class ManagedCollection:
 
         The lock is acquired inside the thread so the event loop never blocks.
         """
-        collection = self._require_open()
+        self._require_open()  # fail fast without queueing for the lock
 
         def _locked() -> T:
             with self.rwlock.gen_rlock():
-                return fn(collection)
+                # Re-resolve under the lock: a drop/close may have run while we waited.
+                return fn(self._require_open())
 
         return await run_in_threadpool(_locked)
 
     async def write(self, fn: Callable[[Any], T]) -> T:
         """Run ``fn(collection)`` under an exclusive write lock in a worker thread."""
-        collection = self._require_open()
+        self._require_open()  # fail fast without queueing for the lock
 
         def _locked() -> T:
             with self.rwlock.gen_wlock():
-                return fn(collection)
+                # Re-resolve under the lock: a drop/close may have run while we waited.
+                return fn(self._require_open())
 
         return await run_in_threadpool(_locked)
+
+    async def maintain(self, fn: Callable[[Any], T]) -> T:
+        """Run a maintenance ``fn(collection)`` (e.g. optimize) in a worker thread.
+
+        Zvec (>= 0.7) serves reads while optimize runs, so maintenance takes only
+        the *shared* lock — searches and fetches keep flowing, while writes,
+        flush, and shutdown still wait for it. A dedicated mutex keeps two
+        maintenance runs on the same collection from overlapping.
+        """
+        self._require_open()  # fail fast without queueing for the lock
+
+        def _locked() -> T:
+            with self.maintenance_lock, self.rwlock.gen_rlock():
+                # Re-resolve under the lock: a drop/close may have run while we waited.
+                return fn(self._require_open())
+
+        return await run_in_threadpool(_locked)
+
+    async def stream(
+        self, open_cursor: Callable[[Any], Cursor[T]], batch_size: int
+    ) -> AsyncGenerator[list[T], None]:
+        """Yield batches from a snapshot cursor opened over the collection.
+
+        The shared lock is held only while opening the cursor and while reading
+        each batch — never across a ``yield`` — so a slow client can't block
+        writes for the whole stream. The cursor's snapshot keeps the output
+        consistent regardless. If the collection is dropped or closed mid-stream,
+        the next batch raises :class:`CollectionUnavailableError`.
+        """
+        self._require_open()
+
+        def _open() -> Cursor[T]:
+            with self.rwlock.gen_rlock():
+                cursor = open_cursor(self._require_open())
+                with self._cursors_lock:
+                    self.cursors.add(cursor)
+                return cursor
+
+        cursor = await run_in_threadpool(_open)
+
+        def _next() -> list[T]:
+            with self.rwlock.gen_rlock():
+                with self._cursors_lock:
+                    alive = cursor in self.cursors
+                if not alive:
+                    raise CollectionUnavailableError(
+                        f"Collection '{self.name}' was closed or dropped during the stream.",
+                        {"name": self.name},
+                    )
+                return cursor.next_batch(batch_size)
+
+        try:
+            while batch := await run_in_threadpool(_next):
+                yield batch
+        finally:
+            self._release_cursor(cursor)
+
+    def _release_cursor(self, cursor: Cursor[Any]) -> None:
+        with self._cursors_lock:
+            if cursor not in self.cursors:
+                return  # already released by close_cursors()
+            self.cursors.discard(cursor)
+            cursor.close()
+
+    def close_cursors(self) -> None:
+        """Close every open cursor. Callers must hold the exclusive lock."""
+        with self._cursors_lock:
+            cursors, self.cursors = self.cursors, set()
+            for cursor in cursors:
+                try:
+                    cursor.close()
+                except Exception:
+                    logger.exception("Error closing cursor", extra={"collection": self.name})
 
     def _require_open(self) -> Any:
         if self.collection is None:
@@ -226,14 +323,25 @@ class CollectionManager:
         """
         with self._lock:
             managed = self._registry.get(name)
-            if managed is None:
+        if managed is None:
+            raise CollectionNotFoundError(f"Collection '{name}' not found.", {"name": name})
+
+        # Wait for in-flight operations under the collection's exclusive lock, but
+        # outside the registry lock so a long optimize doesn't stall other routes.
+        with managed.rwlock.gen_wlock():
+            if managed.dropped:  # a concurrent drop got here first
                 raise CollectionNotFoundError(f"Collection '{name}' not found.", {"name": name})
+            managed.close_cursors()
             if managed.available:
                 zcol.destroy_collection(managed.collection)
             else:
                 directory = Path(managed.record.path)
                 if directory.exists():
                     shutil.rmtree(directory, ignore_errors=True)
+            managed.collection = None
+            managed.dropped = True
+
+        with self._lock:
             self._store.delete(name)
             del self._registry[name]
             task = self._recovery_tasks.pop(name, None)
@@ -287,17 +395,37 @@ class CollectionManager:
         """Retry opening ``managed`` with exponential backoff until it succeeds."""
         delay = self._settings.collection_recovery_initial_delay_seconds
         max_delay = self._settings.collection_recovery_max_delay_seconds
-        while not managed.available:
+        while not managed.available and not managed.dropped:
             await asyncio.sleep(delay)
             reopened = await run_in_threadpool(self._open_record, managed.record)
             if reopened.available:
-                managed.collection = reopened.collection
-                logger.info(
-                    "Recovered previously unavailable collection",
-                    extra={"collection": managed.name},
-                )
+                if await run_in_threadpool(self._adopt, managed, reopened.collection):
+                    logger.info(
+                        "Recovered previously unavailable collection",
+                        extra={"collection": managed.name},
+                    )
                 return
             delay = min(delay * 2, max_delay)
+
+    @staticmethod
+    def _adopt(managed: ManagedCollection, collection: Any) -> bool:
+        """Install a reopened handle unless the collection was dropped meanwhile.
+
+        drop() cancels the recovery task from a worker thread, so the cancel can
+        land after an open already succeeded; checking ``dropped`` under the
+        exclusive lock keeps a dropped collection from being resurrected.
+        """
+        with managed.rwlock.gen_wlock():
+            if not managed.dropped:
+                managed.collection = collection
+                return True
+        try:
+            zcol.close_collection(collection)
+        except Exception:
+            logger.exception(
+                "Error closing stale reopened handle", extra={"collection": managed.name}
+            )
+        return False
 
     def list(self) -> CollectionListResponse:
         """Return a summary of every registered collection."""
@@ -348,13 +476,30 @@ class CollectionManager:
                 logger.exception("Error flushing collection", extra={"collection": managed.name})
 
     def close(self) -> None:
-        """Flush and release all collections (called at shutdown)."""
+        """Flush and release all collections (called at shutdown).
+
+        Each handle is closed under its exclusive lock, so in-flight operations
+        finish first, and Zvec's on-disk lock is released immediately rather than
+        whenever the handle is garbage-collected — a replacement instance in a
+        rolling restart can then open the collections without waiting.
+        """
         for task in self._recovery_tasks.values():
             task.cancel()
         self._recovery_tasks.clear()
         self.flush_all()
         with self._lock:
+            managed_list = list(self._registry.values())
             self._registry.clear()
+        for managed in managed_list:
+            with managed.rwlock.gen_wlock():
+                managed.close_cursors()
+                collection, managed.collection = managed.collection, None
+                if collection is None:
+                    continue
+                try:
+                    zcol.close_collection(collection)
+                except Exception:
+                    logger.exception("Error closing collection", extra={"collection": managed.name})
 
     # ------------------------------------------------------------------ helpers
     def _effective_mmap(self, options: CollectionOptions | None) -> bool:

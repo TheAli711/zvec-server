@@ -1,7 +1,7 @@
 ---
 id: SPEC-012
 title: Group-by search
-status: accepted
+status: implemented
 created: 2026-09-12
 release: v0.2.0
 ---

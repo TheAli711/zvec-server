@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+import pytest
 from fastapi.testclient import TestClient
 
 
@@ -33,6 +34,15 @@ def test_create_invalid_name_returns_422(client: TestClient) -> None:
         json={"name": "bad name!", "vectors": [{"name": "e", "dim": 4}]},
     )
     assert response.status_code == 422
+
+
+@pytest.mark.parametrize("name", ["ab", "x" * 65])
+def test_create_name_outside_engine_length_returns_422(client: TestClient, name: str) -> None:
+    """Names Zvec would reject (outside 3-64 chars) fail validation, not as a 409."""
+    response = client.post(
+        "/collections", json={"name": name, "vectors": [{"name": "e", "dim": 4}]}
+    )
+    assert response.status_code == 422, response.text
 
 
 def test_create_invalid_dtype_returns_422(client: TestClient) -> None:

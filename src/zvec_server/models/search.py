@@ -13,7 +13,14 @@ from pydantic import BaseModel, Field, model_validator
 
 from zvec_server.models.vectors import DocOut
 
-__all__ = ["QuerySpec", "SearchRequest", "SearchResponse"]
+__all__ = [
+    "GroupOut",
+    "GroupSearchRequest",
+    "GroupSearchResponse",
+    "QuerySpec",
+    "SearchRequest",
+    "SearchResponse",
+]
 
 
 class QuerySpec(BaseModel):
@@ -30,7 +37,12 @@ class QuerySpec(BaseModel):
     )
     params: dict[str, Any] | None = Field(
         default=None,
-        description='Index-specific query tuning, e.g. ``{"ef": 128}`` for HNSW.',
+        description=(
+            "Index-specific query tuning. hnsw/hnsw_rabitq: ``ef``, ``radius``, "
+            "``is_linear``, ``is_using_refiner``. ivf: ``nprobe``. ivf_rabitq: "
+            "``nprobe``, ``radius``, ``is_linear``, ``is_using_refiner``, "
+            "``scale_factor``. flat: none. Unknown keys are rejected."
+        ),
     )
 
     @model_validator(mode="after")
@@ -106,3 +118,60 @@ class SearchResponse(BaseModel):
             ]
         },
     }
+
+
+class GroupSearchRequest(BaseModel):
+    """Body for the group-by search endpoint.
+
+    Runs one nearest-neighbour query, buckets hits by the value of a scalar
+    field, and returns the best ``topk_per_group`` hits from each of the best
+    ``group_count`` groups — e.g. the top chunks from each of the top documents.
+    """
+
+    query: QuerySpec = Field(description="The nearest-neighbour query to run.")
+    group_by: str = Field(description="Scalar field whose value defines the groups.")
+    group_count: int = Field(default=10, ge=1, le=1000, description="Maximum groups to return.")
+    topk_per_group: int = Field(
+        default=3, ge=1, le=1000, description="Maximum hits to return per group."
+    )
+    filter: str | None = Field(
+        default=None,
+        description="SQL-like predicate restricting candidates. Passed to Zvec verbatim.",
+    )
+    include_vector: bool = Field(
+        default=False, description="Whether to include vectors in the hits."
+    )
+    output_fields: list[str] | None = Field(
+        default=None, description="Restrict returned scalar fields. None returns all."
+    )
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "query": {"field": "embedding", "vector": [0.12, 0.98, 0.05]},
+                    "group_by": "doc_id",
+                    "group_count": 5,
+                    "topk_per_group": 2,
+                }
+            ]
+        },
+    }
+
+
+class GroupOut(BaseModel):
+    """One group of hits sharing a ``group_by`` value."""
+
+    value: str = Field(
+        description=(
+            "The group's ``group_by`` value, always rendered as a string "
+            '(a null value is returned as ``""``).'
+        )
+    )
+    results: list[DocOut] = Field(description="The group's hits, best first.")
+
+
+class GroupSearchResponse(BaseModel):
+    """Group-by search results: groups ordered by their best hit."""
+
+    groups: list[GroupOut] = Field(description="Matching groups, best first.")

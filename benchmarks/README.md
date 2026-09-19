@@ -41,6 +41,54 @@ uv run python -m benchmarks run --scenario smoke
 uv run python -m benchmarks list
 ```
 
+### Quantization sweep
+
+```bash
+# every variant on the engine tier (recall / QPS / disk / optimize time)
+uv run python -m benchmarks quant --scenario sift1m
+# server-process RSS in isolation, a subset of variants
+uv run python -m benchmarks quant --scenario sift1m --tier http --variants fp32,int8,int4+rot
+```
+
+Rebuilds the collection once per variant (`fp32`, `fp16`, `int8`, `int8+rot`,
+`int4`, `int4+rot`) and writes a side-by-side table (`quant-*.md`) with recall,
+Δrecall vs FP32, QPS, latency, on-disk size, optimize time, and peak RSS.
+
+SIFT1M, Zvec 0.7.0, HNSW `M=16`, recall@10 at `ef=200` (Apple M-series laptop):
+
+| variant | disk | server RSS (http, mmap) | recall@10 | engine QPS (c=16) |
+| --- | ---: | ---: | ---: | ---: |
+| fp32 | 688 MB | ~980 MB | 0.996 | 13.0k |
+| fp16 | 945 MB | ~1,320 MB | 0.995 | 14.3k |
+| int8 | 822 MB | ~1,205 MB | 0.987 | 13.1k |
+| int8+rot | 822 MB | — | 0.980 | 12.0k |
+| int4 | 762 MB | — | 0.714 | 10.9k |
+| int4+rot | 762 MB | — | 0.541 | 12.5k |
+
+Zvec stores the quantized index *in addition to* the full-precision vectors, so
+quantization raised disk and memory here instead of lowering them, and rotation
+hurt `int4`. Re-run on your own (especially higher-dimensional) data before
+enabling it.
+
+### Search latency during optimize
+
+```bash
+uv run python -m benchmarks optimize-load --scenario smoke --tier http --concurrency 4
+```
+
+Ingests without optimizing, measures a baseline search window, then keeps
+searching while `optimize` runs and compares QPS / p50 / p99 / max latency. Use
+it to check that optimize does not block reads. Smoke, http tier, c=4, on an
+Apple M-series laptop:
+
+| server | queries during optimize | max latency |
+| --- | ---: | ---: |
+| v0.1.2 (exclusive lock, zvec 0.5.0) | 8 in 2.1 s | 2,112 ms |
+| shared-lock optimize (zvec 0.7.0) | 2,609 in 1.5 s | 19 ms |
+
+QPS still drops while optimize runs — that is optimize competing for CPU (the
+lock-free `engine` tier shows the same drop), not blocking.
+
 Results land in `benchmarks/results/<scenario>-<timestamp>.json` (git-ignored),
 a `report.md` with tables, and `report.md`'s plots under `results/plots/`. A
 compact summary plus the **overhead-decomposition** table are printed to stdout.
@@ -55,6 +103,8 @@ compact summary plus the **overhead-decomposition** table are printed to stdout.
 | `--measure-seconds <s>` | per-scenario | override the per-cell measurement window |
 | `--query-threads <n>` | engine default | set `ZVEC_SERVER_ZVEC_QUERY_THREADS` for all tiers |
 | `--mmap` / `--no-mmap` | `--no-mmap` | memory-mapped storage (see the mmap note below) |
+| `--quantize <t>` | — | quantize the index: `fp16` \| `int8` \| `int4` |
+| `--rotate` | off | random rotation before quantizing (with `--quantize`) |
 | `--out <dir>` | `benchmarks/results` | results directory |
 
 ## Scenarios
@@ -99,18 +149,17 @@ this shows up directly.
   clean engine-memory figure. For `engine`/`inproc` it is the whole benchmark
   process (it also holds the dataset in NumPy), so compare RSS *across runs of
   the same tier*, not across tiers.
-- **mmap quirk.** Zvec **0.5.0** has an mmap forward-store bug: under
-  `enable_mmap=True`, a few freshly-optimized docs fail to resolve and come back
-  with empty ids (you'll see `mmap_forward_store.cc ... Failed to find target
-  chunk` on stderr). Benchmarks therefore default to **mmap off** for clean,
-  trustworthy recall. The production server defaults to mmap on — benchmark that
-  configuration with `--mmap` (the harness tolerates the empty ids; recall will
-  dip slightly for the affected queries).
+- **mmap.** Zvec **0.5.x** had an mmap forward-store bug: under
+  `enable_mmap=True`, a few freshly-optimized docs failed to resolve and came
+  back with empty ids (`mmap_forward_store.cc ... Failed to find target chunk`
+  on stderr). It is fixed in **0.7.0** (the minimum this server now requires):
+  `--mmap` runs are clean and recall matches `--no-mmap`. Benchmarks still
+  default to **mmap off**; the production server defaults to mmap on, so use
+  `--mmap` to benchmark that configuration.
 - **Write batch size.** Zvec caps a single write at 1024 docs, so ingest batches
   are ≤ 1000.
-- **IVF tuning.** The server's query mapper only tunes HNSW `ef` today, so IVF
-  `nprobe` sweeps take effect on the `engine` tier only. The shipped scenarios
-  use HNSW.
+- **IVF tuning.** `nprobe` sweeps apply on every tier (the server honors IVF
+  `nprobe`). The shipped scenarios use HNSW.
 - **Reproducibility.** Each result JSON captures CPU/RAM/OS, Python + Zvec
   versions, the git commit, and the thread/mmap config.
 

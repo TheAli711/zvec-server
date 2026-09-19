@@ -6,10 +6,12 @@ This script walks through the full lifecycle against a running server:
     1. create a collection (4-dim embedding + a ``category`` scalar field)
     2. insert a few documents
     3. run a similarity search with a SQL-like filter
-    4. fetch a document by id
-    5. update a document
-    6. delete a document
-    7. drop the collection
+    4. run a group-by search (best hit per category)
+    5. fetch a document by id
+    6. export every document as an NDJSON stream
+    7. update a document
+    8. delete a document
+    9. drop the collection
 
 Run a server first (see the project README), then::
 
@@ -30,6 +32,7 @@ embeddings -- so the vectors below are hand-written for illustration.
 
 from __future__ import annotations
 
+import json
 import os
 import sys
 
@@ -50,7 +53,9 @@ def main() -> int:
         try:
             insert_documents(client)
             search(client)
+            group_by_search(client)
             fetch_by_id(client)
+            export_all(client)
             update_document(client)
             delete_document(client)
         finally:
@@ -146,6 +151,35 @@ def search(client: httpx.Client) -> None:
     resp = _raise_for_status(client.post(f"/collections/{COLLECTION}/search", json=payload))
     for hit in resp.json()["results"]:
         print(f"  id={hit['id']} score={hit['score']} fields={hit['fields']}")
+
+
+def group_by_search(client: httpx.Client) -> None:
+    print("\n== Group-by search (best hit per category) ==")
+    payload = {
+        "query": {"field": "embedding", "vector": [0.11, 0.21, 0.30, 0.40]},
+        "group_by": "category",
+        "group_count": 5,
+        "topk_per_group": 1,
+    }
+    resp = _raise_for_status(
+        client.post(f"/collections/{COLLECTION}/search/group-by", json=payload)
+    )
+    for group in resp.json()["groups"]:
+        best = group["results"][0]
+        print(f"  {group['value']}: id={best['id']} score={best['score']}")
+
+
+def export_all(client: httpx.Client) -> None:
+    print("\n== Export every document (NDJSON stream) ==")
+    # Each line is one document shaped like an insert payload; a line with an
+    # "error" key means the export was cut short.
+    with client.stream("GET", f"/collections/{COLLECTION}/export") as resp:
+        _raise_for_status(resp)
+        for line in resp.iter_lines():
+            doc = json.loads(line)
+            if "error" in doc:
+                raise RuntimeError(f"export interrupted: {doc['error']}")
+            print(f"  id={doc['id']} fields={doc['fields']}")
 
 
 def fetch_by_id(client: httpx.Client) -> None:

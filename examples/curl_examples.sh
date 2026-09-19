@@ -3,7 +3,7 @@
 # End-to-end example of the Zvec Server REST API using curl.
 #
 # Walks through: create collection -> insert -> search (with filter) ->
-# fetch by id -> update -> delete -> drop collection.
+# group-by search -> fetch by id -> export -> update -> delete -> drop collection.
 #
 # Run a server first (see the project README), then:
 #
@@ -113,8 +113,22 @@ req POST "/collections/${COLLECTION}/search" '{
 }'
 
 echo
+echo "== Group-by search (best hit per category) =="
+req POST "/collections/${COLLECTION}/search/group-by" '{
+  "query": { "field": "embedding", "vector": [0.11, 0.21, 0.30, 0.40] },
+  "group_by": "category",
+  "group_count": 5,
+  "topk_per_group": 1
+}'
+
+echo
 echo "== Fetch document by id (a1, include vector) =="
 req GET "/collections/${COLLECTION}/docs/a1?include_vector=true"
+
+echo
+echo "== Export every document (NDJSON, one document per line) =="
+curl -sS --fail-with-body "${AUTH_HEADER[@]+"${AUTH_HEADER[@]}"}" \
+  "${BASE_URL}/collections/${COLLECTION}/export"
 
 echo
 echo "== Update document (a1 -> year 2022) =="

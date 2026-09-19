@@ -24,7 +24,9 @@ __all__ = [
 ]
 
 # Collection names map to on-disk directories, so keep them filesystem-safe.
-_NAME_PATTERN = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
+# Zvec itself rejects collection names outside 3-64 chars, so validate that here
+# rather than letting the engine fail later with a less helpful error.
+_NAME_PATTERN = re.compile(r"^[A-Za-z0-9_-]{3,64}$")
 
 
 class VectorFieldSpec(BaseModel):
@@ -45,7 +47,10 @@ class VectorFieldSpec(BaseModel):
     )
     index: str = Field(
         default="hnsw",
-        description="Vector index type: ``hnsw``, ``flat``, or ``ivf``.",
+        description=(
+            "Vector index type: ``hnsw``, ``flat``, ``ivf``, ``hnsw_rabitq``, or "
+            "``ivf_rabitq`` (RaBitQ indexes require a Linux x86_64 server)."
+        ),
     )
     metric: str = Field(
         default="cosine",
@@ -55,7 +60,10 @@ class VectorFieldSpec(BaseModel):
         default=None,
         description=(
             "Index-specific tuning parameters. HNSW: ``m``, ``ef_construction``. "
-            "IVF: ``n_list``, ``n_iters``. Flat: none."
+            "IVF: ``n_list``, ``n_iters``, ``use_soar``. All of hnsw/flat/ivf also accept "
+            "``quantize_type`` (``fp16``/``int8``/``int4``) and ``enable_rotate`` (bool). "
+            "hnsw_rabitq: ``m``, ``ef_construction``, ``total_bits``, ``num_clusters``, "
+            "``sample_count``. ivf_rabitq: ``n_list``, ``total_bits``, ``sample_count``."
         ),
     )
 
@@ -118,7 +126,7 @@ class CreateCollectionRequest(BaseModel):
     """Request body for creating a new collection."""
 
     name: str = Field(
-        description="Collection name; matches ``^[A-Za-z0-9_-]{1,128}$``.",
+        description="Collection name; matches ``^[A-Za-z0-9_-]{3,64}$``.",
     )
     vectors: list[VectorFieldSpec] = Field(
         min_length=1,
@@ -143,8 +151,8 @@ class CreateCollectionRequest(BaseModel):
         """Reject names that are not filesystem/URL-safe."""
         if not _NAME_PATTERN.match(value):
             raise ValueError(
-                "name must match ^[A-Za-z0-9_-]{1,128}$ "
-                "(letters, digits, underscore, hyphen; 1-128 chars)"
+                "name must match ^[A-Za-z0-9_-]{3,64}$ "
+                "(letters, digits, underscore, hyphen; 3-64 chars)"
             )
         return value
 

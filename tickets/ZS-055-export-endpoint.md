@@ -4,9 +4,10 @@ title: Streaming NDJSON export endpoint
 spec: SPEC-013
 type: feature
 priority: P1
-status: todo
+status: done
 release: v0.2.0
 created: 2026-09-15
+closed: 2026-09-19
 ---
 
 # ZS-055: Streaming NDJSON export endpoint
@@ -21,21 +22,21 @@ error line for failures after streaming starts.
 
 ## Acceptance criteria
 
-- [ ] The route streams every document as `application/x-ndjson` in `DocIn` shape
+- [x] The route streams every document as `application/x-ndjson` in `DocIn` shape
       (`id`, `vectors`, `fields`; no `score`), and the output re-imports through
       `/docs/insert` unchanged.
-- [ ] `include_vector` (default `true`) and repeatable `output_fields` shape each
+- [x] `include_vector` (default `true`) and repeatable `output_fields` shape each
       line; an unknown field returns `400` before any body is sent; a missing
       collection returns `404`.
-- [ ] Empty collections return an empty body; exports larger than one batch
+- [x] Empty collections return an empty body; exports larger than one batch
       (`EXPORT_BATCH_SIZE = 500`) are complete.
-- [ ] A write issued mid-export neither waits for the export nor appears in it.
-- [ ] `drop()` and `close()` call `close_cursors()` under the exclusive lock; the
+- [x] A write issued mid-export neither waits for the export nor appears in it.
+- [x] `drop()` and `close()` call `close_cursors()` under the exclusive lock; the
       interrupted stream fails with `CollectionUnavailableError` and ends with an
       error-envelope line.
-- [ ] No cursor stays registered after a stream finishes, fails, or is cut off by
+- [x] No cursor stays registered after a stream finishes, fails, or is cut off by
       drop/close.
-- [ ] The route appears in `docs/API.md`, the README route table,
+- [x] The route appears in `docs/API.md`, the README route table,
       `docs/ARCHITECTURE.md`, `CLAUDE.md`, and `CHANGELOG.md`.
 
 ## Notes
@@ -51,3 +52,12 @@ error line for failures after streaming starts.
 - Tests: `tests/integration/test_vectors_api.py` for the HTTP behaviour, and
   `tests/unit/test_manager.py` for snapshot isolation, lock release between batches,
   and drop/close mid-stream.
+
+## Resolution
+
+Added `open_export`/`DocExport` in the adapter, `Cursor`, `stream()`, and
+`close_cursors()` in `manager.py` (called from `drop()` and `close()`), and the
+`/export` route in `api/vectors.py`, with integration and unit tests. The API
+reference, README route row, architecture note on export cursors, `CLAUDE.md`
+invariant, and CHANGELOG entry shipped in the same change. A cursor left open when
+the client disconnects mid-stream was found afterwards and fixed in ZS-065.

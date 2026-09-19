@@ -73,8 +73,8 @@ def _recall_pass(
             filter=point.filter,
             include_vector=point.include_vector,
         )
-        # Skip empty ids: zvec 0.5.0's mmap forward store can fail to resolve a
-        # few freshly-optimized docs and return "" (see CollectionSpec.enable_mmap).
+        # Skip empty ids defensively: zvec 0.5.x's mmap forward store could fail to
+        # resolve a few freshly-optimized docs and return "" (fixed in 0.7.0).
         retrieved.append([int(x) for x in out.ids if x])
     return recall_at_k(retrieved, ground_truth[:n], recall_k)
 

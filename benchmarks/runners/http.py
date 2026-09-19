@@ -33,7 +33,7 @@ from typing import IO
 import httpx
 import numpy as np
 
-from benchmarks.runners.base import SearchOutcome
+from benchmarks.runners.base import SearchOutcome, server_query_params
 from benchmarks.spec import CollectionSpec
 
 __all__ = ["HttpRunner"]
@@ -178,7 +178,7 @@ class HttpRunner:
     ) -> SearchOutcome:
         """Run one query and report the hit ids plus JSON payload byte counts."""
         assert self._client is not None and self._spec is not None
-        params: dict[str, int] | None = {"ef": ef} if ef is not None else None
+        params = server_query_params(self._spec.index, ef=ef, nprobe=nprobe)
         body = {
             "queries": [
                 {

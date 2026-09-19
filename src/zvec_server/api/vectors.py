@@ -2,14 +2,23 @@
 
 from __future__ import annotations
 
+import json
+from collections.abc import AsyncGenerator
 from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Depends, Query
+from fastapi.responses import StreamingResponse
+from starlette.types import Receive, Scope, Send
 
 from zvec_server.adapter import operations
 from zvec_server.deps import get_manager
-from zvec_server.errors import DocumentNotFoundError
-from zvec_server.models.search import SearchRequest, SearchResponse
+from zvec_server.errors import DocumentNotFoundError, ZvecServerError, build_error_payload
+from zvec_server.models.search import (
+    GroupSearchRequest,
+    GroupSearchResponse,
+    SearchRequest,
+    SearchResponse,
+)
 from zvec_server.models.vectors import (
     DeleteRequest,
     DeleteResponse,
@@ -24,6 +33,9 @@ if TYPE_CHECKING:
     from zvec_server.manager import CollectionManager
 
 router = APIRouter(prefix="/collections/{name}", tags=["documents"])
+
+# Documents read per lock acquisition while exporting.
+EXPORT_BATCH_SIZE = 500
 
 
 @router.post("/docs/insert", response_model=WriteResponse, summary="Insert documents")
@@ -111,3 +123,93 @@ async def search(
     """Run one or more nearest-neighbour queries with an optional filter."""
     managed = manager.get(name)
     return await managed.read(lambda c: operations.search(c, body))
+
+
+@router.post(
+    "/search/group-by",
+    response_model=GroupSearchResponse,
+    summary="Vector search grouped by a scalar field",
+)
+async def group_search(
+    name: str,
+    body: GroupSearchRequest,
+    manager: CollectionManager = Depends(get_manager),
+) -> GroupSearchResponse:
+    """Return the best hits per group, e.g. the top chunks from each top document."""
+    managed = manager.get(name)
+    return await managed.read(lambda c: operations.group_search(c, body))
+
+
+def _ndjson_lines(batch: list[DocOut]) -> str:
+    # Each line is shaped like a DocIn (no score), so an export can be fed
+    # straight back into /docs/insert.
+    return "".join(
+        doc.model_dump_json(exclude={"score"}, exclude_none=True) + "\n" for doc in batch
+    )
+
+
+async def _ndjson_stream(
+    first: list[DocOut], batches: AsyncGenerator[list[DocOut], None]
+) -> AsyncGenerator[str, None]:
+    try:
+        if first:
+            yield _ndjson_lines(first)
+        async for batch in batches:
+            yield _ndjson_lines(batch)
+    except ZvecServerError as exc:
+        # Headers are already sent, so report the failure in-band as a final line.
+        yield json.dumps(build_error_payload(exc.error_code, exc.message, exc.details)) + "\n"
+    finally:
+        await batches.aclose()  # releases the export cursor
+
+
+class _ClosingStreamingResponse(StreamingResponse):
+    """A StreamingResponse that always closes its body iterator.
+
+    Starlette abandons the iterator when the client disconnects, leaving it to
+    the garbage collector; an export's iterator holds a Zvec snapshot cursor, so
+    close it deterministically instead.
+    """
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        try:
+            await super().__call__(scope, receive, send)
+        finally:
+            aclose = getattr(self.body_iterator, "aclose", None)
+            if aclose is not None:
+                await aclose()
+
+
+@router.get(
+    "/export",
+    response_class=StreamingResponse,
+    summary="Export every document as NDJSON",
+    responses={
+        200: {
+            "content": {"application/x-ndjson": {}},
+            "description": "One JSON document per line, in DocIn shape.",
+        }
+    },
+)
+async def export_docs(
+    name: str,
+    include_vector: bool = True,
+    output_fields: list[str] | None = Query(default=None),
+    manager: CollectionManager = Depends(get_manager),
+) -> StreamingResponse:
+    """Stream a consistent snapshot of every document, one JSON object per line.
+
+    Writes made after the export starts are not included. If the export is cut
+    short (e.g. the collection is dropped), the last line is an error envelope
+    ``{"error": {...}}`` rather than a document.
+    """
+    managed = manager.get(name)
+    batches = managed.stream(
+        lambda c: operations.open_export(c, output_fields, include_vector), EXPORT_BATCH_SIZE
+    )
+    # Read the first batch before responding so bad input (e.g. an unknown
+    # output field) is a normal JSON error rather than a broken stream.
+    first: list[DocOut] = await anext(batches, [])
+    return _ClosingStreamingResponse(
+        _ndjson_stream(first, batches), media_type="application/x-ndjson"
+    )

@@ -4,9 +4,10 @@ title: quant subcommand to sweep quantization variants
 spec: SPEC-014
 type: feature
 priority: P2
-status: todo
+status: done
 release: v0.2.0
 created: 2026-09-16
+closed: 2026-09-19
 ---
 
 # ZS-059: quant subcommand to sweep quantization variants
@@ -21,16 +22,16 @@ docs.
 
 ## Acceptance criteria
 
-- [ ] `VARIANTS` maps each label to `(quantize_type, enable_rotate)`, with `fp32`
+- [x] `VARIANTS` maps each label to `(quantize_type, enable_rotate)`, with `fp32`
       as `(None, False)`.
-- [ ] `--variants` selects a subset; an unknown label exits with the valid list.
-- [ ] Each variant uses a fresh temporary data dir that is removed afterwards, and
+- [x] `--variants` selects a subset; an unknown label exits with the valid list.
+- [x] Each variant uses a fresh temporary data dir that is removed afterwards, and
       records disk MB, optimize seconds, and peak RSS from ingest.
-- [ ] The full scenario grid is measured per variant with the existing harness, and
+- [x] The full scenario grid is measured per variant with the existing harness, and
       Δrecall is computed against the `fp32` row for the same grid cell.
-- [ ] Results are written as `quant-<scenario>-<tier>-<timestamp>.json` plus a
+- [x] Results are written as `quant-<scenario>-<tier>-<timestamp>.json` plus a
       Markdown table, and the table is printed.
-- [ ] Unit tests cover `VARIANTS` and the Δrecall column of `_table()`.
+- [x] Unit tests cover `VARIANTS` and the Δrecall column of `_table()`.
 
 ## Notes
 
@@ -42,3 +43,10 @@ docs.
 - Default to the `engine` tier; RSS there includes the benchmark process and its
   dataset, so document using `--tier http` when server RSS is the question.
 - Measure disk after ingest + optimize, before teardown.
+
+## Resolution
+
+Added `benchmarks/quant.py` (`VARIANTS`, `_table`, `run_quant`), the `quant`
+subparser with `--scenario`, `--tier`, `--variants`, `--hdf5`, `--out`,
+`--query-threads`, `--mmap`, and `--measure-seconds`, unit tests, and a README
+section with example invocations.
