@@ -22,7 +22,13 @@ from zvec_server.errors import (
     ZvecOperationError,
     ZvecServerError,
 )
-from zvec_server.models.search import SearchRequest, SearchResponse
+from zvec_server.models.search import (
+    GroupOut,
+    GroupSearchRequest,
+    GroupSearchResponse,
+    SearchRequest,
+    SearchResponse,
+)
 from zvec_server.models.vectors import (
     DeleteRequest,
     DeleteResponse,
@@ -32,7 +38,7 @@ from zvec_server.models.vectors import (
     WriteResponse,
 )
 
-__all__ = ["delete", "fetch", "insert", "search"]
+__all__ = ["delete", "fetch", "group_search", "insert", "search"]
 
 WriteMode = Literal["insert", "upsert", "update"]
 
@@ -168,3 +174,52 @@ def search(collection: zvec.Collection, req: SearchRequest) -> SearchResponse:
 
     results = [doc_mapper.from_zvec_doc(hit, include_vector=req.include_vector) for hit in hits]
     return SearchResponse(results=results)
+
+
+def group_search(collection: zvec.Collection, req: GroupSearchRequest) -> GroupSearchResponse:
+    """Run one nearest-neighbour query and group the hits by a scalar field.
+
+    Raises:
+        InvalidArgumentError: If the query, filter, or ``group_by`` field is invalid.
+        ZvecOperationError: For any other engine failure.
+    """
+    # Zvec only rejects an unknown group_by field when there is data to search.
+    scalar_fields = {field.name for field in collection.schema.fields}
+    if req.group_by not in scalar_fields:
+        raise InvalidArgumentError(
+            f"Unknown group_by field {req.group_by!r}",
+            {"group_by": req.group_by, "valid": sorted(scalar_fields)},
+        )
+    (query,) = query_mapper.build_queries([req.query], query_mapper.vector_index_types(collection))
+    try:
+        groups = collection.group_by_query(
+            query,
+            req.group_by,
+            group_count=req.group_count,
+            topk_per_group=req.topk_per_group,
+            filter=req.filter,
+            include_vector=req.include_vector,
+            output_fields=req.output_fields,
+        )
+    except ZvecServerError:
+        raise
+    except ValueError as exc:
+        raise InvalidArgumentError(
+            f"Invalid group-by search request: {exc}",
+            {"group_by": req.group_by, "filter": req.filter},
+        ) from exc
+    except Exception as exc:
+        raise ZvecOperationError(f"Failed to run group-by search: {exc}") from exc
+
+    return GroupSearchResponse(
+        groups=[
+            GroupOut(
+                value=str(group.group_by_value),
+                results=[
+                    doc_mapper.from_zvec_doc(doc, include_vector=req.include_vector)
+                    for doc in group.docs
+                ],
+            )
+            for group in groups
+        ]
+    )

@@ -170,6 +170,7 @@ All document routes are under `/collections/{name}`.
 | POST   | `/collections/{name}/docs/fetch`      | Fetch documents by ids. Body: `FetchRequest`.          |
 | GET    | `/collections/{name}/docs/{doc_id}`   | Fetch one document by id (404 if missing). Query: `include_vector`, `output_fields`. |
 | POST   | `/collections/{name}/search`          | Vector similarity search. Body: `SearchRequest`.       |
+| POST   | `/collections/{name}/search/group-by` | Search grouped by a scalar field (top hits per group). |
 
 > **Filters use Zvec's SQL-like syntax**, e.g. `category = 'tech' AND year > 2020`.
 > Use single `=` (not `==`), single-quote string literals, and operators

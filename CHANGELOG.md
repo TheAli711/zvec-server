@@ -14,6 +14,8 @@ and this project adheres to
   `params.quantize_type` (`fp16` / `int8` / `int4`) and `params.enable_rotate`.
 - `hnsw_rabitq` and `ivf_rabitq` index types (RaBitQ quantization; Linux
   x86_64 servers only — other platforms return `422`).
+- Group-by search: `POST /collections/{name}/search/group-by` returns the best
+  hits per value of a scalar field (e.g. top chunks per document).
 - Search `params` for every index type: `ef`, `radius`, `is_linear`,
   `is_using_refiner` (hnsw / hnsw_rabitq), `nprobe` (ivf), plus `scale_factor`
   (ivf_rabitq). Previously only HNSW `ef` was honored.

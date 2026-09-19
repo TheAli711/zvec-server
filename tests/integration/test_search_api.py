@@ -242,3 +242,89 @@ def test_search_params_on_unknown_field_return_400(
         json={"queries": [{"field": "nope", "vector": [0.1] * 4, "params": {"ef": 8}}]},
     )
     assert response.status_code == 400, response.text
+
+
+def test_group_by_search(
+    client: TestClient, created_collection: str, sample_docs: list[dict[str, Any]]
+) -> None:
+    _seed(client, created_collection, sample_docs)
+    response = client.post(
+        f"/collections/{created_collection}/search/group-by",
+        json={
+            "query": {"field": "embedding", "vector": [0.1, 0.2, 0.3, 0.4]},
+            "group_by": "category",
+            "group_count": 5,
+            "topk_per_group": 1,
+            "output_fields": ["category"],
+        },
+    )
+    assert response.status_code == 200, response.text
+    groups = response.json()["groups"]
+    assert sorted(g["value"] for g in groups) == ["news", "tech"]
+    for group in groups:
+        assert len(group["results"]) == 1
+        assert group["results"][0]["fields"]["category"] == group["value"]
+    tech = next(g for g in groups if g["value"] == "tech")
+    assert tech["results"][0]["id"] == "a"
+
+
+def test_group_by_search_with_filter(
+    client: TestClient, created_collection: str, sample_docs: list[dict[str, Any]]
+) -> None:
+    _seed(client, created_collection, sample_docs)
+    response = client.post(
+        f"/collections/{created_collection}/search/group-by",
+        json={
+            "query": {"field": "embedding", "vector": [0.1, 0.2, 0.3, 0.4]},
+            "group_by": "category",
+            "filter": "year > 2020",
+        },
+    )
+    assert response.status_code == 200, response.text
+    groups = response.json()["groups"]
+    assert [g["value"] for g in groups] == ["tech"]
+    assert sorted(d["id"] for d in groups[0]["results"]) == ["a", "c"]
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"group_by": "nope"},
+        {"filter": "year == = 1"},
+        {"query": {"field": "embedding", "vector": [0.1, 0.2, 0.3, 0.4], "params": {"nprobe": 2}}},
+    ],
+)
+def test_group_by_search_bad_request_returns_400(
+    client: TestClient,
+    created_collection: str,
+    sample_docs: list[dict[str, Any]],
+    overrides: dict[str, Any],
+) -> None:
+    # Zvec only validates group_by / filter when there is data to search.
+    _seed(client, created_collection, sample_docs)
+    body = {
+        "query": {"field": "embedding", "vector": [0.1, 0.2, 0.3, 0.4]},
+        "group_by": "category",
+        **overrides,
+    }
+    response = client.post(f"/collections/{created_collection}/search/group-by", json=body)
+    assert response.status_code == 400, response.text
+
+
+def test_group_by_unknown_field_on_empty_collection_returns_400(
+    client: TestClient, created_collection: str
+) -> None:
+    response = client.post(
+        f"/collections/{created_collection}/search/group-by",
+        json={"query": {"field": "embedding", "vector": [0.1] * 4}, "group_by": "nope"},
+    )
+    assert response.status_code == 400, response.text
+    assert response.json()["error"]["details"]["valid"] == ["category", "year"]
+
+
+def test_group_by_search_missing_collection_returns_404(client: TestClient) -> None:
+    response = client.post(
+        "/collections/nope_col/search/group-by",
+        json={"query": {"field": "embedding", "vector": [0.1] * 4}, "group_by": "category"},
+    )
+    assert response.status_code == 404

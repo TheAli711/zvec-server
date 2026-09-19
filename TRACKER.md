@@ -5,7 +5,7 @@
 Specs, tickets, and how they flow into each other are described in
 [specs/README.md](specs/README.md).
 
-**14 specs · 62 tickets** — 0 in-progress · 12 todo · 0 backlog · 50 done · 0 wontfix
+**14 specs · 62 tickets** — 0 in-progress · 11 todo · 0 backlog · 51 done · 0 wontfix
 
 ## Board
 
@@ -13,12 +13,11 @@ Specs, tickets, and how they flow into each other are described in
 
 _None._
 
-### Todo (12)
+### Todo (11)
 
 | Ticket | Title | Spec | Type | Priority | Release |
 | --- | --- | --- | --- | --- | --- |
 | [ZS-051](tickets/ZS-051-index-options-docs.md) | Document quantization, RaBitQ, and search params | [SPEC-011](specs/SPEC-011-index-and-search-options.md) | docs | P1 | v0.2.0 |
-| [ZS-052](tickets/ZS-052-group-by-endpoint.md) | Group-by search endpoint | [SPEC-012](specs/SPEC-012-group-by-search.md) | feature | P1 | v0.2.0 |
 | [ZS-054](tickets/ZS-054-group-by-docs.md) | Document group-by search | [SPEC-012](specs/SPEC-012-group-by-search.md) | docs | P1 | v0.2.0 |
 | [ZS-055](tickets/ZS-055-export-endpoint.md) | Streaming NDJSON export endpoint | [SPEC-013](specs/SPEC-013-ndjson-export.md) | feature | P1 | v0.2.0 |
 | [ZS-057](tickets/ZS-057-export-docs.md) | Document streaming export | [SPEC-013](specs/SPEC-013-ndjson-export.md) | docs | P1 | v0.2.0 |
@@ -34,10 +33,10 @@ _None._
 
 _None._
 
-### Done (50)
+### Done (51)
 
 <details>
-<summary>v0.2.0 — 11 tickets</summary>
+<summary>v0.2.0 — 12 tickets</summary>
 
 | Ticket | Title | Spec | Type | Priority | Release |
 | --- | --- | --- | --- | --- | --- |
@@ -51,6 +50,7 @@ _None._
 | [ZS-047](tickets/ZS-047-strict-index-params.md) | Reject unknown vector index params instead of ignoring them | [SPEC-011](specs/SPEC-011-index-and-search-options.md) | bug | P1 | v0.2.0 |
 | [ZS-048](tickets/ZS-048-rabitq-indexes.md) | hnsw_rabitq and ivf_rabitq index types | [SPEC-011](specs/SPEC-011-index-and-search-options.md) | feature | P1 | v0.2.0 |
 | [ZS-049](tickets/ZS-049-per-index-search-params.md) | Search params for every index type | [SPEC-011](specs/SPEC-011-index-and-search-options.md) | feature | P1 | v0.2.0 |
+| [ZS-052](tickets/ZS-052-group-by-endpoint.md) | Group-by search endpoint | [SPEC-012](specs/SPEC-012-group-by-search.md) | feature | P1 | v0.2.0 |
 | [ZS-062](tickets/ZS-062-collection-name-length.md) | Collection names outside 3-64 characters are misreported as 409 | [SPEC-002](specs/SPEC-002-collection-management.md) | bug | P1 | v0.2.0 |
 
 </details>
@@ -133,6 +133,6 @@ _None._
 | [SPEC-009](specs/SPEC-009-collection-recovery.md) | Self-healing recovery for unavailable collections | implemented | v0.1.2 | 3/3 |
 | [SPEC-010](specs/SPEC-010-zvec-0-7-upgrade.md) | Upgrade to Zvec 0.7.0 | implemented | v0.2.0 | 4/4 |
 | [SPEC-011](specs/SPEC-011-index-and-search-options.md) | Index quantization, RaBitQ indexes, and per-index search params | accepted | v0.2.0 | 5/7 |
-| [SPEC-012](specs/SPEC-012-group-by-search.md) | Group-by search | accepted | v0.2.0 | 0/3 |
+| [SPEC-012](specs/SPEC-012-group-by-search.md) | Group-by search | accepted | v0.2.0 | 1/3 |
 | [SPEC-013](specs/SPEC-013-ndjson-export.md) | Streaming NDJSON export | accepted | v0.2.0 | 0/3 |
 | [SPEC-014](specs/SPEC-014-quantization-benchmarks.md) | Quantization and optimize-load benchmarks | accepted | v0.2.0 | 0/4 |
