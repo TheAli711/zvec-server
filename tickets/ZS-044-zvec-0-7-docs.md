@@ -4,9 +4,10 @@ title: Document the Zvec 0.7.0 upgrade, explicit close, and optimize locking
 spec: SPEC-010
 type: docs
 priority: P1
-status: in-progress
+status: done
 release: v0.2.0
 created: 2026-09-09
+closed: 2026-09-19
 ---
 
 # ZS-044: Document the Zvec 0.7.0 upgrade, explicit close, and optimize locking
@@ -20,15 +21,15 @@ takes the exclusive lock, which will no longer be true.
 
 ## Acceptance criteria
 
-- [ ] `CHANGELOG.md` `[Unreleased]` *Changed* covers the Zvec 0.7.0 requirement and
+- [x] `CHANGELOG.md` `[Unreleased]` *Changed* covers the Zvec 0.7.0 requirement and
       the upstream fixes it brings, non-blocking optimize with serialized
       concurrent calls, and explicit close on shutdown for rolling restarts.
-- [ ] `CHANGELOG.md` *Fixed* records the mmap empty-id bug (ZS-040) with the
+- [x] `CHANGELOG.md` *Fixed* records the mmap empty-id bug (ZS-040) with the
       `Failed to find target chunk` symptom and `ZVEC_SERVER_ENABLE_MMAP`.
-- [ ] The `CLAUDE.md` concurrency invariant lists `maintain()`, the maintenance
+- [x] The `CLAUDE.md` concurrency invariant lists `maintain()`, the maintenance
       mutex, and explicit close under the exclusive lock. Optimize is removed from
       the exclusive-lock list.
-- [ ] The lock section of `docs/ARCHITECTURE.md` matches, with a new
+- [x] The lock section of `docs/ARCHITECTURE.md` matches, with a new
       "Explicit close on shutdown" bullet.
 
 ## Notes
@@ -39,3 +40,10 @@ takes the exclusive lock, which will no longer be true.
   same.
 - Keep the wording about when reads are served during optimize tied to "Zvec >=
   0.7", so a future downgrade or regression is easy to spot.
+
+## Resolution
+
+Added *Changed* and *Fixed* entries under `[Unreleased]` in `CHANGELOG.md`, and
+rewrote the concurrency invariant in `CLAUDE.md` and the lock section of
+`docs/ARCHITECTURE.md` to describe `maintain()`, the maintenance mutex, and
+explicit close. As planned, README and API docs were not changed.

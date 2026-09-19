@@ -8,6 +8,25 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- Requires **Zvec 0.7.0** (was 0.5.0). Picks up upstream fixes for crash
+  recovery, filter validation, query validation (`topk`, field names), and
+  mmap storage. Thread-pool CPU pinning is now off by default in Zvec, which
+  suits containers.
+- `POST /collections/{name}/optimize` no longer blocks reads: searches and
+  fetches on the collection continue while it runs (writes still wait).
+  Concurrent optimize calls on the same collection are serialized.
+- Shutdown now explicitly closes every collection, releasing Zvec's on-disk
+  lock immediately so a replacement instance in a rolling restart can open the
+  collections without waiting.
+
+### Fixed
+
+- With `ZVEC_SERVER_ENABLE_MMAP=true` (the default), a few freshly-optimized
+  documents could come back from search with empty ids
+  (`Failed to find target chunk`). Fixed by the Zvec 0.7.0 upgrade.
+
 ## [0.1.2] - 2026-07-08
 
 ### Added

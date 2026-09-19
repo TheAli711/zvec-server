@@ -1,7 +1,7 @@
 ---
 id: SPEC-010
 title: Upgrade to Zvec 0.7.0
-status: accepted
+status: implemented
 created: 2026-09-08
 release: v0.2.0
 ---
