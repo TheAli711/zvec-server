@@ -328,3 +328,45 @@ def test_group_by_search_missing_collection_returns_404(client: TestClient) -> N
         json={"query": {"field": "embedding", "vector": [0.1] * 4}, "group_by": "category"},
     )
     assert response.status_code == 404
+
+
+def test_new_index_params_survive_restart(settings: Settings) -> None:
+    """Quantized HNSW and SOAR IVF collections reopen with their params intact,
+    and per-index search params still apply after the reload."""
+    specs = {
+        "quant_hnsw": {"index": "hnsw", "params": {"quantize_type": "int4", "enable_rotate": True}},
+        "soar_ivf": {"index": "ivf", "params": {"n_list": 4, "use_soar": True}},
+    }
+    rng = random.Random(3)
+    docs = [
+        {"id": str(i), "vectors": {"embedding": [rng.random() for _ in range(16)]}}
+        for i in range(300)
+    ]
+    with TestClient(create_app(settings)) as first:
+        for name, spec in specs.items():
+            body = {"name": name, "vectors": [{"name": "embedding", "dim": 16, **spec}]}
+            assert first.post("/collections", json=body).status_code == 201
+            _seed(first, name, docs)
+            assert first.post(f"/collections/{name}/optimize").status_code == 200
+        before = {n: first.get(f"/collections/{n}").json()["vectors"] for n in specs}
+
+    with TestClient(create_app(settings)) as second:
+        for name in specs:
+            info = second.get(f"/collections/{name}").json()
+            assert info["available"] is True
+            assert info["vectors"] == before[name]
+            assert info["stats"]["doc_count"] == 300
+        index_param = before["quant_hnsw"][0]["index_param"]
+        assert (index_param["quantize_type"], index_param["quantizer_param"]) == (
+            "INT4",
+            {"enable_rotate": True},
+        )
+        assert before["soar_ivf"][0]["index_param"]["use_soar"] is True
+
+        for name, params in [("quant_hnsw", {"ef": 64}), ("soar_ivf", {"nprobe": 4})]:
+            response = second.post(
+                f"/collections/{name}/search",
+                json={"queries": [{"field": "embedding", "id": "7", "params": params}], "topk": 3},
+            )
+            assert response.status_code == 200, response.text
+            assert len(response.json()["results"]) == 3
