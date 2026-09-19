@@ -582,3 +582,46 @@ brute-force scan; `radius` limits hits to a distance threshold.
 
 > Results are a flat list of hits. For a single query they are ordered by score.
 > A malformed filter returns `400` (`invalid_argument`).
+
+### `POST /collections/{name}/search/group-by`
+
+Run **one** query, bucket hits by the value of a scalar field, and return the
+best `topk_per_group` hits from each of the best `group_count` groups. Typical
+RAG use: chunks stored with a `doc_id` field, grouped so one long document
+can't crowd every other document out of the results.
+
+| Field            | Type                    | Default | Notes                                      |
+| ---------------- | ----------------------- | ------- | ------------------------------------------ |
+| `query`          | `QuerySpec`             | —       | Same shape as a `search` query.            |
+| `group_by`       | string                  | —       | Scalar field defining the groups.          |
+| `group_count`    | int (1–1000)            | `10`    | Maximum groups returned.                   |
+| `topk_per_group` | int (1–1000)            | `3`     | Maximum hits per group.                    |
+| `filter`         | string \| null          | `null`  | SQL-like scalar filter.                    |
+| `include_vector` | bool                    | `false` | Include vectors in hits.                   |
+| `output_fields`  | array of string \| null | `null`  | Restrict returned scalar fields.           |
+
+**Example request**
+
+```json
+{
+  "query": { "field": "embedding", "vector": [0.12, 0.22, 0.29, 0.41] },
+  "group_by": "doc_id",
+  "group_count": 5,
+  "topk_per_group": 2
+}
+```
+
+**Response 200** (`GroupSearchResponse`)
+
+```json
+{
+  "groups": [
+    { "value": "doc-7", "results": [{ "id": "doc-7#3", "score": 0.011, "fields": { "doc_id": "doc-7" } }] },
+    { "value": "doc-2", "results": [{ "id": "doc-2#0", "score": 0.019, "fields": { "doc_id": "doc-2" } }] }
+  ]
+}
+```
+
+> Group `value`s are always strings (an `INT64` field's `3` comes back as
+> `"3"`), and documents with a null `group_by` value form a group with value
+> `""`. An unknown `group_by` field or a malformed filter returns `400`.

@@ -9,7 +9,12 @@ from fastapi import APIRouter, Depends, Query
 from zvec_server.adapter import operations
 from zvec_server.deps import get_manager
 from zvec_server.errors import DocumentNotFoundError
-from zvec_server.models.search import SearchRequest, SearchResponse
+from zvec_server.models.search import (
+    GroupSearchRequest,
+    GroupSearchResponse,
+    SearchRequest,
+    SearchResponse,
+)
 from zvec_server.models.vectors import (
     DeleteRequest,
     DeleteResponse,
@@ -111,3 +116,18 @@ async def search(
     """Run one or more nearest-neighbour queries with an optional filter."""
     managed = manager.get(name)
     return await managed.read(lambda c: operations.search(c, body))
+
+
+@router.post(
+    "/search/group-by",
+    response_model=GroupSearchResponse,
+    summary="Vector search grouped by a scalar field",
+)
+async def group_search(
+    name: str,
+    body: GroupSearchRequest,
+    manager: CollectionManager = Depends(get_manager),
+) -> GroupSearchResponse:
+    """Return the best hits per group, e.g. the top chunks from each top document."""
+    managed = manager.get(name)
+    return await managed.read(lambda c: operations.group_search(c, body))
