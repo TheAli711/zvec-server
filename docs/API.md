@@ -214,7 +214,7 @@ Create a collection.
 
 | Field             | Type                     | Required | Notes                                                |
 | ----------------- | ------------------------ | -------- | ---------------------------------------------------- |
-| `name`            | string                   | yes      | Matches `^[A-Za-z0-9_-]{1,128}$`.                    |
+| `name`            | string                   | yes      | Matches `^[A-Za-z0-9_-]{3,64}$`.                     |
 | `vectors`         | array of `VectorFieldSpec` | yes    | At least one.                                        |
 | `fields`          | array of `ScalarFieldSpec` | no     | Defaults to `[]`.                                    |
 | `options`         | object                   | no       | `{ "enable_mmap": bool }`.                           |

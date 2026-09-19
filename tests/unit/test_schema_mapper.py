@@ -215,7 +215,7 @@ def test_unknown_index_params_raise(index: str, params: dict[str, object]) -> No
 
 def test_primary_vector_info() -> None:
     req = CreateCollectionRequest(
-        name="c",
+        name="coll",
         vectors=[
             VectorFieldSpec(name="first", dim=128),
             VectorFieldSpec(name="second", dim=64),

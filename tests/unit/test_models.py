@@ -16,13 +16,13 @@ from zvec_server.models.vectors import DeleteRequest, FetchRequest, WriteRequest
 # --- CreateCollectionRequest name validation ---
 
 
-@pytest.mark.parametrize("name", ["articles", "my-col_1", "A" * 128, "x"])
+@pytest.mark.parametrize("name", ["articles", "my-col_1", "A" * 64, "abc"])
 def test_collection_name_valid(name: str) -> None:
     req = CreateCollectionRequest(name=name, vectors=[VectorFieldSpec(name="emb", dim=4)])
     assert req.name == name
 
 
-@pytest.mark.parametrize("name", ["", "has space", "bad/slash", "a" * 129, "emoji😀"])
+@pytest.mark.parametrize("name", ["", "ab", "has space", "bad/slash", "a" * 65, "emoji😀"])
 def test_collection_name_invalid(name: str) -> None:
     with pytest.raises(ValidationError):
         CreateCollectionRequest(name=name, vectors=[VectorFieldSpec(name="emb", dim=4)])
