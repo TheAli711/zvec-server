@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+import platform
+import random
+import sys
 from typing import Any
 
+import pytest
 from fastapi.testclient import TestClient
 
 from zvec_server.app import create_app
@@ -146,3 +150,32 @@ def test_bad_quantize_type_returns_422(client: TestClient, collection_body: dict
     collection_body["vectors"][0]["params"] = {"quantize_type": "int2"}
     response = client.post("/collections", json=collection_body)
     assert response.status_code == 422, response.text
+
+
+RABITQ_SUPPORTED = sys.platform == "linux" and platform.machine() in ("x86_64", "AMD64")
+
+
+@pytest.mark.parametrize("index", ["hnsw_rabitq", "ivf_rabitq"])
+def test_rabitq_collection(client: TestClient, index: str) -> None:
+    """RaBitQ works on Linux x86_64 and fails cleanly (422) everywhere else."""
+    body = {"name": "rq_col", "vectors": [{"name": "embedding", "dim": 64, "index": index}]}
+    created = client.post("/collections", json=body)
+    if not RABITQ_SUPPORTED:
+        assert created.status_code == 422, created.text
+        assert "not supported on this platform" in created.json()["error"]["message"]
+        assert client.get("/collections/rq_col").status_code == 404
+        return
+    assert created.status_code == 201, created.text
+    rng = random.Random(0)
+    docs = [
+        {"id": str(i), "vectors": {"embedding": [rng.random() for _ in range(64)]}}
+        for i in range(200)
+    ]
+    _seed(client, "rq_col", docs)
+    assert client.post("/collections/rq_col/optimize").status_code == 200
+    response = client.post(
+        "/collections/rq_col/search",
+        json={"queries": [{"field": "embedding", "id": "7"}], "topk": 5},
+    )
+    assert response.status_code == 200, response.text
+    assert len(response.json()["results"]) == 5

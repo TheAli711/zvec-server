@@ -30,7 +30,14 @@ _INDEX_PARAMS: dict[str, frozenset[str]] = {
     "hnsw": frozenset({"m", "ef_construction"}) | _QUANTIZE_PARAMS,
     "ivf": frozenset({"n_list", "n_iters", "use_soar"}) | _QUANTIZE_PARAMS,
     "flat": _QUANTIZE_PARAMS,
+    "hnsw_rabitq": frozenset(
+        {"m", "ef_construction", "total_bits", "num_clusters", "sample_count"}
+    ),
+    "ivf_rabitq": frozenset({"n_list", "total_bits", "sample_count"}),
 }
+
+# API param name -> Zvec kwarg, where they differ (kept uniform across IVF kinds).
+_KWARG_NAMES: dict[str, str] = {"ivf_rabitq.n_list": "nlist"}
 
 
 def _check_param_keys(index: str, params: dict[str, Any]) -> None:
@@ -118,6 +125,16 @@ def _build_vector_index_param(spec: VectorFieldSpec) -> Any:
         if use_soar is not None:
             kwargs["use_soar"] = use_soar
         return zvec.IVFIndexParam(**kwargs)
+
+    if index in ("hnsw_rabitq", "ivf_rabitq"):
+        # RaBitQ indexes quantize by construction; every param is an int.
+        kwargs = {"metric_type": metric}
+        for key in sorted(params):
+            value = _int_param(params, key)
+            kwargs[_KWARG_NAMES.get(f"{index}.{key}", key)] = value
+        if index == "hnsw_rabitq":
+            return zvec.HnswRabitqIndexParam(**kwargs)
+        return zvec.IvfRabitqIndexParam(**kwargs)
 
     # flat: no tuning parameters beyond the metric and quantization.
     return zvec.FlatIndexParam(metric_type=metric, **_quantize_kwargs(params))

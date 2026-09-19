@@ -87,6 +87,33 @@ def test_build_schema_flat() -> None:
     assert "m" not in index and "n_list" not in index
 
 
+def test_build_schema_rabitq_params_applied() -> None:
+    schema = schema_mapper.build_collection_schema(
+        "c",
+        [
+            VectorFieldSpec(
+                name="a",
+                dim=64,
+                index="hnsw_rabitq",
+                params={"m": 24, "total_bits": 5, "num_clusters": 8},
+            ),
+            VectorFieldSpec(
+                name="b", dim=64, index="ivf_rabitq", params={"n_list": 32, "total_bits": 4}
+            ),
+        ],
+        [],
+    )
+    vectors, _ = col_adapter.schema_to_dicts(schema)
+    hnsw, ivf = (v["index_param"] for v in vectors)
+    assert (hnsw["type"], hnsw["m"], hnsw["total_bits"], hnsw["num_clusters"]) == (
+        "HNSW_RABITQ",
+        24,
+        5,
+        8,
+    )
+    assert (ivf["type"], ivf["nlist"], ivf["total_bits"]) == ("IVF_RABITQ", 32, 4)
+
+
 @pytest.mark.parametrize("index", ["hnsw", "flat", "ivf"])
 @pytest.mark.parametrize("quantize", ["fp16", "int8", "INT4"])
 def test_build_schema_quantization(index: str, quantize: str) -> None:

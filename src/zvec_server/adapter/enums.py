@@ -45,7 +45,7 @@ SCALAR_DATA_TYPES: frozenset[str] = frozenset(
 )
 
 # Supported vector index kinds (lowercase API tokens).
-INDEX_TYPES: frozenset[str] = frozenset({"hnsw", "flat", "ivf"})
+INDEX_TYPES: frozenset[str] = frozenset({"hnsw", "flat", "ivf", "hnsw_rabitq", "ivf_rabitq"})
 
 # Vector quantization types accepted in index ``params`` (lowercase API tokens).
 # RaBitQ is exposed as its own index types rather than a quantize option.
@@ -96,7 +96,7 @@ def parse_quantize_type(name: object) -> zvec.QuantizeType:
 
 
 def validate_index_type(name: str) -> str:
-    """Validate and normalize a vector index token (``hnsw`` / ``flat`` / ``ivf``)."""
+    """Validate and normalize a vector index token (e.g. ``hnsw`` / ``flat`` / ``ivf``)."""
     key = (name or "").lower()
     if key not in INDEX_TYPES:
         raise SchemaValidationError(
