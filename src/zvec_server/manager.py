@@ -395,17 +395,37 @@ class CollectionManager:
         """Retry opening ``managed`` with exponential backoff until it succeeds."""
         delay = self._settings.collection_recovery_initial_delay_seconds
         max_delay = self._settings.collection_recovery_max_delay_seconds
-        while not managed.available:
+        while not managed.available and not managed.dropped:
             await asyncio.sleep(delay)
             reopened = await run_in_threadpool(self._open_record, managed.record)
             if reopened.available:
-                managed.collection = reopened.collection
-                logger.info(
-                    "Recovered previously unavailable collection",
-                    extra={"collection": managed.name},
-                )
+                if await run_in_threadpool(self._adopt, managed, reopened.collection):
+                    logger.info(
+                        "Recovered previously unavailable collection",
+                        extra={"collection": managed.name},
+                    )
                 return
             delay = min(delay * 2, max_delay)
+
+    @staticmethod
+    def _adopt(managed: ManagedCollection, collection: Any) -> bool:
+        """Install a reopened handle unless the collection was dropped meanwhile.
+
+        drop() cancels the recovery task from a worker thread, so the cancel can
+        land after an open already succeeded; checking ``dropped`` under the
+        exclusive lock keeps a dropped collection from being resurrected.
+        """
+        with managed.rwlock.gen_wlock():
+            if not managed.dropped:
+                managed.collection = collection
+                return True
+        try:
+            zcol.close_collection(collection)
+        except Exception:
+            logger.exception(
+                "Error closing stale reopened handle", extra={"collection": managed.name}
+            )
+        return False
 
     def list(self) -> CollectionListResponse:
         """Return a summary of every registered collection."""
