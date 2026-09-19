@@ -370,3 +370,27 @@ def test_new_index_params_survive_restart(settings: Settings) -> None:
             )
             assert response.status_code == 200, response.text
             assert len(response.json()["results"]) == 3
+
+
+def test_group_by_search_output_options(
+    client: TestClient, created_collection: str, sample_docs: list[dict[str, Any]]
+) -> None:
+    _seed(client, created_collection, sample_docs)
+    response = client.post(
+        f"/collections/{created_collection}/search/group-by",
+        json={
+            "query": {"field": "embedding", "vector": [0.1, 0.2, 0.3, 0.4]},
+            "group_by": "category",
+            "include_vector": True,
+            "output_fields": ["year"],
+        },
+    )
+    assert response.status_code == 200, response.text
+    hits = [hit for group in response.json()["groups"] for hit in group["results"]]
+    assert len(hits) == 3
+    by_id = {d["id"]: d for d in sample_docs}
+    for hit in hits:
+        assert set(hit["fields"]) == {"year"}
+        assert hit["vectors"]["embedding"] == pytest.approx(
+            by_id[hit["id"]]["vectors"]["embedding"]
+        )

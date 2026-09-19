@@ -4,9 +4,10 @@ title: Group-by honors include_vector and output_fields
 spec: SPEC-012
 type: test
 priority: P2
-status: todo
+status: done
 release: v0.2.0
 created: 2026-09-14
+closed: 2026-09-19
 ---
 
 # ZS-053: Group-by honors include_vector and output_fields
@@ -21,13 +22,13 @@ pins both options down together.
 
 ## Acceptance criteria
 
-- [ ] A group-by on `category` with `include_vector: true` and
+- [x] A group-by on `category` with `include_vector: true` and
       `output_fields: ["year"]` returns `200`.
-- [ ] Every hit across all groups has exactly `{"year"}` in `fields`, even though
+- [x] Every hit across all groups has exactly `{"year"}` in `fields`, even though
       the grouping field is not requested.
-- [ ] Every hit's `vectors.embedding` matches the stored vector for its id
+- [x] Every hit's `vectors.embedding` matches the stored vector for its id
       (approximate float comparison).
-- [ ] All seeded documents are accounted for across the groups (three hits for the
+- [x] All seeded documents are accounted for across the groups (three hits for the
       three sample documents with the default `topk_per_group`).
 
 ## Notes
@@ -38,3 +39,10 @@ pins both options down together.
   bit-for-bit.
 - If Zvec needs the group field in the output to group, this test is where it shows
   up; the fix would belong in the adapter, not the test.
+
+## Resolution
+
+Added `test_group_by_search_output_options`, which seeds the sample collection, groups
+by `category` with vectors on and `output_fields: ["year"]`, and checks the field set
+and vectors of all three hits. It passed against the ZS-052 implementation with no
+code changes.
