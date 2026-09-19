@@ -55,6 +55,8 @@ compact summary plus the **overhead-decomposition** table are printed to stdout.
 | `--measure-seconds <s>` | per-scenario | override the per-cell measurement window |
 | `--query-threads <n>` | engine default | set `ZVEC_SERVER_ZVEC_QUERY_THREADS` for all tiers |
 | `--mmap` / `--no-mmap` | `--no-mmap` | memory-mapped storage (see the mmap note below) |
+| `--quantize <t>` | — | quantize the index: `fp16` \| `int8` \| `int4` |
+| `--rotate` | off | random rotation before quantizing (with `--quantize`) |
 | `--out <dir>` | `benchmarks/results` | results directory |
 
 ## Scenarios
