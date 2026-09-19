@@ -99,13 +99,13 @@ this shows up directly.
   clean engine-memory figure. For `engine`/`inproc` it is the whole benchmark
   process (it also holds the dataset in NumPy), so compare RSS *across runs of
   the same tier*, not across tiers.
-- **mmap quirk.** Zvec **0.5.0** has an mmap forward-store bug: under
-  `enable_mmap=True`, a few freshly-optimized docs fail to resolve and come back
-  with empty ids (you'll see `mmap_forward_store.cc ... Failed to find target
-  chunk` on stderr). Benchmarks therefore default to **mmap off** for clean,
-  trustworthy recall. The production server defaults to mmap on — benchmark that
-  configuration with `--mmap` (the harness tolerates the empty ids; recall will
-  dip slightly for the affected queries).
+- **mmap.** Zvec **0.5.x** had an mmap forward-store bug: under
+  `enable_mmap=True`, a few freshly-optimized docs failed to resolve and came
+  back with empty ids (`mmap_forward_store.cc ... Failed to find target chunk`
+  on stderr). It is fixed in **0.7.0** (the minimum this server now requires):
+  `--mmap` runs are clean and recall matches `--no-mmap`. Benchmarks still
+  default to **mmap off**; the production server defaults to mmap on, so use
+  `--mmap` to benchmark that configuration.
 - **Write batch size.** Zvec caps a single write at 1024 docs, so ingest batches
   are ≤ 1000.
 - **IVF tuning.** The server's query mapper only tunes HNSW `ef` today, so IVF

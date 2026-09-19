@@ -4,9 +4,10 @@ title: Search returns empty ids after optimize with mmap enabled
 spec: SPEC-004
 type: bug
 priority: P1
-status: in-progress
+status: done
 release: v0.2.0
 created: 2026-06-28
+closed: 2026-09-19
 ---
 
 # ZS-040: Search returns empty ids after optimize with mmap enabled
@@ -35,11 +36,11 @@ same results.
 
 ## Acceptance criteria
 
-- [ ] Searches after optimize with mmap enabled return no hits with empty ids.
-- [ ] `--mmap` benchmark runs match `--no-mmap` recall on the same scenario.
-- [ ] The minimum `zvec` requirement includes the upstream fix, and CI passes on
+- [x] Searches after optimize with mmap enabled return no hits with empty ids.
+- [x] `--mmap` benchmark runs match `--no-mmap` recall on the same scenario.
+- [x] The minimum `zvec` requirement includes the upstream fix, and CI passes on
       it.
-- [ ] The benchmark README's mmap caveat and the CHANGELOG reflect the fix.
+- [x] The benchmark README's mmap caveat and the CHANGELOG reflect the fix.
 
 ## Notes
 
@@ -52,3 +53,10 @@ same results.
   recall numbers stay usable (see `benchmarks/README.md`, SPEC-007).
 - Operators who hit this can set `ZVEC_SERVER_ENABLE_MMAP=false` or pass
   `options.enable_mmap: false` per collection.
+
+## Resolution
+
+Fixed upstream in Zvec 0.7.0. The ticket was scheduled under SPEC-010 and closed by
+raising the requirement to `zvec>=0.7.0` together with ZS-041. No server code
+changed. The benchmark README now says `--mmap` runs are clean and match
+`--no-mmap` recall, and the CHANGELOG lists the fix under *Fixed*.
