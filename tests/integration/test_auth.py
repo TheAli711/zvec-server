@@ -90,3 +90,32 @@ def test_full_write_flow_requires_and_accepts_key(auth_client: TestClient) -> No
 def test_auth_disabled_allows_unauthenticated_requests(client: TestClient) -> None:
     # The default `client` fixture builds an app with auth disabled.
     assert client.get("/collections").status_code == 200
+
+
+@pytest.mark.parametrize(
+    ("method", "path", "body"),
+    [
+        ("GET", "/collections/articles/export", None),
+        (
+            "POST",
+            "/collections/articles/search/group-by",
+            {"query": {"field": "e", "vector": [0.1] * 4}, "group_by": "category"},
+        ),
+    ],
+)
+def test_new_routes_require_auth(
+    auth_client: TestClient, method: str, path: str, body: dict[str, Any] | None
+) -> None:
+    created = auth_client.post(
+        "/collections",
+        json={
+            "name": "articles",
+            "vectors": [{"name": "e", "dim": 4}],
+            "fields": [{"name": "category", "dtype": "STRING"}],
+        },
+        headers=_bearer(),
+    )
+    assert created.status_code == 201, created.text
+    assert auth_client.request(method, path, json=body).status_code == 401
+    assert auth_client.request(method, path, json=body, headers=_bearer("nope")).status_code == 401
+    assert auth_client.request(method, path, json=body, headers=_bearer()).status_code == 200
