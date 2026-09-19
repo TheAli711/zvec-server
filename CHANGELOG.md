@@ -16,6 +16,8 @@ and this project adheres to
 
 ### Changed
 
+- Unknown keys in a vector field's `params` are now rejected with `422` instead
+  of being silently ignored, so a typo can't quietly build a different index.
 - Requires **Zvec 0.7.0** (was 0.5.0). Picks up upstream fixes for crash
   recovery, filter validation, query validation (`topk`, field names), and
   mmap storage. Thread-pool CPU pinning is now off by default in Zvec, which

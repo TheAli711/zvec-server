@@ -22,6 +22,27 @@ from zvec_server.models.collections import (
 __all__ = ["build_collection_schema", "primary_vector_info"]
 
 
+_QUANTIZE_PARAMS = frozenset({"quantize_type", "enable_rotate"})
+
+# Recognized ``params`` keys per index type. Anything else is rejected so a typo
+# (e.g. ``quantize`` for ``quantize_type``) can't silently build a different index.
+_INDEX_PARAMS: dict[str, frozenset[str]] = {
+    "hnsw": frozenset({"m", "ef_construction"}) | _QUANTIZE_PARAMS,
+    "ivf": frozenset({"n_list", "n_iters", "use_soar"}) | _QUANTIZE_PARAMS,
+    "flat": _QUANTIZE_PARAMS,
+}
+
+
+def _check_param_keys(index: str, params: dict[str, Any]) -> None:
+    """Reject ``params`` keys the index type does not recognize."""
+    unknown = sorted(set(params) - _INDEX_PARAMS[index])
+    if unknown:
+        raise SchemaValidationError(
+            f"Unknown parameter(s) for {index!r} index: {', '.join(unknown)}",
+            {"unknown": unknown, "valid": sorted(_INDEX_PARAMS[index])},
+        )
+
+
 def _int_param(params: dict[str, Any], key: str) -> int | None:
     """Read an optional positive-ish int parameter, validating its type."""
     if key not in params:
@@ -73,6 +94,7 @@ def _build_vector_index_param(spec: VectorFieldSpec) -> Any:
     index = enums.validate_index_type(spec.index)
     metric = enums.parse_metric_type(spec.metric)
     params = spec.params or {}
+    _check_param_keys(index, params)
 
     if index == "hnsw":
         kwargs: dict[str, Any] = {"metric_type": metric, **_quantize_kwargs(params)}

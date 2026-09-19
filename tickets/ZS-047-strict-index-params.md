@@ -4,9 +4,10 @@ title: Reject unknown vector index params instead of ignoring them
 spec: SPEC-011
 type: bug
 priority: P1
-status: todo
+status: done
 release: v0.2.0
 created: 2026-09-11
+closed: 2026-09-19
 ---
 
 # ZS-047: Reject unknown vector index params instead of ignoring them
@@ -34,15 +35,15 @@ neither key is mentioned anywhere. Expected: `422 schema_validation_error` namin
 
 ## Acceptance criteria
 
-- [ ] Each index type has an allow-list of `params` keys, checked before any index
+- [x] Each index type has an allow-list of `params` keys, checked before any index
       param object is built.
-- [ ] Unknown keys raise `SchemaValidationError` (422) with message
+- [x] Unknown keys raise `SchemaValidationError` (422) with message
       `Unknown parameter(s) for '<index>' index: ...` and details
       `{"unknown": [...], "valid": [...]}`, both sorted.
-- [ ] Cross-index keys are rejected: `n_list` on `hnsw`, `m` on `flat`,
+- [x] Cross-index keys are rejected: `n_list` on `hnsw`, `m` on `flat`,
       `ef_construction` on `ivf`, and the `quantize` typo.
-- [ ] Valid params for every index type still build unchanged.
-- [ ] The CHANGELOG records the behaviour change.
+- [x] Valid params for every index type still build unchanged.
+- [x] The CHANGELOG records the behaviour change.
 
 ## Notes
 
@@ -53,3 +54,10 @@ neither key is mentioned anywhere. Expected: `422 schema_validation_error` namin
   release with a CHANGELOG callout.
 - Search `params` have the same silent-ignore problem. That fix is part of ZS-049,
   which returns 400 instead because it is a request argument, not a schema.
+
+## Resolution
+
+Added per-index allow-lists and a key check at the top of
+`_build_vector_index_param`, so unknown keys now return 422 with the unknown and
+valid keys in the details. Parametrized unit tests cover typos and cross-index keys.
+The change is listed under *Changed* in the CHANGELOG.
