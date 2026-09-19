@@ -537,7 +537,19 @@ an existing document `id` (exactly one per query).
 | `field`  | string                | Vector field to search.                |
 | `vector` | list of float \| null | Query vector.                          |
 | `id`     | string \| null        | Search by an existing document's vector. |
-| `params` | object \| null        | Query tuning, e.g. `{ "ef": 64 }` (hnsw). |
+| `params` | object \| null        | Query tuning for the field's index (below). |
+
+Query `params` by index type (unknown keys return `400`):
+
+| Index                  | Params                                                        |
+| ---------------------- | ------------------------------------------------------------- |
+| `hnsw`, `hnsw_rabitq`  | `ef` (int), `radius` (float), `is_linear` (bool), `is_using_refiner` (bool) |
+| `ivf`                  | `nprobe` (int)                                                |
+| `ivf_rabitq`           | `nprobe`, `radius`, `is_linear`, `is_using_refiner`, `scale_factor` (float) |
+| `flat`                 | none                                                          |
+
+`ef` / `nprobe` trade speed for recall; `is_linear: true` forces an exact
+brute-force scan; `radius` limits hits to a distance threshold.
 
 **Example request**
 

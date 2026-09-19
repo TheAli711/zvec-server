@@ -108,9 +108,8 @@ this shows up directly.
   `--mmap` to benchmark that configuration.
 - **Write batch size.** Zvec caps a single write at 1024 docs, so ingest batches
   are ≤ 1000.
-- **IVF tuning.** The server's query mapper only tunes HNSW `ef` today, so IVF
-  `nprobe` sweeps take effect on the `engine` tier only. The shipped scenarios
-  use HNSW.
+- **IVF tuning.** `nprobe` sweeps apply on every tier (the server honors IVF
+  `nprobe`). The shipped scenarios use HNSW.
 - **Reproducibility.** Each result JSON captures CPU/RAM/OS, Python + Zvec
   versions, the git commit, and the thread/mmap config.
 

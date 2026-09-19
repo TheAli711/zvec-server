@@ -147,7 +147,7 @@ def search(collection: zvec.Collection, req: SearchRequest) -> SearchResponse:
         InvalidArgumentError: If a filter or query is malformed.
         ZvecOperationError: For any other engine failure.
     """
-    queries = query_mapper.build_queries(req.queries)
+    queries = query_mapper.build_queries(req.queries, query_mapper.vector_index_types(collection))
     try:
         hits = collection.query(
             queries=queries,
