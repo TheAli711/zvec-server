@@ -40,6 +40,10 @@ and this project adheres to
 
 ### Fixed
 
+- Dropping a collection now waits for in-flight requests on it, and requests
+  queued behind the drop (or behind shutdown) fail with `503`/`404` instead of
+  running against the destroyed handle.
+
 - Collection names are validated against Zvec's 3-64 character limit. Names
   outside it previously passed validation, then failed in the engine and were
   misreported as `409 collection_already_exists`; they now return `422`. Other

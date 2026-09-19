@@ -378,3 +378,41 @@ def test_maintain_allows_reads_but_blocks_writes(manager: CollectionManager) -> 
         assert await asyncio.wait_for(write, timeout=2) == "written"
 
     asyncio.run(_run())
+
+
+def test_drop_waits_for_in_flight_reads_and_fails_queued_ones(
+    manager: CollectionManager,
+) -> None:
+    """drop() waits for in-flight operations, and requests that queued behind it
+    fail cleanly instead of touching the destroyed handle."""
+    manager.create(_request())
+    managed = manager.get("docs")
+    started = threading.Event()
+    release = threading.Event()
+
+    def _slow_read(_: object) -> str:
+        started.set()
+        release.wait(timeout=5)
+        return "read"
+
+    async def _run() -> None:
+        reading = asyncio.create_task(managed.read(_slow_read))
+        await asyncio.to_thread(started.wait, 5)
+        dropping = asyncio.create_task(asyncio.to_thread(manager.drop, "docs"))
+        await asyncio.sleep(0.2)
+        assert not dropping.done()  # blocked behind the in-flight read
+        queued = asyncio.create_task(managed.write(lambda _: "written"))
+        await asyncio.sleep(0.1)
+
+        release.set()
+        assert await reading == "read"
+        await dropping
+        with pytest.raises(CollectionUnavailableError):
+            await queued
+
+    asyncio.run(_run())
+    assert managed.dropped is True
+    with pytest.raises(CollectionNotFoundError):
+        manager.get("docs")
+    with pytest.raises(CollectionNotFoundError):
+        manager.drop("docs")

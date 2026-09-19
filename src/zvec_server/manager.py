@@ -65,6 +65,7 @@ class ManagedCollection:
         record: The persisted metadata record.
         rwlock: Per-collection fair reader/writer lock.
         maintenance_lock: Serializes maintenance (optimize) runs on this collection.
+        dropped: Set once :meth:`CollectionManager.drop` has destroyed it.
     """
 
     def __init__(self, name: str, collection: Any, record: CollectionRecord) -> None:
@@ -73,6 +74,7 @@ class ManagedCollection:
         self.record = record
         self.rwlock = rwlock.RWLockFair()
         self.maintenance_lock = threading.Lock()
+        self.dropped = False
 
     @property
     def available(self) -> bool:
@@ -84,21 +86,23 @@ class ManagedCollection:
 
         The lock is acquired inside the thread so the event loop never blocks.
         """
-        collection = self._require_open()
+        self._require_open()  # fail fast without queueing for the lock
 
         def _locked() -> T:
             with self.rwlock.gen_rlock():
-                return fn(collection)
+                # Re-resolve under the lock: a drop/close may have run while we waited.
+                return fn(self._require_open())
 
         return await run_in_threadpool(_locked)
 
     async def write(self, fn: Callable[[Any], T]) -> T:
         """Run ``fn(collection)`` under an exclusive write lock in a worker thread."""
-        collection = self._require_open()
+        self._require_open()  # fail fast without queueing for the lock
 
         def _locked() -> T:
             with self.rwlock.gen_wlock():
-                return fn(collection)
+                # Re-resolve under the lock: a drop/close may have run while we waited.
+                return fn(self._require_open())
 
         return await run_in_threadpool(_locked)
 
@@ -110,11 +114,12 @@ class ManagedCollection:
         flush, and shutdown still wait for it. A dedicated mutex keeps two
         maintenance runs on the same collection from overlapping.
         """
-        collection = self._require_open()
+        self._require_open()  # fail fast without queueing for the lock
 
         def _locked() -> T:
             with self.maintenance_lock, self.rwlock.gen_rlock():
-                return fn(collection)
+                # Re-resolve under the lock: a drop/close may have run while we waited.
+                return fn(self._require_open())
 
         return await run_in_threadpool(_locked)
 
@@ -245,7 +250,13 @@ class CollectionManager:
         """
         with self._lock:
             managed = self._registry.get(name)
-            if managed is None:
+        if managed is None:
+            raise CollectionNotFoundError(f"Collection '{name}' not found.", {"name": name})
+
+        # Wait for in-flight operations under the collection's exclusive lock, but
+        # outside the registry lock so a long optimize doesn't stall other routes.
+        with managed.rwlock.gen_wlock():
+            if managed.dropped:  # a concurrent drop got here first
                 raise CollectionNotFoundError(f"Collection '{name}' not found.", {"name": name})
             if managed.available:
                 zcol.destroy_collection(managed.collection)
@@ -253,6 +264,10 @@ class CollectionManager:
                 directory = Path(managed.record.path)
                 if directory.exists():
                     shutil.rmtree(directory, ignore_errors=True)
+            managed.collection = None
+            managed.dropped = True
+
+        with self._lock:
             self._store.delete(name)
             del self._registry[name]
             task = self._recovery_tasks.pop(name, None)
