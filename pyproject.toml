@@ -26,7 +26,7 @@ dependencies = [
     "uvicorn[standard]>=0.32",
     "pydantic>=2.9",
     "pydantic-settings>=2.6",
-    "zvec>=0.5.0",
+    "zvec>=0.7.0",
     "readerwriterlock>=1.0.9",
     "python-json-logger>=3.1",
 ]
