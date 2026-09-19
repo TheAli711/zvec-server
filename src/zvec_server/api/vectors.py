@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import json
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import StreamingResponse
+from starlette.types import Receive, Scope, Send
 
 from zvec_server.adapter import operations
 from zvec_server.deps import get_manager
@@ -148,8 +149,8 @@ def _ndjson_lines(batch: list[DocOut]) -> str:
 
 
 async def _ndjson_stream(
-    first: list[DocOut], batches: AsyncIterator[list[DocOut]]
-) -> AsyncIterator[str]:
+    first: list[DocOut], batches: AsyncGenerator[list[DocOut], None]
+) -> AsyncGenerator[str, None]:
     try:
         if first:
             yield _ndjson_lines(first)
@@ -158,6 +159,25 @@ async def _ndjson_stream(
     except ZvecServerError as exc:
         # Headers are already sent, so report the failure in-band as a final line.
         yield json.dumps(build_error_payload(exc.error_code, exc.message, exc.details)) + "\n"
+    finally:
+        await batches.aclose()  # releases the export cursor
+
+
+class _ClosingStreamingResponse(StreamingResponse):
+    """A StreamingResponse that always closes its body iterator.
+
+    Starlette abandons the iterator when the client disconnects, leaving it to
+    the garbage collector; an export's iterator holds a Zvec snapshot cursor, so
+    close it deterministically instead.
+    """
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        try:
+            await super().__call__(scope, receive, send)
+        finally:
+            aclose = getattr(self.body_iterator, "aclose", None)
+            if aclose is not None:
+                await aclose()
 
 
 @router.get(
@@ -190,4 +210,6 @@ async def export_docs(
     # Read the first batch before responding so bad input (e.g. an unknown
     # output field) is a normal JSON error rather than a broken stream.
     first: list[DocOut] = await anext(batches, [])
-    return StreamingResponse(_ndjson_stream(first, batches), media_type="application/x-ndjson")
+    return _ClosingStreamingResponse(
+        _ndjson_stream(first, batches), media_type="application/x-ndjson"
+    )

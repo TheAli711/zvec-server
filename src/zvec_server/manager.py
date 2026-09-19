@@ -21,7 +21,7 @@ import asyncio
 import json
 import shutil
 import threading
-from collections.abc import AsyncIterator, Callable
+from collections.abc import AsyncGenerator, Callable
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol, TypeVar
 
@@ -142,7 +142,7 @@ class ManagedCollection:
 
     async def stream(
         self, open_cursor: Callable[[Any], Cursor[T]], batch_size: int
-    ) -> AsyncIterator[list[T]]:
+    ) -> AsyncGenerator[list[T], None]:
         """Yield batches from a snapshot cursor opened over the collection.
 
         The shared lock is held only while opening the cursor and while reading

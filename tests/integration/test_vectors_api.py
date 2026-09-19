@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
+import contextlib
+import gc
 import json
 from typing import Any
 
@@ -229,3 +232,62 @@ def test_export_unknown_output_field_returns_400(
 
 def test_export_missing_collection_returns_404(client: TestClient) -> None:
     assert client.get("/collections/nope_col/export").status_code == 404
+
+
+@pytest.mark.parametrize("spec_version", ["2.3", "2.4"])
+def test_export_client_disconnect_releases_cursor(
+    client: TestClient,
+    created_collection: str,
+    sample_docs: list[dict[str, Any]],
+    monkeypatch: pytest.MonkeyPatch,
+    spec_version: str,
+) -> None:
+    """A client hanging up mid-export releases the snapshot cursor promptly,
+    without waiting for garbage collection (TestClient buffers streams, so this
+    drives the ASGI app directly)."""
+    monkeypatch.setattr(vectors_api, "EXPORT_BATCH_SIZE", 1)
+    _insert(client, created_collection, sample_docs)
+    managed = client.app.state.manager.get(created_collection)  # type: ignore[attr-defined]
+
+    async def _run() -> None:
+        first_chunk = asyncio.Event()
+        received = 0
+
+        async def receive() -> dict[str, Any]:
+            nonlocal received
+            received += 1
+            if received == 1:
+                return {"type": "http.request", "body": b"", "more_body": False}
+            await first_chunk.wait()
+            return {"type": "http.disconnect"}
+
+        async def send(message: dict[str, Any]) -> None:
+            if message["type"] == "http.response.body" and message.get("body"):
+                if first_chunk.is_set() and spec_version == "2.4":
+                    raise OSError("client went away")
+                first_chunk.set()
+                await asyncio.sleep(0)  # let the disconnect be observed
+
+        scope = {
+            "type": "http",
+            "asgi": {"version": "3.0", "spec_version": spec_version},
+            "http_version": "1.1",
+            "method": "GET",
+            "scheme": "http",
+            "path": f"/collections/{created_collection}/export",
+            "raw_path": f"/collections/{created_collection}/export".encode(),
+            "query_string": b"",
+            "root_path": "",
+            "headers": [],
+            "client": ("test", 1),
+            "server": ("test", 80),
+        }
+        with contextlib.suppress(Exception):
+            await client.app(scope, receive, send)  # type: ignore[arg-type]
+
+    gc.disable()  # prove release doesn't rely on the GC finalizing the generator
+    try:
+        client.portal.call(_run)  # type: ignore[union-attr]
+        assert managed.cursors == set()
+    finally:
+        gc.enable()
