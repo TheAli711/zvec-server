@@ -179,3 +179,66 @@ def test_rabitq_collection(client: TestClient, index: str) -> None:
     )
     assert response.status_code == 200, response.text
     assert len(response.json()["results"]) == 5
+
+
+def _search(client: TestClient, name: str, params: dict[str, Any] | None) -> Any:
+    return client.post(
+        f"/collections/{name}/search",
+        json={
+            "queries": [{"field": "embedding", "vector": [0.1, 0.2, 0.3, 0.4], "params": params}],
+            "topk": 3,
+        },
+    )
+
+
+@pytest.mark.parametrize(
+    ("index", "params"),
+    [
+        ("hnsw", {"ef": 64, "is_linear": True, "is_using_refiner": False}),
+        ("hnsw", {"radius": 10}),
+        ("ivf", {"nprobe": 4}),
+        ("flat", None),
+    ],
+)
+def test_search_query_params_per_index(
+    client: TestClient,
+    collection_body: dict[str, Any],
+    sample_docs: list[dict[str, Any]],
+    index: str,
+    params: dict[str, Any] | None,
+) -> None:
+    collection_body["vectors"][0]["index"] = index
+    assert client.post("/collections", json=collection_body).status_code == 201
+    _seed(client, "articles", sample_docs)
+    response = _search(client, "articles", params)
+    assert response.status_code == 200, response.text
+    assert response.json()["results"][0]["id"] == "a"
+
+
+@pytest.mark.parametrize(
+    ("index", "params"),
+    [
+        ("flat", {"ef": 64}),
+        ("ivf", {"ef": 64}),
+        ("hnsw", {"nprobe": 4}),
+        ("hnsw", {"ef": "64"}),
+        ("hnsw", {"is_linear": 1}),
+    ],
+)
+def test_search_bad_query_params_return_400(
+    client: TestClient, collection_body: dict[str, Any], index: str, params: dict[str, Any]
+) -> None:
+    collection_body["vectors"][0]["index"] = index
+    assert client.post("/collections", json=collection_body).status_code == 201
+    response = _search(client, "articles", params)
+    assert response.status_code == 400, response.text
+
+
+def test_search_params_on_unknown_field_return_400(
+    client: TestClient, created_collection: str
+) -> None:
+    response = client.post(
+        f"/collections/{created_collection}/search",
+        json={"queries": [{"field": "nope", "vector": [0.1] * 4, "params": {"ef": 8}}]},
+    )
+    assert response.status_code == 400, response.text

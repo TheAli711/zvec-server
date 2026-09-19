@@ -7,9 +7,8 @@
 
 Datasets are loaded lazily (``load`` callable) so listing scenarios is cheap.
 
-Note on IVF: the server's query mapper only tunes HNSW ``ef`` today, so
-``nprobe`` sweeps take effect on the **engine** tier only; over inproc/http the
-engine uses its default. Scenarios here therefore use HNSW.
+IVF ``nprobe`` sweeps apply on every tier (the server honors ``nprobe`` for IVF
+fields); the shipped scenarios use HNSW.
 """
 
 from __future__ import annotations

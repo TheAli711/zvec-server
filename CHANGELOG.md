@@ -14,10 +14,15 @@ and this project adheres to
   `params.quantize_type` (`fp16` / `int8` / `int4`) and `params.enable_rotate`.
 - `hnsw_rabitq` and `ivf_rabitq` index types (RaBitQ quantization; Linux
   x86_64 servers only — other platforms return `422`).
+- Search `params` for every index type: `ef`, `radius`, `is_linear`,
+  `is_using_refiner` (hnsw / hnsw_rabitq), `nprobe` (ivf), plus `scale_factor`
+  (ivf_rabitq). Previously only HNSW `ef` was honored.
 - `ivf` indexes accept `params.use_soar` (SOAR spilling for better recall).
 
 ### Changed
 
+- Unknown or mistyped search `params` now return `400` instead of being silently
+  ignored (e.g. `ef` on a `flat` or `ivf` field).
 - Unknown keys in a vector field's `params` are now rejected with `422` instead
   of being silently ignored, so a typo can't quietly build a different index.
 - Requires **Zvec 0.7.0** (was 0.5.0). Picks up upstream fixes for crash

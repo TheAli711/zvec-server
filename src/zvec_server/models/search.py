@@ -30,7 +30,12 @@ class QuerySpec(BaseModel):
     )
     params: dict[str, Any] | None = Field(
         default=None,
-        description='Index-specific query tuning, e.g. ``{"ef": 128}`` for HNSW.',
+        description=(
+            "Index-specific query tuning. hnsw/hnsw_rabitq: ``ef``, ``radius``, "
+            "``is_linear``, ``is_using_refiner``. ivf: ``nprobe``. ivf_rabitq: "
+            "``nprobe``, ``radius``, ``is_linear``, ``is_using_refiner``, "
+            "``scale_factor``. flat: none. Unknown keys are rejected."
+        ),
     )
 
     @model_validator(mode="after")
