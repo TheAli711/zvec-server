@@ -58,4 +58,4 @@ def test_is_vector_and_scalar_type() -> None:
 def test_constants_present() -> None:
     assert "VECTOR_FP32" in enums.VECTOR_DATA_TYPES
     assert "STRING" in enums.SCALAR_DATA_TYPES
-    assert frozenset({"hnsw", "flat", "ivf"}) == enums.INDEX_TYPES
+    assert frozenset({"hnsw", "flat", "ivf", "hnsw_rabitq", "ivf_rabitq"}) == enums.INDEX_TYPES

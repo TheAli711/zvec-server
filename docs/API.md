@@ -141,7 +141,11 @@ Provide dtypes by name (case-sensitive, as Zvec defines them).
 
 ## Index types & metrics
 
-**Index types** (for `vectors[].index`): `hnsw` (default), `flat`, `ivf`.
+**Index types** (for `vectors[].index`): `hnsw` (default), `flat`, `ivf`,
+`hnsw_rabitq`, `ivf_rabitq`. The RaBitQ variants store vectors with RaBitQ
+binary quantization (very compact, good recall with reranking) and are only
+available when the **server** runs on Linux x86_64 (the published Docker image
+does); elsewhere creating one returns `422`.
 
 Optional per-index tuning goes in `vectors[].params`:
 
@@ -150,6 +154,8 @@ Optional per-index tuning goes in `vectors[].params`:
 | `hnsw` | `m`, `ef_construction`             |
 | `ivf`  | `n_list`, `n_iters`, `use_soar`    |
 | `flat` | (none)                             |
+| `hnsw_rabitq` | `m`, `ef_construction`, `total_bits`, `num_clusters`, `sample_count` |
+| `ivf_rabitq`  | `n_list`, `total_bits`, `sample_count` |
 
 **Quantization** (`hnsw`, `flat`, `ivf`): add `quantize_type` — `fp16`, `int8`,
 or `int4` — so the index searches over compressed vectors (roughly 2×, 4×, and

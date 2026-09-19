@@ -11,6 +11,7 @@ import zvec
 
 from zvec_server.errors import (
     CollectionAlreadyExistsError,
+    SchemaValidationError,
     ZvecOperationError,
     ZvecServerError,
 )
@@ -54,6 +55,9 @@ def create_collection(
             f"A collection already exists at {path!r}", {"path": path}
         ) from exc
     except Exception as exc:
+        # e.g. "RabitQ is not supported on this platform (Linux x86_64 only)".
+        if isinstance(exc, RuntimeError) and "not supported on this platform" in str(exc):
+            raise SchemaValidationError(str(exc), {"path": path}) from exc
         raise ZvecOperationError(f"Failed to create collection: {exc}", {"path": path}) from exc
 
 
