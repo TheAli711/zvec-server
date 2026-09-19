@@ -58,7 +58,11 @@ def test_build_schema_ivf_params_applied() -> None:
         "c",
         [
             VectorFieldSpec(
-                name="emb", dim=4, index="ivf", metric="l2", params={"n_list": 16, "n_iters": 7}
+                name="emb",
+                dim=4,
+                index="ivf",
+                metric="l2",
+                params={"n_list": 16, "n_iters": 7, "use_soar": True},
             )
         ],
         [],
@@ -68,6 +72,7 @@ def test_build_schema_ivf_params_applied() -> None:
     assert index["type"] == "IVF"
     assert index["n_list"] == 16
     assert index["n_iters"] == 7
+    assert index["use_soar"] is True
 
 
 def test_build_schema_flat() -> None:

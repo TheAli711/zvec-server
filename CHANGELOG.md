@@ -12,6 +12,7 @@ and this project adheres to
 
 - Vector quantization: `hnsw`, `flat`, and `ivf` indexes accept
   `params.quantize_type` (`fp16` / `int8` / `int4`) and `params.enable_rotate`.
+- `ivf` indexes accept `params.use_soar` (SOAR spilling for better recall).
 
 ### Changed
 
