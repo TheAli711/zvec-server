@@ -43,6 +43,8 @@ and this project adheres to
 
 ### Fixed
 
+- A background recovery that reopened a collection just as it was dropped
+  could re-attach (and leak) the handle; it is now discarded and closed.
 - Dropping a collection now waits for in-flight requests on it, and requests
   queued behind the drop (or behind shutdown) fail with `503`/`404` instead of
   running against the destroyed handle.

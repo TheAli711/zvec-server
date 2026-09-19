@@ -10,6 +10,7 @@ from pathlib import Path
 
 import pytest
 
+from zvec_server.adapter import collections as zcol
 from zvec_server.adapter import operations
 from zvec_server.adapter.runtime import init_zvec
 from zvec_server.config import Settings
@@ -474,3 +475,35 @@ def test_stream_is_cut_off_cleanly_by_drop_or_close(
     asyncio.run(_run())
     assert managed.collection is None
     assert managed.cursors == set()
+
+
+def test_recovery_does_not_resurrect_a_dropped_collection(tmp_path: Path) -> None:
+    """If drop() wins the race with an in-flight recovery open, the reopened
+    handle is discarded (and closed) instead of being attached."""
+    settings = Settings(
+        data_dir=tmp_path / "data",
+        collection_recovery_initial_delay_seconds=0.01,
+        collection_recovery_max_delay_seconds=0.01,
+    )
+    settings.ensure_directories()
+    assert settings.metadata_db_path is not None
+    store = MetadataStore(settings.metadata_db_path)
+    store.connect()
+    manager = CollectionManager(settings, store)
+    manager.create(_request())
+    manager.close()
+
+    manager.load_all()
+    managed = manager.get("docs")
+    zcol.close_collection(managed.collection)  # release Zvec's LOCK for the reopen
+    managed.collection = None
+    reopened = manager._open_record(managed.record)  # recovery's open succeeded...
+    assert reopened.available
+    managed.dropped = True  # ...but drop() ran before it could be attached
+
+    assert CollectionManager._adopt(managed, reopened.collection) is False
+    assert managed.collection is None
+    # The recovery loop itself also stops instead of retrying forever.
+    asyncio.run(asyncio.wait_for(manager._recover(managed), timeout=2))
+    assert managed.collection is None
+    store.close()
