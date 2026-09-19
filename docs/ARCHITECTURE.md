@@ -43,11 +43,11 @@ src/zvec_server/
 │   ├── doc_mapper.py
 │   ├── query_mapper.py
 │   ├── collections.py
-│   └── operations.py # insert/delete/fetch/search over a zvec.Collection
+│   └── operations.py # insert/delete/fetch/search/group-by/export over a zvec.Collection
 └── api/
     ├── health.py     # GET /healthz, GET /readyz
     ├── collections.py# /collections CRUD + flush/optimize
-    └── vectors.py    # /collections/{name}/docs/* and /search
+    └── vectors.py    # /collections/{name}/docs/*, /search, /search/group-by, /export
 ```
 
 ### Import direction (layering)

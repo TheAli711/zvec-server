@@ -1,7 +1,7 @@
 ---
 id: SPEC-013
 title: Streaming NDJSON export
-status: accepted
+status: implemented
 created: 2026-09-13
 release: v0.2.0
 ---

@@ -4,9 +4,10 @@ title: Document group-by search
 spec: SPEC-012
 type: docs
 priority: P1
-status: todo
+status: done
 release: v0.2.0
 created: 2026-09-14
+closed: 2026-09-19
 ---
 
 # ZS-054: Document group-by search
@@ -20,14 +21,14 @@ map; and a group-by step in both runnable examples so users see it end to end.
 
 ## Acceptance criteria
 
-- [ ] `docs/API.md` documents `POST /collections/{name}/search/group-by`: fields,
+- [x] `docs/API.md` documents `POST /collections/{name}/search/group-by`: fields,
       defaults, bounds, an example, string `value`s, the `""` null group, and the
       `400` cases.
-- [ ] The README route table lists the route and the key-features list mentions
+- [x] The README route table lists the route and the key-features list mentions
       group-by search.
-- [ ] `docs/ARCHITECTURE.md` lists group-by in the `operations.py` and
+- [x] `docs/ARCHITECTURE.md` lists group-by in the `operations.py` and
       `api/vectors.py` entries of the module map.
-- [ ] `examples/curl_examples.sh` and `examples/python_client.py` run a group-by
+- [x] `examples/curl_examples.sh` and `examples/python_client.py` run a group-by
       (best hit per `category`) after the plain search, and `examples/README.md`
       describes the updated flow.
 
@@ -39,3 +40,11 @@ map; and a group-by step in both runnable examples so users see it end to end.
   `topk_per_group: 1` so the output is short.
 - The curl script must stay safe under macOS bash 3.2 (reuse the existing `req`
   helper).
+
+## Resolution
+
+The API reference section, route-table row, and CHANGELOG entry shipped with the
+endpoint in ZS-052. This ticket added the README key-features bullet, the
+architecture module-map entries, and the group-by step in the curl script, the
+Python client (`group_by_search`), and `examples/README.md`, in the same docs pass as
+the export docs (ZS-057).

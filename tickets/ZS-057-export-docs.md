@@ -4,9 +4,10 @@ title: Document streaming export
 spec: SPEC-013
 type: docs
 priority: P1
-status: todo
+status: done
 release: v0.2.0
 created: 2026-09-15
+closed: 2026-09-19
 ---
 
 # ZS-057: Document streaming export
@@ -21,16 +22,16 @@ detect a truncated export.
 
 ## Acceptance criteria
 
-- [ ] `docs/API.md` documents `GET /collections/{name}/export`: `include_vector`
+- [x] `docs/API.md` documents `GET /collections/{name}/export`: `include_vector`
       and `output_fields`, a `curl > file` example, sample lines, snapshot
       semantics, the final `{"error": ...}` line, and unspecified order.
-- [ ] The README route table lists the route; key features mention streaming export
+- [x] The README route table lists the route; key features mention streaming export
       and that exports never block writes.
-- [ ] `docs/ARCHITECTURE.md` explains per-batch locking and `close_cursors()`, and
+- [x] `docs/ARCHITECTURE.md` explains per-batch locking and `close_cursors()`, and
       the module map lists `/export`.
-- [ ] `CLAUDE.md` states that any new drop/close path must call `close_cursors()`
+- [x] `CLAUDE.md` states that any new drop/close path must call `close_cursors()`
       under the exclusive lock first.
-- [ ] `examples/curl_examples.sh` streams an export; `examples/python_client.py`
+- [x] `examples/curl_examples.sh` streams an export; `examples/python_client.py`
       streams it line by line with `httpx` and raises on an error line.
 
 ## Notes
@@ -42,3 +43,11 @@ detect a truncated export.
   (which pretty-prints JSON with `jq` when present) so the raw NDJSON lines are
   shown, and keep the optional auth header expansion safe under bash 3.2
   (`"${AUTH_HEADER[@]+"${AUTH_HEADER[@]}"}"`).
+
+## Resolution
+
+The API reference section, README route row, architecture note on export cursors,
+`CLAUDE.md` invariant, and CHANGELOG entry shipped with the endpoint in ZS-055. This
+ticket added the README key-features text, the architecture module-map entry, the
+curl export step, `export_all()` in the Python client, and the updated flow in
+`examples/README.md`.

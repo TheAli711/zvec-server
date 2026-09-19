@@ -1,7 +1,7 @@
 ---
 id: SPEC-011
 title: Index quantization, RaBitQ indexes, and per-index search params
-status: accepted
+status: implemented
 created: 2026-09-10
 release: v0.2.0
 ---
