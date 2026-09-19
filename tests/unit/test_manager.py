@@ -318,3 +318,32 @@ def test_drop_cancels_pending_recovery_task(tmp_path: Path) -> None:
     asyncio.run(_run())
     manager2.close()
     store2.close()
+
+
+def test_close_releases_handles_for_reopen(tmp_path: Path) -> None:
+    """close() releases each Zvec handle (and its on-disk lock) immediately,
+    even while something still references the managed entry, so another
+    manager can open the same collections straight away."""
+    settings = Settings(data_dir=tmp_path / "data")
+    settings.ensure_directories()
+    assert settings.metadata_db_path is not None
+
+    store1 = MetadataStore(settings.metadata_db_path)
+    store1.connect()
+    manager1 = CollectionManager(settings, store1)
+    manager1.create(_request())
+    lingering = manager1.get("docs")
+    manager1.close()
+    store1.close()
+
+    assert lingering.available is False
+    with pytest.raises(CollectionUnavailableError):
+        asyncio.run(lingering.read(lambda c: c))
+
+    store2 = MetadataStore(settings.metadata_db_path)
+    store2.connect()
+    manager2 = CollectionManager(settings, store2)
+    manager2.load_all()
+    assert manager2.counts() == (1, 0)
+    manager2.close()
+    store2.close()
