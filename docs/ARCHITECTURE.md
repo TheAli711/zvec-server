@@ -109,8 +109,14 @@ exception handlers registered in `errors.py` (e.g. `CollectionNotFoundError` →
 
 - **Per-collection reader/writer lock.** Each `ManagedCollection` owns a fair
   `RWLockFair` (`readerwriterlock`). Reads (`fetch`, `search`) take a shared read
-  lock; writes (`insert`/`upsert`/`update`/`delete`, `flush`, `optimize`) take an
-  exclusive write lock. Different collections never block each other.
+  lock; writes (`insert`/`upsert`/`update`/`delete`, `flush`) take an exclusive
+  write lock. `optimize` takes the *shared* lock plus a per-collection
+  maintenance mutex: Zvec (>= 0.7) serves reads during optimize, so searches keep
+  flowing while writes wait, and two optimizes never overlap. Different
+  collections never block each other.
+- **Explicit close on shutdown.** `CollectionManager.close()` flushes, then
+  `close()`s each Zvec handle under its exclusive lock, releasing Zvec's on-disk
+  lock immediately so a replacement instance (rolling restart) can open it.
 - **Threadpool offload.** Zvec calls are blocking/CPU-bound, so they run inside
   `starlette.concurrency.run_in_threadpool`. The lock is acquired **inside** the
   threadpool thread, so the asyncio event loop is never blocked waiting on a
