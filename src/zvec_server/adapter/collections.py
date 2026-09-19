@@ -43,6 +43,8 @@ def create_collection(
 
     Raises:
         CollectionAlreadyExistsError: If a collection already exists at ``path``.
+        SchemaValidationError: If the engine rejects the schema, or the index type
+            is unsupported on this platform.
         ZvecOperationError: For any other engine failure.
     """
     option = zvec.CollectionOption(enable_mmap=enable_mmap, read_only=False)
@@ -51,9 +53,13 @@ def create_collection(
     except ZvecServerError:
         raise
     except ValueError as exc:
-        raise CollectionAlreadyExistsError(
-            f"A collection already exists at {path!r}", {"path": path}
-        ) from exc
+        # Zvec raises ValueError both for an existing path and for a schema it
+        # rejects; only the former is a conflict.
+        if "path validate failed" in str(exc):
+            raise CollectionAlreadyExistsError(
+                f"A collection already exists at {path!r}", {"path": path}
+            ) from exc
+        raise SchemaValidationError(f"Invalid collection schema: {exc}", {"path": path}) from exc
     except Exception as exc:
         # e.g. "RabitQ is not supported on this platform (Linux x86_64 only)".
         if isinstance(exc, RuntimeError) and "not supported on this platform" in str(exc):

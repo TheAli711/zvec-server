@@ -5,7 +5,7 @@
 Specs, tickets, and how they flow into each other are described in
 [specs/README.md](specs/README.md).
 
-**14 specs · 61 tickets** — 0 in-progress · 13 todo · 0 backlog · 48 done · 0 wontfix
+**14 specs · 62 tickets** — 0 in-progress · 13 todo · 0 backlog · 49 done · 0 wontfix
 
 ## Board
 
@@ -35,10 +35,10 @@ _None._
 
 _None._
 
-### Done (48)
+### Done (49)
 
 <details>
-<summary>v0.2.0 — 9 tickets</summary>
+<summary>v0.2.0 — 10 tickets</summary>
 
 | Ticket | Title | Spec | Type | Priority | Release |
 | --- | --- | --- | --- | --- | --- |
@@ -51,6 +51,7 @@ _None._
 | [ZS-046](tickets/ZS-046-ivf-use-soar.md) | use_soar for ivf indexes | [SPEC-011](specs/SPEC-011-index-and-search-options.md) | feature | P2 | v0.2.0 |
 | [ZS-047](tickets/ZS-047-strict-index-params.md) | Reject unknown vector index params instead of ignoring them | [SPEC-011](specs/SPEC-011-index-and-search-options.md) | bug | P1 | v0.2.0 |
 | [ZS-048](tickets/ZS-048-rabitq-indexes.md) | hnsw_rabitq and ivf_rabitq index types | [SPEC-011](specs/SPEC-011-index-and-search-options.md) | feature | P1 | v0.2.0 |
+| [ZS-062](tickets/ZS-062-collection-name-length.md) | Collection names outside 3-64 characters are misreported as 409 | [SPEC-002](specs/SPEC-002-collection-management.md) | bug | P1 | v0.2.0 |
 
 </details>
 
@@ -122,7 +123,7 @@ _None._
 | Spec | Title | Status | Release | Tickets done |
 | --- | --- | --- | --- | --- |
 | [SPEC-001](specs/SPEC-001-server-foundation.md) | Server foundation: app factory, configuration, errors, and health | implemented | v0.1.0 | 7/7 |
-| [SPEC-002](specs/SPEC-002-collection-management.md) | Collection management and metadata store | implemented | v0.1.0 | 7/7 |
+| [SPEC-002](specs/SPEC-002-collection-management.md) | Collection management and metadata store | implemented | v0.1.0 | 8/8 |
 | [SPEC-003](specs/SPEC-003-document-operations.md) | Document operations | implemented | v0.1.0 | 4/4 |
 | [SPEC-004](specs/SPEC-004-vector-search.md) | Vector similarity search | implemented | v0.1.0 | 3/3 |
 | [SPEC-005](specs/SPEC-005-api-key-auth.md) | Optional API-key authentication | implemented | v0.1.0 | 2/2 |

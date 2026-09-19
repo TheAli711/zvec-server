@@ -33,6 +33,11 @@ and this project adheres to
 
 ### Fixed
 
+- Collection names are validated against Zvec's 3-64 character limit. Names
+  outside it previously passed validation, then failed in the engine and were
+  misreported as `409 collection_already_exists`; they now return `422`. Other
+  engine schema rejections also return `422` instead of `409`.
+
 - With `ZVEC_SERVER_ENABLE_MMAP=true` (the default), a few freshly-optimized
   documents could come back from search with empty ids
   (`Failed to find target chunk`). Fixed by the Zvec 0.7.0 upgrade.

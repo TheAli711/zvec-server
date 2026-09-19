@@ -24,7 +24,9 @@ __all__ = [
 ]
 
 # Collection names map to on-disk directories, so keep them filesystem-safe.
-_NAME_PATTERN = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
+# Zvec itself rejects collection names outside 3-64 chars, so validate that here
+# rather than letting the engine fail later with a less helpful error.
+_NAME_PATTERN = re.compile(r"^[A-Za-z0-9_-]{3,64}$")
 
 
 class VectorFieldSpec(BaseModel):
@@ -124,7 +126,7 @@ class CreateCollectionRequest(BaseModel):
     """Request body for creating a new collection."""
 
     name: str = Field(
-        description="Collection name; matches ``^[A-Za-z0-9_-]{1,128}$``.",
+        description="Collection name; matches ``^[A-Za-z0-9_-]{3,64}$``.",
     )
     vectors: list[VectorFieldSpec] = Field(
         min_length=1,
@@ -149,8 +151,8 @@ class CreateCollectionRequest(BaseModel):
         """Reject names that are not filesystem/URL-safe."""
         if not _NAME_PATTERN.match(value):
             raise ValueError(
-                "name must match ^[A-Za-z0-9_-]{1,128}$ "
-                "(letters, digits, underscore, hyphen; 1-128 chars)"
+                "name must match ^[A-Za-z0-9_-]{3,64}$ "
+                "(letters, digits, underscore, hyphen; 3-64 chars)"
             )
         return value
 
