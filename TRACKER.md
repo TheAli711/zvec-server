@@ -5,7 +5,7 @@
 Specs, tickets, and how they flow into each other are described in
 [specs/README.md](specs/README.md).
 
-**14 specs · 66 tickets** — 0 in-progress · 5 todo · 0 backlog · 61 done · 0 wontfix
+**14 specs · 67 tickets** — 0 in-progress · 5 todo · 0 backlog · 62 done · 0 wontfix
 
 ## Board
 
@@ -27,10 +27,10 @@ _None._
 
 _None._
 
-### Done (61)
+### Done (62)
 
 <details>
-<summary>v0.2.0 — 22 tickets</summary>
+<summary>v0.2.0 — 23 tickets</summary>
 
 | Ticket | Title | Spec | Type | Priority | Release |
 | --- | --- | --- | --- | --- | --- |
@@ -56,6 +56,7 @@ _None._
 | [ZS-064](tickets/ZS-064-recovery-resurrects-dropped.md) | Background recovery can resurrect a dropped collection | [SPEC-009](specs/SPEC-009-collection-recovery.md) | bug | P1 | v0.2.0 |
 | [ZS-065](tickets/ZS-065-export-cursor-on-disconnect.md) | Export cursor is held after the client disconnects | [SPEC-013](specs/SPEC-013-ndjson-export.md) | bug | P1 | v0.2.0 |
 | [ZS-066](tickets/ZS-066-sift1m-download-403.md) | SIFT1M download is rejected with 403 | [SPEC-007](specs/SPEC-007-benchmark-suite.md) | bug | P2 | v0.2.0 |
+| [ZS-067](tickets/ZS-067-inproc-optimize-lock.md) | Inproc benchmark runner does not mirror the server's shared-lock optimize | [SPEC-014](specs/SPEC-014-quantization-benchmarks.md) | bug | P2 | v0.2.0 |
 
 </details>
 
@@ -139,4 +140,4 @@ _None._
 | [SPEC-011](specs/SPEC-011-index-and-search-options.md) | Index quantization, RaBitQ indexes, and per-index search params | accepted | v0.2.0 | 6/7 |
 | [SPEC-012](specs/SPEC-012-group-by-search.md) | Group-by search | accepted | v0.2.0 | 2/3 |
 | [SPEC-013](specs/SPEC-013-ndjson-export.md) | Streaming NDJSON export | accepted | v0.2.0 | 3/4 |
-| [SPEC-014](specs/SPEC-014-quantization-benchmarks.md) | Quantization and optimize-load benchmarks | accepted | v0.2.0 | 2/4 |
+| [SPEC-014](specs/SPEC-014-quantization-benchmarks.md) | Quantization and optimize-load benchmarks | accepted | v0.2.0 | 3/5 |
