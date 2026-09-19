@@ -5,7 +5,7 @@
 Specs, tickets, and how they flow into each other are described in
 [specs/README.md](specs/README.md).
 
-**14 specs · 61 tickets** — 0 in-progress · 16 todo · 0 backlog · 45 done · 0 wontfix
+**14 specs · 61 tickets** — 0 in-progress · 15 todo · 0 backlog · 46 done · 0 wontfix
 
 ## Board
 
@@ -13,7 +13,7 @@ Specs, tickets, and how they flow into each other are described in
 
 _None._
 
-### Todo (16)
+### Todo (15)
 
 | Ticket | Title | Spec | Type | Priority | Release |
 | --- | --- | --- | --- | --- | --- |
@@ -26,7 +26,6 @@ _None._
 | [ZS-055](tickets/ZS-055-export-endpoint.md) | Streaming NDJSON export endpoint | [SPEC-013](specs/SPEC-013-ndjson-export.md) | feature | P1 | v0.2.0 |
 | [ZS-057](tickets/ZS-057-export-docs.md) | Document streaming export | [SPEC-013](specs/SPEC-013-ndjson-export.md) | docs | P1 | v0.2.0 |
 | [ZS-061](tickets/ZS-061-quantization-tradeoffs-docs.md) | Report measured quantization trade-offs in the docs | [SPEC-014](specs/SPEC-014-quantization-benchmarks.md) | docs | P1 | v0.2.0 |
-| [ZS-046](tickets/ZS-046-ivf-use-soar.md) | use_soar for ivf indexes | [SPEC-011](specs/SPEC-011-index-and-search-options.md) | feature | P2 | v0.2.0 |
 | [ZS-050](tickets/ZS-050-index-options-restart-tests.md) | Restart tests for quantized and SOAR ivf collections | [SPEC-011](specs/SPEC-011-index-and-search-options.md) | test | P2 | v0.2.0 |
 | [ZS-053](tickets/ZS-053-group-by-output-tests.md) | Group-by honors include_vector and output_fields | [SPEC-012](specs/SPEC-012-group-by-search.md) | test | P2 | v0.2.0 |
 | [ZS-056](tickets/ZS-056-new-routes-auth-tests.md) | Auth coverage for the export and group-by routes | [SPEC-013](specs/SPEC-013-ndjson-export.md) | test | P2 | v0.2.0 |
@@ -38,10 +37,10 @@ _None._
 
 _None._
 
-### Done (45)
+### Done (46)
 
 <details>
-<summary>v0.2.0 — 6 tickets</summary>
+<summary>v0.2.0 — 7 tickets</summary>
 
 | Ticket | Title | Spec | Type | Priority | Release |
 | --- | --- | --- | --- | --- | --- |
@@ -51,6 +50,7 @@ _None._
 | [ZS-043](tickets/ZS-043-reads-during-optimize.md) | Serve reads while optimize runs | [SPEC-010](specs/SPEC-010-zvec-0-7-upgrade.md) | feature | P1 | v0.2.0 |
 | [ZS-044](tickets/ZS-044-zvec-0-7-docs.md) | Document the Zvec 0.7.0 upgrade, explicit close, and optimize locking | [SPEC-010](specs/SPEC-010-zvec-0-7-upgrade.md) | docs | P1 | v0.2.0 |
 | [ZS-045](tickets/ZS-045-vector-quantization.md) | Vector quantization for hnsw, flat, and ivf indexes | [SPEC-011](specs/SPEC-011-index-and-search-options.md) | feature | P1 | v0.2.0 |
+| [ZS-046](tickets/ZS-046-ivf-use-soar.md) | use_soar for ivf indexes | [SPEC-011](specs/SPEC-011-index-and-search-options.md) | feature | P2 | v0.2.0 |
 
 </details>
 
@@ -131,7 +131,7 @@ _None._
 | [SPEC-008](specs/SPEC-008-release-automation.md) | Release automation and GHCR image publishing | implemented | v0.1.1 | 5/5 |
 | [SPEC-009](specs/SPEC-009-collection-recovery.md) | Self-healing recovery for unavailable collections | implemented | v0.1.2 | 3/3 |
 | [SPEC-010](specs/SPEC-010-zvec-0-7-upgrade.md) | Upgrade to Zvec 0.7.0 | implemented | v0.2.0 | 4/4 |
-| [SPEC-011](specs/SPEC-011-index-and-search-options.md) | Index quantization, RaBitQ indexes, and per-index search params | accepted | v0.2.0 | 1/7 |
+| [SPEC-011](specs/SPEC-011-index-and-search-options.md) | Index quantization, RaBitQ indexes, and per-index search params | accepted | v0.2.0 | 2/7 |
 | [SPEC-012](specs/SPEC-012-group-by-search.md) | Group-by search | accepted | v0.2.0 | 0/3 |
 | [SPEC-013](specs/SPEC-013-ndjson-export.md) | Streaming NDJSON export | accepted | v0.2.0 | 0/3 |
 | [SPEC-014](specs/SPEC-014-quantization-benchmarks.md) | Quantization and optimize-load benchmarks | accepted | v0.2.0 | 0/4 |

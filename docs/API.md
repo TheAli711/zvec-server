@@ -148,7 +148,7 @@ Optional per-index tuning goes in `vectors[].params`:
 | Index  | Recognized params                  |
 | ------ | ---------------------------------- |
 | `hnsw` | `m`, `ef_construction`             |
-| `ivf`  | `n_list`, `n_iters`               |
+| `ivf`  | `n_list`, `n_iters`, `use_soar`    |
 | `flat` | (none)                             |
 
 **Quantization** (`hnsw`, `flat`, `ivf`): add `quantize_type` — `fp16`, `int8`,

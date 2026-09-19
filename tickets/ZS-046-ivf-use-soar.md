@@ -4,9 +4,10 @@ title: use_soar for ivf indexes
 spec: SPEC-011
 type: feature
 priority: P2
-status: todo
+status: done
 release: v0.2.0
 created: 2026-09-11
+closed: 2026-09-19
 ---
 
 # ZS-046: use_soar for ivf indexes
@@ -19,12 +20,12 @@ secondary cluster, which improves recall at a given `nprobe`. Expose it as a boo
 
 ## Acceptance criteria
 
-- [ ] `ivf` accepts `params.use_soar` (JSON boolean) and passes it to
+- [x] `ivf` accepts `params.use_soar` (JSON boolean) and passes it to
       `zvec.IVFIndexParam(use_soar=...)`.
-- [ ] A non-boolean value returns 422 `schema_validation_error`.
-- [ ] The built schema echoes `use_soar` in `index_param`, alongside `n_list` and
+- [x] A non-boolean value returns 422 `schema_validation_error`.
+- [x] The built schema echoes `use_soar` in `index_param`, alongside `n_list` and
       `n_iters`.
-- [ ] The `docs/API.md` params table, the `VectorFieldSpec.params` description, and
+- [x] The `docs/API.md` params table, the `VectorFieldSpec.params` description, and
       the CHANGELOG list `use_soar` for `ivf`.
 
 ## Notes
@@ -35,3 +36,9 @@ secondary cluster, which improves recall at a given `nprobe`. Expose it as a boo
 - SOAR spills vectors, so the index grows. Leave it off by default (Zvec's default)
   and don't recommend it without measurements.
 - Restart persistence is covered by ZS-050.
+
+## Resolution
+
+The `ivf` builder now reads `use_soar` via `_bool_param()` and passes it to
+`IVFIndexParam`. The existing IVF schema-mapper test was extended to assert the
+echoed value. The API params table, model description, and CHANGELOG were updated.

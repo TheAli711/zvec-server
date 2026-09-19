@@ -55,7 +55,7 @@ class VectorFieldSpec(BaseModel):
         default=None,
         description=(
             "Index-specific tuning parameters. HNSW: ``m``, ``ef_construction``. "
-            "IVF: ``n_list``, ``n_iters``. All of hnsw/flat/ivf also accept "
+            "IVF: ``n_list``, ``n_iters``, ``use_soar``. All of hnsw/flat/ivf also accept "
             "``quantize_type`` (``fp16``/``int8``/``int4``) and ``enable_rotate`` (bool)."
         ),
     )

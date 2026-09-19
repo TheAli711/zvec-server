@@ -92,6 +92,9 @@ def _build_vector_index_param(spec: VectorFieldSpec) -> Any:
         n_iters = _int_param(params, "n_iters")
         if n_iters is not None:
             kwargs["n_iters"] = n_iters
+        use_soar = _bool_param(params, "use_soar")
+        if use_soar is not None:
+            kwargs["use_soar"] = use_soar
         return zvec.IVFIndexParam(**kwargs)
 
     # flat: no tuning parameters beyond the metric and quantization.
