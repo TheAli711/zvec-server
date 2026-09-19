@@ -5,7 +5,7 @@
 Specs, tickets, and how they flow into each other are described in
 [specs/README.md](specs/README.md).
 
-**14 specs · 65 tickets** — 0 in-progress · 5 todo · 0 backlog · 60 done · 0 wontfix
+**14 specs · 66 tickets** — 0 in-progress · 5 todo · 0 backlog · 61 done · 0 wontfix
 
 ## Board
 
@@ -27,10 +27,10 @@ _None._
 
 _None._
 
-### Done (60)
+### Done (61)
 
 <details>
-<summary>v0.2.0 — 21 tickets</summary>
+<summary>v0.2.0 — 22 tickets</summary>
 
 | Ticket | Title | Spec | Type | Priority | Release |
 | --- | --- | --- | --- | --- | --- |
@@ -55,6 +55,7 @@ _None._
 | [ZS-063](tickets/ZS-063-drop-waits-for-inflight.md) | Drop does not wait for in-flight requests; queued requests hit a dead handle | [SPEC-002](specs/SPEC-002-collection-management.md) | bug | P0 | v0.2.0 |
 | [ZS-064](tickets/ZS-064-recovery-resurrects-dropped.md) | Background recovery can resurrect a dropped collection | [SPEC-009](specs/SPEC-009-collection-recovery.md) | bug | P1 | v0.2.0 |
 | [ZS-065](tickets/ZS-065-export-cursor-on-disconnect.md) | Export cursor is held after the client disconnects | [SPEC-013](specs/SPEC-013-ndjson-export.md) | bug | P1 | v0.2.0 |
+| [ZS-066](tickets/ZS-066-sift1m-download-403.md) | SIFT1M download is rejected with 403 | [SPEC-007](specs/SPEC-007-benchmark-suite.md) | bug | P2 | v0.2.0 |
 
 </details>
 
@@ -131,7 +132,7 @@ _None._
 | [SPEC-004](specs/SPEC-004-vector-search.md) | Vector similarity search | implemented | v0.1.0 | 3/3 |
 | [SPEC-005](specs/SPEC-005-api-key-auth.md) | Optional API-key authentication | implemented | v0.1.0 | 2/2 |
 | [SPEC-006](specs/SPEC-006-packaging-and-docs.md) | Container image, documentation, and examples | implemented | v0.1.0 | 4/4 |
-| [SPEC-007](specs/SPEC-007-benchmark-suite.md) | Benchmark suite with overhead decomposition | implemented | v0.1.1 | 5/5 |
+| [SPEC-007](specs/SPEC-007-benchmark-suite.md) | Benchmark suite with overhead decomposition | implemented | v0.1.1 | 6/6 |
 | [SPEC-008](specs/SPEC-008-release-automation.md) | Release automation and GHCR image publishing | implemented | v0.1.1 | 5/5 |
 | [SPEC-009](specs/SPEC-009-collection-recovery.md) | Self-healing recovery for unavailable collections | implemented | v0.1.2 | 4/4 |
 | [SPEC-010](specs/SPEC-010-zvec-0-7-upgrade.md) | Upgrade to Zvec 0.7.0 | implemented | v0.2.0 | 4/4 |
