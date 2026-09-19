@@ -511,6 +511,38 @@ GET /collections/articles/docs/a1?include_vector=true
 }
 ```
 
+### `GET /collections/{name}/export`
+
+Stream **every** document as NDJSON (`application/x-ndjson`, one JSON object
+per line) — for backups, migrations, or re-indexing. Each line is shaped like a
+`DocIn` (`id`, `vectors`, `fields`; no `score`), so an export can be posted back
+to `/docs/insert` in batches unchanged.
+
+| Query param      | Type                  | Default | Notes                                   |
+| ---------------- | --------------------- | ------- | --------------------------------------- |
+| `include_vector` | bool                  | `true`  | Include vectors (needed to re-import).  |
+| `output_fields`  | string (repeatable)   | all     | Restrict scalar fields, e.g. `?output_fields=year`. |
+
+```bash
+curl -s localhost:8000/collections/articles/export > articles.ndjson
+```
+
+```
+{"id":"a1","vectors":{"embedding":[0.1,0.2,0.3,0.4]},"fields":{"category":"tech","year":2021}}
+{"id":"a2","vectors":{"embedding":[0.2,0.1,0.0,0.9]},"fields":{"category":"news","year":2019}}
+```
+
+- **Consistent snapshot.** The export reflects the collection as of the
+  request; writes made while it streams are not included, and are **not
+  blocked** by it (the collection lock is taken per batch, not for the whole
+  stream).
+- **Errors.** Bad input (unknown `output_fields`, missing collection) returns a
+  normal JSON error before streaming starts. If the export is cut short after
+  it has started — e.g. the collection is dropped or the server shuts down —
+  the **last line is an error envelope** (`{"error": {...}}`) instead of a
+  document. Check for it before treating an export as complete.
+- Order is unspecified.
+
 ---
 
 ## Search
