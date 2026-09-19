@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import shutil
+import threading
 from collections.abc import Iterator
 from pathlib import Path
 
@@ -347,3 +348,33 @@ def test_close_releases_handles_for_reopen(tmp_path: Path) -> None:
     assert manager2.counts() == (1, 0)
     manager2.close()
     store2.close()
+
+
+def test_maintain_allows_reads_but_blocks_writes(manager: CollectionManager) -> None:
+    """Maintenance (optimize) holds only the shared lock: reads proceed while it
+    runs, writes wait until it finishes."""
+    manager.create(_request())
+    managed = manager.get("docs")
+    started = threading.Event()
+    release = threading.Event()
+
+    def _maintenance(_: object) -> str:
+        started.set()
+        release.wait(timeout=5)
+        return "maintained"
+
+    async def _run() -> None:
+        maintenance = asyncio.create_task(managed.maintain(_maintenance))
+        await asyncio.to_thread(started.wait, 5)
+
+        assert await asyncio.wait_for(managed.read(lambda _: "read"), timeout=2) == "read"
+
+        write = asyncio.create_task(managed.write(lambda _: "written"))
+        await asyncio.sleep(0.2)
+        assert not write.done()
+
+        release.set()
+        assert await maintenance == "maintained"
+        assert await asyncio.wait_for(write, timeout=2) == "written"
+
+    asyncio.run(_run())
