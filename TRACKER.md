@@ -5,7 +5,7 @@
 Specs, tickets, and how they flow into each other are described in
 [specs/README.md](specs/README.md).
 
-**14 specs · 64 tickets** — 0 in-progress · 10 todo · 0 backlog · 54 done · 0 wontfix
+**14 specs · 65 tickets** — 0 in-progress · 10 todo · 0 backlog · 55 done · 0 wontfix
 
 ## Board
 
@@ -32,10 +32,10 @@ _None._
 
 _None._
 
-### Done (54)
+### Done (55)
 
 <details>
-<summary>v0.2.0 — 15 tickets</summary>
+<summary>v0.2.0 — 16 tickets</summary>
 
 | Ticket | Title | Spec | Type | Priority | Release |
 | --- | --- | --- | --- | --- | --- |
@@ -54,6 +54,7 @@ _None._
 | [ZS-062](tickets/ZS-062-collection-name-length.md) | Collection names outside 3-64 characters are misreported as 409 | [SPEC-002](specs/SPEC-002-collection-management.md) | bug | P1 | v0.2.0 |
 | [ZS-063](tickets/ZS-063-drop-waits-for-inflight.md) | Drop does not wait for in-flight requests; queued requests hit a dead handle | [SPEC-002](specs/SPEC-002-collection-management.md) | bug | P0 | v0.2.0 |
 | [ZS-064](tickets/ZS-064-recovery-resurrects-dropped.md) | Background recovery can resurrect a dropped collection | [SPEC-009](specs/SPEC-009-collection-recovery.md) | bug | P1 | v0.2.0 |
+| [ZS-065](tickets/ZS-065-export-cursor-on-disconnect.md) | Export cursor is held after the client disconnects | [SPEC-013](specs/SPEC-013-ndjson-export.md) | bug | P1 | v0.2.0 |
 
 </details>
 
@@ -136,5 +137,5 @@ _None._
 | [SPEC-010](specs/SPEC-010-zvec-0-7-upgrade.md) | Upgrade to Zvec 0.7.0 | implemented | v0.2.0 | 4/4 |
 | [SPEC-011](specs/SPEC-011-index-and-search-options.md) | Index quantization, RaBitQ indexes, and per-index search params | accepted | v0.2.0 | 5/7 |
 | [SPEC-012](specs/SPEC-012-group-by-search.md) | Group-by search | accepted | v0.2.0 | 1/3 |
-| [SPEC-013](specs/SPEC-013-ndjson-export.md) | Streaming NDJSON export | accepted | v0.2.0 | 1/3 |
+| [SPEC-013](specs/SPEC-013-ndjson-export.md) | Streaming NDJSON export | accepted | v0.2.0 | 2/4 |
 | [SPEC-014](specs/SPEC-014-quantization-benchmarks.md) | Quantization and optimize-load benchmarks | accepted | v0.2.0 | 0/4 |

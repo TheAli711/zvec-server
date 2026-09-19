@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import shutil
 import threading
-from collections.abc import AsyncIterator, Iterator
+from collections.abc import AsyncGenerator, Iterator
 from pathlib import Path
 
 import pytest
@@ -427,7 +427,7 @@ def _docs(start: int, count: int) -> list[DocIn]:
     ]
 
 
-def _export(managed: ManagedCollection, batch_size: int = 3) -> AsyncIterator[list[DocOut]]:
+def _export(managed: ManagedCollection, batch_size: int = 3) -> AsyncGenerator[list[DocOut], None]:
     return managed.stream(lambda c: operations.open_export(c, None, False), batch_size)
 
 
