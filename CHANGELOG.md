@@ -8,13 +8,20 @@ and this project adheres to
 
 ## [Unreleased]
 
-> **Breaking:** creating an `hnsw` vector field with `fp16`/`int8`/`int4`
-> quantization **and** `enable_rotate: true` now returns `422`. Zvec 0.8
-> returns near-random results for that combination after optimize
-> ([alibaba/zvec#886](https://github.com/alibaba/zvec/issues/886)). Use a
-> `flat`/`ivf` index or drop the rotation. Existing collections are unaffected
-> and keep their recall. `index_param.quantizer_param` in responses now lists
-> all six quantizer settings instead of only `enable_rotate`.
+## [0.3.0] - 2026-11-09
+
+> **Breaking:**
+>
+> - Creating an `hnsw` vector field with `int8`/`int4` quantization **and**
+>   `enable_rotate: true` now returns `422`. Zvec 0.8 returns near-random results
+>   for that combination after optimize
+>   ([alibaba/zvec#886](https://github.com/alibaba/zvec/issues/886)). Use a
+>   `flat`/`ivf` index or drop the rotation. Existing collections are unaffected
+>   and keep their recall.
+> - `enable_rotate: true` with `fp16` (or a uniform quantizer) returns `422` on
+>   every index. Such collections never accepted inserts.
+> - `index_param.quantizer_param` in responses lists all six quantizer settings
+>   instead of only `enable_rotate`.
 
 ### Added
 
@@ -206,7 +213,8 @@ Initial release: a lightweight, storage-focused HTTP server that exposes the
   coverage, pre-commit hooks, and a GitHub Actions CI pipeline (test matrix over
   Python 3.12/3.13 plus a Docker build).
 
-[Unreleased]: https://github.com/TheAli711/zvec-server/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/TheAli711/zvec-server/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/TheAli711/zvec-server/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/TheAli711/zvec-server/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/TheAli711/zvec-server/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/TheAli711/zvec-server/compare/v0.1.0...v0.1.1
