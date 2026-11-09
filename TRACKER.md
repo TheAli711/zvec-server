@@ -5,7 +5,7 @@
 Specs, tickets, and how they flow into each other are described in
 [specs/README.md](specs/README.md).
 
-**15 specs · 79 tickets** — 0 in-progress · 0 todo · 3 backlog · 76 done · 0 wontfix
+**15 specs · 80 tickets** — 0 in-progress · 0 todo · 3 backlog · 77 done · 0 wontfix
 
 ## Board
 
@@ -25,10 +25,10 @@ _None._
 | [ZS-076](tickets/ZS-076-lift-hnsw-rotate-guard.md) | Lift the hnsw rotation guard once Zvec fixes the regression | [SPEC-015](specs/SPEC-015-zvec-0-8-upgrade.md) | chore | P2 | v0.3.1 |
 | [ZS-078](tickets/ZS-078-int-params-overflow-500.md) | Integer index and search params of 2**31 or more return 500 | [SPEC-011](specs/SPEC-011-index-and-search-options.md) | bug | P2 | v0.3.1 |
 
-### Done (76)
+### Done (77)
 
 <details>
-<summary>v0.3.0 — 9 tickets</summary>
+<summary>v0.3.0 — 10 tickets</summary>
 
 | Ticket | Title | Spec | Type | Priority | Release |
 | --- | --- | --- | --- | --- | --- |
@@ -41,6 +41,7 @@ _None._
 | [ZS-074](tickets/ZS-074-bench-new-quantizers.md) | Benchmark the new quantizers and the refiner | [SPEC-015](specs/SPEC-015-zvec-0-8-upgrade.md) | chore | P1 | v0.3.0 |
 | [ZS-075](tickets/ZS-075-zvec-0-8-docs.md) | Document the Zvec 0.8.1 upgrade and measured trade-offs | [SPEC-015](specs/SPEC-015-zvec-0-8-upgrade.md) | docs | P1 | v0.3.0 |
 | [ZS-077](tickets/ZS-077-fp16-rotate-unusable.md) | fp16 + enable_rotate creates a collection that rejects every insert | [SPEC-011](specs/SPEC-011-index-and-search-options.md) | bug | P1 | v0.3.0 |
+| [ZS-080](tickets/ZS-080-close-flush-race.md) | Shutdown lets a queued optimize run between flush and close | [SPEC-010](specs/SPEC-010-zvec-0-7-upgrade.md) | bug | P1 | v0.3.0 |
 
 </details>
 
@@ -156,7 +157,7 @@ _None._
 | [SPEC-007](specs/SPEC-007-benchmark-suite.md) | Benchmark suite with overhead decomposition | implemented | v0.1.1 | 6/6 |
 | [SPEC-008](specs/SPEC-008-release-automation.md) | Release automation and GHCR image publishing | implemented | v0.1.1 | 5/5 |
 | [SPEC-009](specs/SPEC-009-collection-recovery.md) | Self-healing recovery for unavailable collections | implemented | v0.1.2 | 4/4 |
-| [SPEC-010](specs/SPEC-010-zvec-0-7-upgrade.md) | Upgrade to Zvec 0.7.0 | implemented | v0.2.0 | 4/4 |
+| [SPEC-010](specs/SPEC-010-zvec-0-7-upgrade.md) | Upgrade to Zvec 0.7.0 | implemented | v0.2.0 | 5/5 |
 | [SPEC-011](specs/SPEC-011-index-and-search-options.md) | Index quantization, RaBitQ indexes, and per-index search params | implemented | v0.2.0 | 9/10 |
 | [SPEC-012](specs/SPEC-012-group-by-search.md) | Group-by search | implemented | v0.2.0 | 3/3 |
 | [SPEC-013](specs/SPEC-013-ndjson-export.md) | Streaming NDJSON export | implemented | v0.2.0 | 4/4 |
