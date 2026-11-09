@@ -35,11 +35,18 @@ and this project adheres to
 
 ### Changed
 
+- Dependencies (bench extra only; not in the server image): `pillow` 12.3.0 →
+  13.0.0 and `certifi` 2026.6.17 → 2026.10.23, which clears the open security
+  advisories.
 - Requires **Zvec 0.8.1** (was 0.7.0). Brings faster distance kernels
   (especially INT4 and ARM64), lower index-build memory, and the fixes listed
   below. On-disk collections from 0.7.0 open unchanged.
 
 ### Fixed
+
+- Shutdown flushed and closed each collection under two separate exclusive-lock
+  holds, so a queued optimize could run in between. Both now happen under one
+  hold.
 
 - `is_using_refiner: true` on an unquantized `hnsw` field returned `500` once
   the collection was optimized. It now returns `400`, and so does a
