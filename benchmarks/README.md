@@ -47,12 +47,41 @@ uv run python -m benchmarks list
 # every variant on the engine tier (recall / QPS / disk / optimize time)
 uv run python -m benchmarks quant --scenario sift1m
 # server-process RSS in isolation, a subset of variants
-uv run python -m benchmarks quant --scenario sift1m --tier http --variants fp32,int8,int4+rot
+uv run python -m benchmarks quant --scenario sift1m --tier http --variants fp32,int8,uint8
+# also measure every quantized variant with the query-time refiner (scale_factor 0)
+uv run python -m benchmarks quant --scenario sift1m --refine 0 --ef 200 --concurrency 16
+# PQ on IVF, including 4-bit fast-scan
+uv run python -m benchmarks quant --scenario sift1m --index ivf --nprobe 10,50 \
+  --variants fp32,pq,pq4,pq4+fs --refine 10
 ```
 
-Rebuilds the collection once per variant (`fp32`, `fp16`, `int8`, `int8+rot`,
-`int4`, `int4+rot`) and writes a side-by-side table (`quant-*.md`) with recall,
-Δrecall vs FP32, QPS, latency, on-disk size, optimize time, and peak RSS.
+Rebuilds the collection once per variant and writes a side-by-side table
+(`quant-*.md`, plus the raw `quant-*.json`) with recall, Δrecall vs FP32, QPS,
+latency, on-disk size, optimize time, and peak RSS. Variants:
+
+| Variant | Quantizer | Builds on |
+| ------- | --------- | --------- |
+| `fp32` | none (baseline) | any |
+| `fp16`, `int8`, `int4` | scalar | hnsw / flat / ivf |
+| `int8+rot`, `int4+rot` | scalar + random rotation | hnsw / flat / ivf (the server rejects these on hnsw — zvec 0.8.x bug, see below) |
+| `uint8`, `uint7`, `uint4` | zvec 0.8 uniform (`uniform_uint*`) | hnsw, L2 metric only |
+| `pq`, `pq4` | product quantization, 8 / 4 bits per code | hnsw / ivf, `VECTOR_FP32` only |
+| `pq+opq` | PQ with learned rotation (OPQ) | hnsw / ivf |
+| `pq4+fs` | 4-bit PQ with fast-scan | ivf only |
+
+PQ uses `num_chunk = dim // 4` (32 for SIFT's 128-d) unless `--pq-chunks` says
+otherwise. The default `--variants` is everything that builds on HNSW; a variant
+the scenario's index/metric cannot build, or that a tier rejects (e.g. the
+`http` tier's `422` for `int8+rot` on HNSW), is skipped and listed under
+**Skipped** instead of aborting the sweep.
+
+`--refine SF[,SF...]` adds a refined copy of every search cell for quantized
+variants: the engine re-scores the quantized candidates against the stored
+full-precision vectors (`is_using_refiner` + `scale_factor`; on HNSW `0` means
+`max(topk, ef)` candidates, IVF defaults to `10`). FP32 is never refined — it
+has nothing to refine, and zvec 0.8.1 raises on an unquantized HNSW field.
+`--index`, `--ef`, `--nprobe`, and `--concurrency` override the scenario's
+index type and search grid.
 
 SIFT1M, Zvec 0.7.0, HNSW `M=16`, recall@10 at `ef=200` (Apple M-series laptop):
 
@@ -69,6 +98,40 @@ Zvec stores the quantized index *in addition to* the full-precision vectors, so
 quantization raised disk and memory here instead of lowering them, and rotation
 hurt `int4`. Re-run on your own (especially higher-dimensional) data before
 enabling it.
+
+SIFT1M, Zvec 0.8.1, same settings (HNSW `M=16`, `ef_construction=200`,
+recall@10 at `ef=200`, `--mmap`), Apple M5 (10 cores, 16 GB). "+refine" is the
+query-time refiner at `scale_factor=0` (re-score `max(topk, ef)` = 200
+candidates). Server RSS is the http tier's peak during ingest + optimize, as a
+range over 2–3 runs (it was noisy on this 16 GB laptop under memory pressure):
+
+| variant | disk | server RSS (http) | recall@10 | +refine | engine QPS (c=16) | +refine | optimize |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| fp32 | 687 MB | ~860–960 MB | 0.996 | — | 21.3k | — | 47 s |
+| fp16 | 946 MB | ~1,310–1,600 MB | 0.996 | 0.996 | 24.1k | 10.8k | 35 s |
+| int8 | 823 MB | ~1,310–1,380 MB | 0.987 | 0.995 | 26.7k | 11.0k | 34 s |
+| int8+rot | 823 MB | `422` | **0.000** | **0.000** | 28.3k | 11.3k | 31 s |
+| int4 | 763 MB | — | 0.867 | 0.996 | 20.2k | 10.9k | 34 s |
+| int4+rot | 763 MB | `422` | **0.000** | **0.000** | 26.6k | 11.2k | 31 s |
+| uint8 | 823 MB | ~900–1,160 MB | 0.995 | 0.995 | 25.6k | 11.0k | 35 s |
+| uint7 | 823 MB | ~1,020–1,150 MB | 0.965 | 0.995 | 25.9k | 10.9k | 34 s |
+| uint4 | 763 MB | ~890–1,070 MB | 0.834 | 0.994 | 24.8k | 10.6k | 35 s |
+| pq (32×8 bit) | 732 MB | ~970–1,090 MB | 0.717 | 0.991 | 25.5k | 11.0k | 56 s |
+| pq4 (32×4 bit) | 701 MB | ~1,350–1,490 MB | 0.400 | 0.922 | 25.2k | 10.3k | 37 s |
+| pq+opq | 732 MB | ~1,090–1,110 MB | 0.623 | 0.991 | 24.5k | 11.2k | 66 s |
+
+- Quantization still adds to disk and RSS on 0.8.1; even PQ (32 B/vector)
+  is +7% disk, because the FP32 vectors stay alongside.
+- Without the refiner, every quantized HNSW variant beats FP32 QPS by 13–25%
+  (except `int4`). The refiner at `scale_factor=0` brings recall back to about
+  FP32 levels (0.99+, `pq4` 0.92) but cuts c=16 QPS to about 11k, half of FP32.
+- A smaller refine window costs almost nothing. For `pq`, `scale_factor=5` (50
+  candidates) gave 0.984 recall at 23.7k QPS and `scale_factor=2` gave 0.908 at
+  25.0k (`uint8` held 0.996 at any scale factor).
+- **HNSW + INT8/INT4 + `enable_rotate` is broken on 0.8.x:** recall@10 is
+  0.000 after optimize, refined or not (0.7.0 gave 0.980 / 0.541). The server
+  rejects that combination with `422`; the engine tier still builds it, so this
+  sweep shows the bug.
 
 ### Search latency during optimize
 
@@ -103,8 +166,9 @@ compact summary plus the **overhead-decomposition** table are printed to stdout.
 | `--measure-seconds <s>` | per-scenario | override the per-cell measurement window |
 | `--query-threads <n>` | engine default | set `ZVEC_SERVER_ZVEC_QUERY_THREADS` for all tiers |
 | `--mmap` / `--no-mmap` | `--no-mmap` | memory-mapped storage (see the mmap note below) |
-| `--quantize <t>` | — | quantize the index: `fp16` \| `int8` \| `int4` |
-| `--rotate` | off | random rotation before quantizing (with `--quantize`) |
+| `--quantize <t>` | — | quantize the index: `fp16` \| `int8` \| `int4` \| `uniform_uint8` \| `uniform_uint7` \| `uniform_uint4` \| `pq` |
+| `--rotate` | off | random rotation before quantizing (OPQ for `pq`; with `--quantize`) |
+| `--num-chunk <n>` / `--num-bits <4\|8>` | engine default | PQ sub-quantizers / bits per code (with `--quantize pq`) |
 | `--out <dir>` | `benchmarks/results` | results directory |
 
 ## Scenarios

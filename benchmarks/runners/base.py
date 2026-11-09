@@ -79,8 +79,14 @@ class Runner(Protocol):
         nprobe: int | None = None,
         filter: str | None = None,
         include_vector: bool = False,
+        refine: float | None = None,
     ) -> SearchOutcome:
-        """Run one nearest-neighbour query and return the hit ids."""
+        """Run one nearest-neighbour query and return the hit ids.
+
+        ``refine`` turns on the query-time refiner (re-score quantized candidates
+        against the full-precision vectors) with that ``scale_factor``; ``None``
+        leaves it off.
+        """
         ...
 
     def teardown(self) -> None:
@@ -92,14 +98,25 @@ class Runner(Protocol):
         ...
 
 
-def server_query_params(index: str, *, ef: int | None, nprobe: int | None) -> dict[str, int] | None:
+def server_query_params(
+    index: str,
+    *,
+    ef: int | None,
+    nprobe: int | None,
+    refine: float | None = None,
+) -> dict[str, int | float | bool] | None:
     """Build the server's search ``params`` for ``index``, mirroring the engine tier.
 
     The server rejects params the field's index doesn't support, so only the
-    knob that applies (``ef`` for HNSW, ``nprobe`` for IVF) is sent.
+    knobs that apply are sent: ``ef`` for HNSW, ``nprobe`` for IVF, plus
+    ``is_using_refiner`` + ``scale_factor`` on either when ``refine`` is set.
     """
+    params: dict[str, int | float | bool] = {}
     if index == "hnsw" and ef is not None:
-        return {"ef": ef}
-    if index == "ivf" and nprobe is not None:
-        return {"nprobe": nprobe}
-    return None
+        params["ef"] = ef
+    elif index == "ivf" and nprobe is not None:
+        params["nprobe"] = nprobe
+    if refine is not None and index in ("hnsw", "ivf"):
+        params["is_using_refiner"] = True
+        params["scale_factor"] = refine
+    return params or None

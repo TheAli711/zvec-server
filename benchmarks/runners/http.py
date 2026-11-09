@@ -28,7 +28,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import IO
+from typing import IO, Any
 
 import httpx
 import numpy as np
@@ -40,6 +40,9 @@ __all__ = ["HttpRunner"]
 
 _READINESS_TIMEOUT_S = 30.0
 _READINESS_POLL_S = 0.2
+# optimize builds the whole index (PQ also trains its codebook) in one request;
+# on 1M+ docs that can take minutes, well past the default request timeout.
+_OPTIMIZE_TIMEOUT_S = 1800.0
 
 
 class HttpRunner:
@@ -163,7 +166,7 @@ class HttpRunner:
         """Flush buffered writes, then build/optimize the index."""
         assert self._spec is not None
         self._post(f"/collections/{self._spec.name}/flush", {})
-        self._post(f"/collections/{self._spec.name}/optimize", {})
+        self._post(f"/collections/{self._spec.name}/optimize", {}, timeout=_OPTIMIZE_TIMEOUT_S)
 
     # ------------------------------------------------------------------- queries
     def search(
@@ -175,10 +178,11 @@ class HttpRunner:
         nprobe: int | None = None,
         filter: str | None = None,
         include_vector: bool = False,
+        refine: float | None = None,
     ) -> SearchOutcome:
         """Run one query and report the hit ids plus JSON payload byte counts."""
         assert self._client is not None and self._spec is not None
-        params = server_query_params(self._spec.index, ef=ef, nprobe=nprobe)
+        params = server_query_params(self._spec.index, ef=ef, nprobe=nprobe, refine=refine)
         body = {
             "queries": [
                 {
@@ -234,10 +238,13 @@ class HttpRunner:
         }
         self._post("/collections", body)
 
-    def _post(self, url: str, body: dict[str, object]) -> httpx.Response:
+    def _post(
+        self, url: str, body: dict[str, object], *, timeout: float | None = None
+    ) -> httpx.Response:
         """POST a JSON body, raising a clear error on any non-2xx response."""
         assert self._client is not None
-        resp = self._client.post(url, json=body)
+        kwargs: dict[str, Any] = {} if timeout is None else {"timeout": timeout}
+        resp = self._client.post(url, json=body, **kwargs)
         if not resp.is_success:
             raise RuntimeError(f"POST {url} -> {resp.status_code}: {resp.text}")
         return resp

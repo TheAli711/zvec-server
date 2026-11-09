@@ -48,10 +48,19 @@ class CollectionSpec:
     # IVF build params
     n_list: int | None = None
     n_iters: int | None = None
-    # Quantization (hnsw / flat / ivf): "fp16" | "int8" | "int4", plus an
-    # optional random rotation before quantizing.
+    # Quantization: "fp16" | "int8" | "int4" (hnsw / flat / ivf),
+    # "uniform_uint4" | "uniform_uint7" | "uniform_uint8" (hnsw + l2 only), or
+    # "pq" (hnsw / ivf, VECTOR_FP32 only). ``enable_rotate`` is a random rotation
+    # before quantizing (learned OPQ for ``pq``).
     quantize_type: str | None = None
     enable_rotate: bool = False
+    # PQ-only quantizer params (None = engine default). ``fast_scan`` is IVF +
+    # ``num_bits=4`` only; ``opq_iter`` / ``opq_pq_iter`` need ``enable_rotate``.
+    num_chunk: int | None = None
+    num_bits: int | None = None
+    fast_scan: bool = False
+    opq_iter: int | None = None
+    opq_pq_iter: int | None = None
     # Optional scalar fields (only needed for filtered-search scenarios).
     scalar_fields: tuple[ScalarFieldSpec, ...] = field(default_factory=tuple)
     vector_field: str = "embedding"
@@ -59,6 +68,17 @@ class CollectionSpec:
     # of a zvec 0.5.x mmap bug, fixed in 0.7.0). The production server defaults
     # to True -- run the CLI with ``--mmap`` to benchmark that config.
     enable_mmap: bool = False
+
+    def quantizer_params(self) -> dict[str, int | bool]:
+        """The non-default PQ quantizer params, keyed by their server/engine names."""
+        params: dict[str, int | bool] = {}
+        for key in ("num_chunk", "num_bits", "opq_iter", "opq_pq_iter"):
+            value = getattr(self, key)
+            if value is not None:
+                params[key] = value
+        if self.fast_scan:
+            params["fast_scan"] = True
+        return params
 
     def index_params(self) -> dict[str, int | str | bool] | None:
         """Build the engine ``params`` dict for the vector field, or ``None``."""
@@ -77,4 +97,5 @@ class CollectionSpec:
             params["quantize_type"] = self.quantize_type
             if self.enable_rotate:
                 params["enable_rotate"] = True
+            params.update(self.quantizer_params())
         return params or None

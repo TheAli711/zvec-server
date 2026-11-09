@@ -100,10 +100,11 @@ class EngineRunner:
         nprobe: int | None = None,
         filter: str | None = None,
         include_vector: bool = False,
+        refine: float | None = None,
     ) -> SearchOutcome:
         """Run one nearest-neighbour query against the engine and return hit ids."""
         assert self._collection is not None and self._spec is not None
-        param = self._build_query_param(ef=ef, nprobe=nprobe)
+        param = self._build_query_param(ef=ef, nprobe=nprobe, refine=refine)
         query = zvec.Query(
             field_name=self._spec.vector_field,
             vector=vector.tolist(),
@@ -145,7 +146,9 @@ class EngineRunner:
         quant: dict[str, object] = {}
         if spec.quantize_type is not None:
             quant["quantize_type"] = zvec.QuantizeType.__members__[spec.quantize_type.upper()]
-            quant["quantizer_param"] = zvec.QuantizerParam(enable_rotate=spec.enable_rotate)
+            quant["quantizer_param"] = zvec.QuantizerParam(
+                enable_rotate=spec.enable_rotate, **spec.quantizer_params()
+            )
         if spec.index == "hnsw":
             kwargs: dict[str, object] = dict(quant)
             if spec.m is not None:
@@ -162,11 +165,24 @@ class EngineRunner:
             return zvec.IVFIndexParam(metric_type=metric, **kwargs)
         return zvec.FlatIndexParam(metric_type=metric, **quant)
 
-    def _build_query_param(self, *, ef: int | None, nprobe: int | None) -> object | None:
-        """Build the per-query search param matching the collection's index, or ``None``."""
+    def _build_query_param(
+        self, *, ef: int | None, nprobe: int | None, refine: float | None = None
+    ) -> object | None:
+        """Build the per-query search param matching the collection's index, or ``None``.
+
+        ``refine`` (a ``scale_factor``) turns on the refiner. Callers must not set
+        it on an unquantized HNSW field: zvec 0.8.1 raises after optimize.
+        """
         assert self._spec is not None
-        if self._spec.index == "hnsw" and ef is not None:
-            return zvec.HnswQueryParam(ef=ef)
-        if self._spec.index == "ivf" and nprobe is not None:
-            return zvec.IVFQueryParam(nprobe=nprobe)
+        kwargs: dict[str, object] = {}
+        if refine is not None:
+            kwargs = {"is_using_refiner": True, "scale_factor": refine}
+        if self._spec.index == "hnsw":
+            if ef is not None:
+                kwargs["ef"] = ef
+            return zvec.HnswQueryParam(**kwargs) if kwargs else None
+        if self._spec.index == "ivf":
+            if nprobe is not None:
+                kwargs["nprobe"] = nprobe
+            return zvec.IVFQueryParam(**kwargs) if kwargs else None
         return None
