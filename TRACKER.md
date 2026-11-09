@@ -5,7 +5,7 @@
 Specs, tickets, and how they flow into each other are described in
 [specs/README.md](specs/README.md).
 
-**14 specs · 67 tickets** — 0 in-progress · 0 todo · 0 backlog · 67 done · 0 wontfix
+**15 specs · 79 tickets** — 0 in-progress · 0 todo · 3 backlog · 76 done · 0 wontfix
 
 ## Board
 
@@ -17,11 +17,32 @@ _None._
 
 _None._
 
-### Backlog (0)
+### Backlog (3)
 
-_None._
+| Ticket | Title | Spec | Type | Priority | Release |
+| --- | --- | --- | --- | --- | --- |
+| [ZS-079](tickets/ZS-079-vector-int8-insert-500.md) | Inserting into a VECTOR_INT8 field returns 500 | [SPEC-003](specs/SPEC-003-document-operations.md) | bug | P1 | v0.3.1 |
+| [ZS-076](tickets/ZS-076-lift-hnsw-rotate-guard.md) | Lift the hnsw rotation guard once Zvec fixes the regression | [SPEC-015](specs/SPEC-015-zvec-0-8-upgrade.md) | chore | P2 | v0.3.1 |
+| [ZS-078](tickets/ZS-078-int-params-overflow-500.md) | Integer index and search params of 2**31 or more return 500 | [SPEC-011](specs/SPEC-011-index-and-search-options.md) | bug | P2 | v0.3.1 |
 
-### Done (67)
+### Done (76)
+
+<details>
+<summary>v0.3.0 — 9 tickets</summary>
+
+| Ticket | Title | Spec | Type | Priority | Release |
+| --- | --- | --- | --- | --- | --- |
+| [ZS-068](tickets/ZS-068-require-zvec-0-8-1.md) | Require Zvec 0.8.1 | [SPEC-015](specs/SPEC-015-zvec-0-8-upgrade.md) | chore | P0 | v0.3.0 |
+| [ZS-069](tickets/ZS-069-hnsw-rotate-guard.md) | Reject enable_rotate on hnsw scalar quantization (Zvec 0.8 regression) | [SPEC-015](specs/SPEC-015-zvec-0-8-upgrade.md) | bug | P0 | v0.3.0 |
+| [ZS-070](tickets/ZS-070-uniform-and-pq-quantizers.md) | Uniform and PQ quantizers | [SPEC-015](specs/SPEC-015-zvec-0-8-upgrade.md) | feature | P1 | v0.3.0 |
+| [ZS-071](tickets/ZS-071-refiner-search-params.md) | Refiner search params for hnsw, hnsw_rabitq, and ivf | [SPEC-015](specs/SPEC-015-zvec-0-8-upgrade.md) | feature | P1 | v0.3.0 |
+| [ZS-072](tickets/ZS-072-refiner-unquantized-hnsw-500.md) | Refiner on an unquantized hnsw field returns 500 | [SPEC-011](specs/SPEC-011-index-and-search-options.md) | bug | P1 | v0.3.0 |
+| [ZS-073](tickets/ZS-073-relaxed-doc-ids.md) | Accept Zvec 0.8 document ids, including in GET /docs/{doc_id} | [SPEC-015](specs/SPEC-015-zvec-0-8-upgrade.md) | feature | P1 | v0.3.0 |
+| [ZS-074](tickets/ZS-074-bench-new-quantizers.md) | Benchmark the new quantizers and the refiner | [SPEC-015](specs/SPEC-015-zvec-0-8-upgrade.md) | chore | P1 | v0.3.0 |
+| [ZS-075](tickets/ZS-075-zvec-0-8-docs.md) | Document the Zvec 0.8.1 upgrade and measured trade-offs | [SPEC-015](specs/SPEC-015-zvec-0-8-upgrade.md) | docs | P1 | v0.3.0 |
+| [ZS-077](tickets/ZS-077-fp16-rotate-unusable.md) | fp16 + enable_rotate creates a collection that rejects every insert | [SPEC-011](specs/SPEC-011-index-and-search-options.md) | bug | P1 | v0.3.0 |
+
+</details>
 
 <details>
 <summary>v0.2.0 — 28 tickets</summary>
@@ -128,7 +149,7 @@ _None._
 | --- | --- | --- | --- | --- |
 | [SPEC-001](specs/SPEC-001-server-foundation.md) | Server foundation: app factory, configuration, errors, and health | implemented | v0.1.0 | 7/7 |
 | [SPEC-002](specs/SPEC-002-collection-management.md) | Collection management and metadata store | implemented | v0.1.0 | 9/9 |
-| [SPEC-003](specs/SPEC-003-document-operations.md) | Document operations | implemented | v0.1.0 | 4/4 |
+| [SPEC-003](specs/SPEC-003-document-operations.md) | Document operations | implemented | v0.1.0 | 4/5 |
 | [SPEC-004](specs/SPEC-004-vector-search.md) | Vector similarity search | implemented | v0.1.0 | 3/3 |
 | [SPEC-005](specs/SPEC-005-api-key-auth.md) | Optional API-key authentication | implemented | v0.1.0 | 2/2 |
 | [SPEC-006](specs/SPEC-006-packaging-and-docs.md) | Container image, documentation, and examples | implemented | v0.1.0 | 4/4 |
@@ -136,7 +157,8 @@ _None._
 | [SPEC-008](specs/SPEC-008-release-automation.md) | Release automation and GHCR image publishing | implemented | v0.1.1 | 5/5 |
 | [SPEC-009](specs/SPEC-009-collection-recovery.md) | Self-healing recovery for unavailable collections | implemented | v0.1.2 | 4/4 |
 | [SPEC-010](specs/SPEC-010-zvec-0-7-upgrade.md) | Upgrade to Zvec 0.7.0 | implemented | v0.2.0 | 4/4 |
-| [SPEC-011](specs/SPEC-011-index-and-search-options.md) | Index quantization, RaBitQ indexes, and per-index search params | implemented | v0.2.0 | 7/7 |
+| [SPEC-011](specs/SPEC-011-index-and-search-options.md) | Index quantization, RaBitQ indexes, and per-index search params | implemented | v0.2.0 | 9/10 |
 | [SPEC-012](specs/SPEC-012-group-by-search.md) | Group-by search | implemented | v0.2.0 | 3/3 |
 | [SPEC-013](specs/SPEC-013-ndjson-export.md) | Streaming NDJSON export | implemented | v0.2.0 | 4/4 |
 | [SPEC-014](specs/SPEC-014-quantization-benchmarks.md) | Quantization and optimize-load benchmarks | implemented | v0.2.0 | 5/5 |
+| [SPEC-015](specs/SPEC-015-zvec-0-8-upgrade.md) | Upgrade to Zvec 0.8.1 with uniform and PQ quantizers, refiner, and relaxed ids | accepted | v0.3.0 | 7/8 |

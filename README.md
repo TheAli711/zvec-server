@@ -37,11 +37,13 @@ Zvec library in-process.
   and **streaming NDJSON export** of a consistent snapshot, re-importable as-is.
 - Multiple vector dtypes (`VECTOR_FP32`, `VECTOR_FP16`, `VECTOR_FP64`,
   `VECTOR_INT8`, sparse variants) and scalar field types.
-- Index types `hnsw` / `flat` / `ivf` (plus `hnsw_rabitq` / `ivf_rabitq` on
-  Linux x86_64) and metrics `cosine` / `ip` / `l2`, with per-index build and
-  search tuning (`ef`, `nprobe`, `radius`, exact `is_linear` search, ...) and
-  opt-in quantization (`fp16` / `int8` / `int4` — benchmark first, see
-  [docs/API.md](./docs/API.md#index-types--metrics)).
+- Index types `hnsw` / `flat` / `ivf` / `hnsw_rabitq` / `ivf_rabitq` and
+  metrics `cosine` / `ip` / `l2`, with per-index build and search tuning (`ef`,
+  `nprobe`, `radius`, exact `is_linear` search, ...) and opt-in quantization
+  (`fp16` / `int8` / `int4`, uniform `uint4`–`uint8`, and product quantization
+  with optional OPQ), plus a search-time refiner that re-ranks against the full
+  vectors. Benchmark first, see
+  [docs/API.md](./docs/API.md#index-types--metrics).
 - SQL-like filtering on scalar fields for search and delete.
 - Optional **API-key authentication** (`Authorization: Bearer`), off by default
   and configured entirely via the environment.

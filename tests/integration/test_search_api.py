@@ -126,9 +126,14 @@ def test_persistence_reload(settings: Settings, collection_body: dict[str, Any])
         assert any(r["id"] == "a" for r in search.json()["results"])
 
 
+@pytest.mark.parametrize("index", ["flat", "ivf"])
 def test_quantized_collection_roundtrip(
-    client: TestClient, collection_body: dict[str, Any], sample_docs: list[dict[str, Any]]
+    client: TestClient,
+    collection_body: dict[str, Any],
+    sample_docs: list[dict[str, Any]],
+    index: str,
 ) -> None:
+    collection_body["vectors"][0]["index"] = index
     collection_body["vectors"][0]["params"] = {"quantize_type": "int8", "enable_rotate": True}
     created = client.post("/collections", json=collection_body)
     assert created.status_code == 201, created.text
@@ -146,18 +151,153 @@ def test_quantized_collection_roundtrip(
     assert response.json()["results"][0]["id"] == "a"
 
 
+def test_hnsw_rotation_rejected_until_upstream_fix(
+    client: TestClient, collection_body: dict[str, Any]
+) -> None:
+    """ZS-069: Zvec 0.8 returns wrong results for new hnsw + int8 + rotation."""
+    collection_body["vectors"][0]["params"] = {"quantize_type": "int8", "enable_rotate": True}
+    response = client.post("/collections", json=collection_body)
+    assert response.status_code == 422, response.text
+    assert "Zvec 0.8 returns wrong results" in response.json()["error"]["message"]
+    assert client.get("/collections/articles").status_code == 404
+
+
+def _random_docs(n: int, dim: int, seed: int) -> list[dict[str, Any]]:
+    rng = random.Random(seed)
+    return [
+        {"id": str(i), "vectors": {"embedding": [rng.gauss(0, 1) for _ in range(dim)]}}
+        for i in range(n)
+    ]
+
+
+@pytest.mark.parametrize(
+    ("index", "params", "query_params"),
+    [
+        ("hnsw", {"quantize_type": "uniform_uint4"}, {"is_using_refiner": True}),
+        ("hnsw", {"quantize_type": "uniform_uint7"}, {"is_using_refiner": True}),
+        ("hnsw", {"quantize_type": "uniform_uint8"}, None),
+        ("hnsw", {"quantize_type": "pq", "num_chunk": 8}, {"is_using_refiner": True}),
+        (
+            "hnsw",
+            {"quantize_type": "pq", "num_chunk": 8, "num_bits": 4, "enable_rotate": True},
+            {"is_using_refiner": True, "scale_factor": 4},
+        ),
+        (
+            "ivf",
+            {"n_list": 4, "quantize_type": "pq", "num_chunk": 8},
+            {"nprobe": 4, "is_using_refiner": True, "scale_factor": 10},
+        ),
+        (
+            "ivf",
+            {"n_list": 4, "quantize_type": "pq", "num_chunk": 8, "num_bits": 4, "fast_scan": True},
+            {"nprobe": 4, "is_using_refiner": True, "scale_factor": 50},
+        ),
+    ],
+)
+def test_new_quantizers_find_exact_match(
+    client: TestClient,
+    index: str,
+    params: dict[str, Any],
+    query_params: dict[str, Any] | None,
+) -> None:
+    body = {
+        "name": "q_col",
+        "vectors": [
+            {"name": "embedding", "dim": 16, "index": index, "metric": "l2", "params": params}
+        ],
+    }
+    created = client.post("/collections", json=body)
+    assert created.status_code == 201, created.text
+    index_param = created.json()["vectors"][0]["index_param"]
+    assert index_param["quantize_type"] == params["quantize_type"].upper()
+    for key in ("num_chunk", "num_bits", "fast_scan", "enable_rotate"):
+        if key in params:
+            assert index_param["quantizer_param"][key] == params[key]
+
+    docs = _random_docs(300, 16, seed=11)
+    _seed(client, "q_col", docs)
+    assert client.post("/collections/q_col/optimize").status_code == 200
+    for target in ("7", "123"):
+        response = client.post(
+            "/collections/q_col/search",
+            json={
+                "queries": [
+                    {
+                        "field": "embedding",
+                        "vector": docs[int(target)]["vectors"]["embedding"],
+                        "params": query_params,
+                    }
+                ],
+                "topk": 3,
+            },
+        )
+        assert response.status_code == 200, response.text
+        top = response.json()["results"][0]
+        assert top["id"] == target
+        if params["quantize_type"] == "pq" and query_params:
+            # Only the refiner re-scores against the full vectors; PQ distances
+            # alone are approximate, so an exact 0 proves the refiner ran.
+            assert top["score"] == pytest.approx(0.0, abs=1e-6)
+
+
+def test_refiner_on_unquantized_hnsw_returns_400(
+    client: TestClient, collection_body: dict[str, Any], sample_docs: list[dict[str, Any]]
+) -> None:
+    """ZS-072: the engine fails after optimize; reject up front instead of a 500."""
+    assert client.post("/collections", json=collection_body).status_code == 201
+    _seed(client, "articles", sample_docs)
+    assert client.post("/collections/articles/optimize").status_code == 200
+    response = _search(client, "articles", {"is_using_refiner": True})
+    assert response.status_code == 400, response.text
+    assert "requires a quantized index" in response.json()["error"]["message"]
+    # Turning it off explicitly, or tuning scale_factor alone, is still fine.
+    assert _search(client, "articles", {"is_using_refiner": False}).status_code == 200
+    assert _search(client, "articles", {"scale_factor": 2}).status_code == 200
+
+
+@pytest.mark.parametrize(
+    ("index", "params"),
+    [
+        ("ivf", {"is_using_refiner": True, "scale_factor": 10}),
+        ("hnsw_int8", {"is_using_refiner": True, "scale_factor": 0}),
+        ("hnsw_int8", {"ef": 32, "scale_factor": 2.5}),
+    ],
+)
+def test_refiner_params_accepted(
+    client: TestClient,
+    collection_body: dict[str, Any],
+    sample_docs: list[dict[str, Any]],
+    index: str,
+    params: dict[str, Any],
+) -> None:
+    if index == "hnsw_int8":
+        collection_body["vectors"][0]["params"] = {"quantize_type": "int8"}
+    else:
+        collection_body["vectors"][0]["index"] = index
+    assert client.post("/collections", json=collection_body).status_code == 201
+    _seed(client, "articles", sample_docs)
+    assert client.post("/collections/articles/optimize").status_code == 200
+    response = _search(client, "articles", params)
+    assert response.status_code == 200, response.text
+    assert response.json()["results"][0]["id"] == "a"
+
+
 def test_bad_quantize_type_returns_422(client: TestClient, collection_body: dict[str, Any]) -> None:
     collection_body["vectors"][0]["params"] = {"quantize_type": "int2"}
     response = client.post("/collections", json=collection_body)
     assert response.status_code == 422, response.text
 
 
-RABITQ_SUPPORTED = sys.platform == "linux" and platform.machine() in ("x86_64", "AMD64")
+# Zvec 0.8.1 builds RaBitQ for Linux and macOS (x86_64 and ARM64) and Windows x86_64.
+RABITQ_SUPPORTED = sys.platform in ("linux", "darwin") or platform.machine() in (
+    "x86_64",
+    "AMD64",
+)
 
 
 @pytest.mark.parametrize("index", ["hnsw_rabitq", "ivf_rabitq"])
 def test_rabitq_collection(client: TestClient, index: str) -> None:
-    """RaBitQ works on Linux x86_64 and fails cleanly (422) everywhere else."""
+    """RaBitQ works where the engine supports it and fails cleanly (422) elsewhere."""
     body = {"name": "rq_col", "vectors": [{"name": "embedding", "dim": 64, "index": index}]}
     created = client.post("/collections", json=body)
     if not RABITQ_SUPPORTED:
@@ -223,6 +363,12 @@ def test_search_query_params_per_index(
         ("hnsw", {"nprobe": 4}),
         ("hnsw", {"ef": "64"}),
         ("hnsw", {"is_linear": 1}),
+        ("hnsw", {"scale_factor": -1}),
+        ("hnsw", {"scale_factor": 1e9}),
+        ("hnsw", {"scale_factor": "2"}),
+        ("ivf", {"is_using_refiner": "yes"}),
+        ("ivf", {"radius": 1.0}),
+        ("flat", {"scale_factor": 2}),
     ],
 )
 def test_search_bad_query_params_return_400(
@@ -231,6 +377,26 @@ def test_search_bad_query_params_return_400(
     collection_body["vectors"][0]["index"] = index
     assert client.post("/collections", json=collection_body).status_code == 201
     response = _search(client, "articles", params)
+    assert response.status_code == 400, response.text
+
+
+@pytest.mark.parametrize("raw", ["NaN", "Infinity", "-Infinity"])
+@pytest.mark.parametrize("param", ["scale_factor", "radius"])
+def test_search_non_finite_float_params_return_400(
+    client: TestClient, collection_body: dict[str, Any], raw: str, param: str
+) -> None:
+    """The JSON parser accepts NaN/Infinity literals; the engine would 500 on them."""
+    collection_body["vectors"][0]["params"] = {"quantize_type": "int8"}
+    assert client.post("/collections", json=collection_body).status_code == 201
+    body = (
+        '{"queries": [{"field": "embedding", "vector": [0.1, 0.2, 0.3, 0.4], '
+        f'"params": {{"is_using_refiner": true, "{param}": {raw}}}}}]}}'
+    )
+    response = client.post(
+        "/collections/articles/search",
+        content=body,
+        headers={"content-type": "application/json"},
+    )
     assert response.status_code == 400, response.text
 
 
@@ -334,8 +500,25 @@ def test_new_index_params_survive_restart(settings: Settings) -> None:
     """Quantized HNSW and SOAR IVF collections reopen with their params intact,
     and per-index search params still apply after the reload."""
     specs = {
-        "quant_hnsw": {"index": "hnsw", "params": {"quantize_type": "int4", "enable_rotate": True}},
+        "quant_hnsw": {"index": "hnsw", "params": {"quantize_type": "int4"}},
         "soar_ivf": {"index": "ivf", "params": {"n_list": 4, "use_soar": True}},
+        "rot_flat": {"index": "flat", "params": {"quantize_type": "int4", "enable_rotate": True}},
+        "uniform_hnsw": {
+            "index": "hnsw",
+            "metric": "l2",
+            "params": {"quantize_type": "uniform_uint8"},
+        },
+        "pq_ivf": {
+            "index": "ivf",
+            "metric": "l2",
+            "params": {
+                "n_list": 4,
+                "quantize_type": "pq",
+                "num_chunk": 8,
+                "num_bits": 4,
+                "fast_scan": True,
+            },
+        },
     }
     rng = random.Random(3)
     docs = [
@@ -356,14 +539,26 @@ def test_new_index_params_survive_restart(settings: Settings) -> None:
             assert info["available"] is True
             assert info["vectors"] == before[name]
             assert info["stats"]["doc_count"] == 300
-        index_param = before["quant_hnsw"][0]["index_param"]
-        assert (index_param["quantize_type"], index_param["quantizer_param"]) == (
-            "INT4",
-            {"enable_rotate": True},
-        )
+        assert before["quant_hnsw"][0]["index_param"]["quantize_type"] == "INT4"
+        rot = before["rot_flat"][0]["index_param"]
+        assert (rot["quantize_type"], rot["quantizer_param"]["enable_rotate"]) == ("INT4", True)
         assert before["soar_ivf"][0]["index_param"]["use_soar"] is True
+        assert before["uniform_hnsw"][0]["index_param"]["quantize_type"] == "UNIFORM_UINT8"
+        pq = before["pq_ivf"][0]["index_param"]
+        assert pq["quantize_type"] == "PQ"
+        assert {k: pq["quantizer_param"][k] for k in ("num_chunk", "num_bits", "fast_scan")} == {
+            "num_chunk": 8,
+            "num_bits": 4,
+            "fast_scan": True,
+        }
 
-        for name, params in [("quant_hnsw", {"ef": 64}), ("soar_ivf", {"nprobe": 4})]:
+        for name, params in [
+            ("quant_hnsw", {"ef": 64}),
+            ("soar_ivf", {"nprobe": 4}),
+            ("rot_flat", None),
+            ("uniform_hnsw", {"ef": 64, "is_using_refiner": True}),
+            ("pq_ivf", {"nprobe": 4, "is_using_refiner": True, "scale_factor": 20}),
+        ]:
             response = second.post(
                 f"/collections/{name}/search",
                 json={"queries": [{"field": "embedding", "id": "7", "params": params}], "topk": 3},

@@ -93,7 +93,8 @@ async def fetch_docs(
     return await managed.read(lambda c: operations.fetch(c, body))
 
 
-@router.get("/docs/{doc_id}", response_model=DocOut, summary="Fetch a single document")
+# ``:path`` so ids containing "/" (allowed since Zvec 0.8) still route.
+@router.get("/docs/{doc_id:path}", response_model=DocOut, summary="Fetch a single document")
 async def get_doc(
     name: str,
     doc_id: str,

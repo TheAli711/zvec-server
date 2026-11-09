@@ -160,6 +160,11 @@ tracker, and put a `Closes: ZS-NNN` trailer in the commit message.
   **Releasing** below. Keep `__version__` in sync with the release tag.
 - Filter strings are passed through to Zvec verbatim (SQL-like: single `=`,
   single-quoted strings, `AND`/`OR`/`IN`/`BETWEEN`/`LIKE`).
+- Index/search `params` are strict and validated in `adapter/schema_mapper.py` /
+  `adapter/query_mapper.py`, not by Zvec. Zvec's errors for bad quantizer/PQ
+  values are generic or crash its constructors (500s). `schema_mapper._check_rotation`
+  holds a **temporary** guard for a Zvec 0.8 bug (hnsw + scalar quantization +
+  `enable_rotate`); remove it when upstream fixes it (ZS-076).
 
 ## Releasing
 

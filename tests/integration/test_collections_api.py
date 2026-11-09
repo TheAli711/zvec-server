@@ -95,3 +95,24 @@ def test_delete_missing_collection_returns_404(client: TestClient) -> None:
 def test_flush_and_optimize(client: TestClient, created_collection: str) -> None:
     assert client.post(f"/collections/{created_collection}/flush").status_code == 200
     assert client.post(f"/collections/{created_collection}/optimize").status_code == 200
+
+
+def test_scalar_field_names_up_to_64_ascii_bytes(client: TestClient) -> None:
+    """Zvec 0.8 raised the field-name limit from 32 to 64 ASCII bytes."""
+    long_name = "f" * 64
+    body = {
+        "name": "fields_col",
+        "vectors": [{"name": "e", "dim": 4}],
+        "fields": [{"name": long_name, "dtype": "INT64"}],
+    }
+    assert client.post("/collections", json=body).status_code == 201
+
+    for bad in ("f" * 65, "日本"):
+        body = {
+            "name": "fields_bad",
+            "vectors": [{"name": "e", "dim": 4}],
+            "fields": [{"name": bad, "dtype": "INT64"}],
+        }
+        response = client.post("/collections", json=body)
+        assert response.status_code == 422, response.text
+        assert client.get("/collections/fields_bad").status_code == 404

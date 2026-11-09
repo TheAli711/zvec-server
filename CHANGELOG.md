@@ -8,6 +8,52 @@ and this project adheres to
 
 ## [Unreleased]
 
+> **Breaking:** creating an `hnsw` vector field with `fp16`/`int8`/`int4`
+> quantization **and** `enable_rotate: true` now returns `422`. Zvec 0.8
+> returns near-random results for that combination after optimize
+> ([alibaba/zvec#886](https://github.com/alibaba/zvec/issues/886)). Use a
+> `flat`/`ivf` index or drop the rotation. Existing collections are unaffected
+> and keep their recall. `index_param.quantizer_param` in responses now lists
+> all six quantizer settings instead of only `enable_rotate`.
+
+### Added
+
+- Uniform quantizers `uniform_uint8` / `uniform_uint7` / `uniform_uint4`
+  (`hnsw`, metric `l2`) and product quantization `pq` (`hnsw`, `ivf`) with the
+  settings `num_chunk`, `num_bits`, `fast_scan` (ivf), and OPQ via
+  `enable_rotate` + `opq_iter` / `opq_pq_iter`. The server validates every
+  combination and returns a specific `422` for invalid ones.
+- Search-time refiner: `scale_factor` on `hnsw` / `hnsw_rabitq`, and
+  `is_using_refiner` + `scale_factor` on `ivf`. The refiner re-scores candidates
+  against the full-precision vectors.
+- Document ids can be any UTF-8 string up to 1,024 bytes (no NUL or newline),
+  including spaces, `/`, and non-ASCII. `GET /collections/{name}/docs/{doc_id}`
+  routes ids that contain `/`. Scalar field names can be up to 64 bytes (was 32).
+- RaBitQ indexes (`hnsw_rabitq`, `ivf_rabitq`) now work on Linux and macOS
+  ARM64 and on Intel Macs, in addition to Linux x86_64.
+- Benchmarks: the `quant` sweep covers the new quantizers and the refiner.
+
+### Changed
+
+- Requires **Zvec 0.8.1** (was 0.7.0). Brings faster distance kernels
+  (especially INT4 and ARM64), lower index-build memory, and the fixes listed
+  below. On-disk collections from 0.7.0 open unchanged.
+
+### Fixed
+
+- `is_using_refiner: true` on an unquantized `hnsw` field returned `500` once
+  the collection was optimized. It now returns `400`, and so does a
+  `scale_factor` that is negative, above 1000, or not finite (`NaN` /
+  `Infinity`), all of which also returned `500`.
+- `enable_rotate: true` with `fp16` quantization was accepted, but every insert
+  into the collection then failed. Rotation is now accepted only with `int8`,
+  `int4`, or `pq` (`422` otherwise).
+- From Zvec 0.8: crashes or missing rows when `fetch` or `search` raced a flush,
+  and several filter bugs (`LIKE` prefix/suffix overlap, deep `OR` expressions,
+  exclusive float bounds, empty-array and suffix inverted-index queries,
+  filtered IVF search). Collection locks are no longer held by inherited file
+  descriptors.
+
 ## [0.2.0] - 2026-09-19
 
 > **Breaking:** unknown or mistyped keys in index `params` (`422`) and search

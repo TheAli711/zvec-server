@@ -39,9 +39,11 @@ class QuerySpec(BaseModel):
         default=None,
         description=(
             "Index-specific query tuning. hnsw/hnsw_rabitq: ``ef``, ``radius``, "
-            "``is_linear``, ``is_using_refiner``. ivf: ``nprobe``. ivf_rabitq: "
-            "``nprobe``, ``radius``, ``is_linear``, ``is_using_refiner``, "
-            "``scale_factor``. flat: none. Unknown keys are rejected."
+            "``is_linear``, ``is_using_refiner``, ``scale_factor``. ivf: ``nprobe``, "
+            "``is_using_refiner``, ``scale_factor``. ivf_rabitq: ``nprobe``, "
+            "``radius``, ``is_linear``, ``is_using_refiner``, ``scale_factor``. "
+            "flat: none. Unknown keys are rejected; the refiner needs a quantized "
+            "index on hnsw."
         ),
     )
 
