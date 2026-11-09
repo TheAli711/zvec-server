@@ -129,9 +129,10 @@ class InprocRunner:
         nprobe: int | None = None,
         filter: str | None = None,
         include_vector: bool = False,
+        refine: float | None = None,
     ) -> SearchOutcome:
         assert self._managed is not None and self._spec is not None
-        params = server_query_params(self._spec.index, ef=ef, nprobe=nprobe)
+        params = server_query_params(self._spec.index, ef=ef, nprobe=nprobe, refine=refine)
         query = QuerySpec(field=self._spec.vector_field, vector=vector.tolist(), params=params)
         req = SearchRequest(
             queries=[query],

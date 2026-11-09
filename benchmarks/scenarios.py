@@ -35,6 +35,8 @@ class SearchPoint:
     concurrency: int
     filter: str | None
     include_vector: bool
+    # Query-time refiner ``scale_factor``; ``None`` = refiner off.
+    refine: float | None = None
 
 
 @dataclass(frozen=True)
@@ -47,11 +49,13 @@ class SearchGrid:
     concurrency: tuple[int, ...] = (1,)
     filters: tuple[str | None, ...] = (None,)
     include_vector: tuple[bool, ...] = (False,)
+    refine: tuple[float | None, ...] = (None,)
 
     def points(self) -> list[SearchPoint]:
         return [
-            SearchPoint(tk, ef, np, c, flt, iv)
-            for tk, ef, np, c, flt, iv in product(
+            SearchPoint(tk, ef, np, c, flt, iv, rf)
+            for rf, tk, ef, np, c, flt, iv in product(
+                self.refine,
                 self.topk,
                 self.ef,
                 self.nprobe,

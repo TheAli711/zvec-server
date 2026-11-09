@@ -48,8 +48,7 @@ class VectorFieldSpec(BaseModel):
     index: str = Field(
         default="hnsw",
         description=(
-            "Vector index type: ``hnsw``, ``flat``, ``ivf``, ``hnsw_rabitq``, or "
-            "``ivf_rabitq`` (RaBitQ indexes require a Linux x86_64 server)."
+            "Vector index type: ``hnsw``, ``flat``, ``ivf``, ``hnsw_rabitq``, or ``ivf_rabitq``."
         ),
     )
     metric: str = Field(
@@ -60,10 +59,14 @@ class VectorFieldSpec(BaseModel):
         default=None,
         description=(
             "Index-specific tuning parameters. HNSW: ``m``, ``ef_construction``. "
-            "IVF: ``n_list``, ``n_iters``, ``use_soar``. All of hnsw/flat/ivf also accept "
-            "``quantize_type`` (``fp16``/``int8``/``int4``) and ``enable_rotate`` (bool). "
-            "hnsw_rabitq: ``m``, ``ef_construction``, ``total_bits``, ``num_clusters``, "
-            "``sample_count``. ivf_rabitq: ``n_list``, ``total_bits``, ``sample_count``."
+            "IVF: ``n_list``, ``n_iters``, ``use_soar``. hnsw/flat/ivf also accept "
+            "``quantize_type`` (``fp16``/``int8``/``int4``; hnsw adds "
+            "``uniform_uint4``/``uniform_uint7``/``uniform_uint8`` with metric l2; "
+            "hnsw and ivf add ``pq``) and ``enable_rotate`` (bool; OPQ for pq). PQ "
+            "settings: ``num_chunk``, ``num_bits`` (4/8), ``opq_iter``, ``opq_pq_iter``, "
+            "and ``fast_scan`` (ivf only). hnsw_rabitq: ``m``, ``ef_construction``, "
+            "``total_bits``, ``num_clusters``, ``sample_count``. ivf_rabitq: "
+            "``n_list``, ``total_bits``, ``sample_count``."
         ),
     )
 

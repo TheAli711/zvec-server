@@ -156,7 +156,7 @@ def search(collection: zvec.Collection, req: SearchRequest) -> SearchResponse:
         InvalidArgumentError: If a filter or query is malformed.
         ZvecOperationError: For any other engine failure.
     """
-    queries = query_mapper.build_queries(req.queries, query_mapper.vector_index_types(collection))
+    queries = query_mapper.build_queries(req.queries, query_mapper.vector_index_info(collection))
     try:
         hits = collection.query(
             queries=queries,
@@ -193,7 +193,7 @@ def group_search(collection: zvec.Collection, req: GroupSearchRequest) -> GroupS
             f"Unknown group_by field {req.group_by!r}",
             {"group_by": req.group_by, "valid": sorted(scalar_fields)},
         )
-    (query,) = query_mapper.build_queries([req.query], query_mapper.vector_index_types(collection))
+    (query,) = query_mapper.build_queries([req.query], query_mapper.vector_index_info(collection))
     try:
         groups = collection.group_by_query(
             query,

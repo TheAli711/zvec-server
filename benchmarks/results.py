@@ -78,6 +78,8 @@ class SearchResult:
     # HTTP-only payload sizes (bytes); None for in-process tiers.
     avg_request_bytes: float | None = None
     avg_response_bytes: float | None = None
+    # Query-time refiner scale factor; None = refiner off.
+    refine: float | None = None
 
 
 @dataclass
@@ -119,7 +121,27 @@ def _git_commit() -> str | None:
             timeout=5,
             cwd=Path(__file__).resolve().parent,
         )
-        return out.stdout.strip() or None if out.returncode == 0 else None
+        if out.returncode != 0:
+            return None
+        return out.stdout.strip() or None
+    except Exception:
+        return None
+
+
+def _cpu_brand() -> str | None:
+    """The CPU brand string on macOS (``platform.processor()`` there is just "arm")."""
+    if sys.platform != "darwin":
+        return None
+    try:
+        out = subprocess.run(
+            ["sysctl", "-n", "machdep.cpu.brand_string"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        if out.returncode != 0:
+            return None
+        return out.stdout.strip() or None
     except Exception:
         return None
 
@@ -133,7 +155,7 @@ def capture_env(notes: dict[str, Any] | None = None, **server_knobs: Any) -> Env
     except Exception:
         zvec_version = "unavailable"
 
-    cpu_model = platform.processor() or platform.machine()
+    cpu_model = _cpu_brand() or platform.processor() or platform.machine()
     cpu_physical: int | None = None
     cpu_logical: int | None = None
     ram_gb: float | None = None

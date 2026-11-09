@@ -17,11 +17,13 @@ from pathlib import Path
 
 from benchmarks import scenarios
 from benchmarks.harness import run_tier
+from benchmarks.quant import DEFAULT_VARIANTS, VARIANTS
 from benchmarks.results import RunResult, TierResult, capture_env
 from benchmarks.runners.base import Runner
 
 DEFAULT_OUT = Path(__file__).resolve().parent / "results"
 ALL_TIERS = ("engine", "inproc", "http")
+QUANTIZE_TYPES = ("fp16", "int8", "int4", "uniform_uint8", "uniform_uint7", "uniform_uint4", "pq")
 
 
 def _build_runner(tier: str, data_dir: Path, query_threads: int | None) -> Runner:
@@ -109,7 +111,11 @@ def run(args: argparse.Namespace) -> int:
         scenario = scenarios.Scenario(**{**scenario.__dict__, "spec": spec})
     if args.quantize is not None:
         spec = dataclasses.replace(
-            scenario.spec, quantize_type=args.quantize, enable_rotate=args.rotate
+            scenario.spec,
+            quantize_type=args.quantize,
+            enable_rotate=args.rotate,
+            num_chunk=args.num_chunk,
+            num_bits=args.num_bits,
         )
         scenario = scenarios.Scenario(**{**scenario.__dict__, "spec": spec})
 
@@ -195,24 +201,50 @@ def main(argv: list[str] | None = None) -> int:
     )
     run_p.add_argument(
         "--quantize",
-        choices=("fp16", "int8", "int4"),
+        choices=QUANTIZE_TYPES,
         default=None,
-        help="quantize the vector index (default: none, full FP32)",
+        help="quantize the vector index (default: none, full FP32); uniform_* are HNSW + L2 "
+        "only, pq is HNSW/IVF + VECTOR_FP32 only",
     )
     run_p.add_argument(
-        "--rotate", action="store_true", help="random rotation before quantizing (with --quantize)"
+        "--rotate",
+        action="store_true",
+        help="random rotation before quantizing (learned OPQ for pq; with --quantize)",
+    )
+    run_p.add_argument("--num-chunk", type=int, default=None, help="PQ sub-quantizers (pq only)")
+    run_p.add_argument(
+        "--num-bits", type=int, choices=(4, 8), default=None, help="PQ bits per code (pq only)"
     )
     run_p.set_defaults(func=run)
 
     quant_p = sub.add_parser(
-        "quant", help="sweep quantization variants (fp32/fp16/int8/int4, +rotation) on one scenario"
+        "quant", help="sweep quantization variants (fp16/int*/uint*/pq, +rotation) on one scenario"
     )
     quant_p.add_argument("--scenario", default="smoke", help=f"one of {scenarios.SCENARIO_NAMES}")
     quant_p.add_argument("--tier", default="engine", choices=ALL_TIERS, help="tier to measure")
     quant_p.add_argument(
         "--variants",
-        default="fp32,fp16,int8,int8+rot,int4,int4+rot",
-        help="comma-separated subset of fp32,fp16,int8,int8+rot,int4,int4+rot",
+        default=",".join(DEFAULT_VARIANTS),
+        help=f"comma-separated subset of {','.join(VARIANTS)} (default: all that build on HNSW)",
+    )
+    quant_p.add_argument(
+        "--refine",
+        default=None,
+        metavar="SF[,SF...]",
+        help="also measure quantized variants with the query-time refiner at each scale_factor "
+        "(HNSW: 0 = max(topk, ef) candidates; IVF engine default 10); never applied to fp32",
+    )
+    quant_p.add_argument(
+        "--index", choices=("hnsw", "ivf", "flat"), default=None, help="override the index type"
+    )
+    quant_p.add_argument("--ef", default=None, help="override the ef sweep, e.g. 200 or 80,200")
+    quant_p.add_argument("--nprobe", default=None, help="IVF nprobe sweep, e.g. 10,50")
+    quant_p.add_argument("--concurrency", default=None, help="override the concurrency sweep")
+    quant_p.add_argument(
+        "--pq-chunks",
+        type=int,
+        default=None,
+        help="PQ num_chunk (default: dim // 4, i.e. 32 for 128-d)",
     )
     quant_p.add_argument("--hdf5", default=None, help="ann-benchmarks HDF5 path (cohere scenarios)")
     quant_p.add_argument("--out", default=str(DEFAULT_OUT), help="results output directory")

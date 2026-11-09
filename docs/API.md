@@ -142,39 +142,101 @@ Provide dtypes by name (case-sensitive, as Zvec defines them).
 ## Index types & metrics
 
 **Index types** (for `vectors[].index`): `hnsw` (default), `flat`, `ivf`,
-`hnsw_rabitq`, `ivf_rabitq`. The RaBitQ variants use RaBitQ quantization and
-are only available when the **server** runs on Linux x86_64 (the published
-Docker image does); elsewhere creating one returns `422`. They have not been
-benchmarked here yet — see the quantization note below.
+`hnsw_rabitq`, `ivf_rabitq`. The RaBitQ variants use RaBitQ quantization. The
+engine supports them on Linux and macOS (x86_64 and ARM64) and on Windows
+x86_64; on any other platform, creating one returns `422`. They have not been
+benchmarked here yet.
 
-Optional per-index tuning goes in `vectors[].params`:
+Optional per-index tuning goes in `vectors[].params`. Unknown keys return `422`.
 
-| Index  | Recognized params                  |
-| ------ | ---------------------------------- |
-| `hnsw` | `m`, `ef_construction`             |
-| `ivf`  | `n_list`, `n_iters`, `use_soar`    |
-| `flat` | (none)                             |
+| Index  | Recognized params                                                         |
+| ------ | ------------------------------------------------------------------------- |
+| `hnsw` | `m`, `ef_construction`, plus quantization and PQ settings (below)         |
+| `ivf`  | `n_list`, `n_iters`, `use_soar`, plus quantization and PQ settings (below) |
+| `flat` | quantization only (`quantize_type`, `enable_rotate`)                      |
 | `hnsw_rabitq` | `m`, `ef_construction`, `total_bits`, `num_clusters`, `sample_count` |
 | `ivf_rabitq`  | `n_list`, `total_bits`, `sample_count` |
 
-**Quantization** (`hnsw`, `flat`, `ivf`): `quantize_type` — `fp16`, `int8`,
-or `int4` — makes the index search over quantized vectors; `enable_rotate: true`
-applies a random rotation before quantizing. Zvec keeps the original
-full-precision vectors alongside (fetch returns them unchanged), so the
-quantized index is **additional** storage, not a replacement.
+**Quantization.** `quantize_type` makes the index search over compressed vectors.
+Zvec keeps the original full-precision vectors alongside, and fetch returns them
+unchanged, so the quantized index is **extra** storage, not a replacement. The
+settings are fixed when the collection is created.
 
-> **Measure before adopting.** On SIFT1M (1M × 128) with Zvec 0.7.0 — server
-> defaults, mmap on — every quantized variant used *more* disk and memory than
-> FP32 and was no faster: `fp16` kept recall (0.995) at +37% disk / +35% RSS;
-> `int8` lost ~1 point of recall@10 at +20% disk / +23% RSS; `int4` lost ~28
-> points, and rotation made `int4` *worse* (0.54). Results may differ for
-> higher-dimensional embeddings. Run the quantization sweep on your own data:
+| `quantize_type`                                    | Indexes             | Requirements                     |
+| -------------------------------------------------- | ------------------- | -------------------------------- |
+| `fp16`, `int8`, `int4`                             | `hnsw`, `flat`, `ivf` | —                              |
+| `uniform_uint8`, `uniform_uint7`, `uniform_uint4`  | `hnsw`              | metric `l2`; no `enable_rotate`  |
+| `pq` (product quantization)                        | `hnsw`, `ivf`       | dtype `VECTOR_FP32`              |
+
+- `enable_rotate: true` applies a random rotation before `int8`/`int4`
+  quantization. With `pq`, it learns an OPQ rotation instead. Other quantize
+  types don't support it and return `422`.
+- **Not on `hnsw` with `int8`/`int4`, for now.** Zvec 0.8.0 and 0.8.1 return
+  near-random results after `optimize` for a new HNSW index with scalar
+  quantization and rotation
+  ([alibaba/zvec#886](https://github.com/alibaba/zvec/issues/886)), so the
+  server rejects that combination with `422`.
+  `flat`/`ivf` with rotation and `hnsw` with `pq` + OPQ are unaffected, and so
+  are HNSW collections created before the upgrade.
+- The uniform quantizers share one value range across all vectors. That makes
+  scoring cheaper but can cost recall. Pair them with the search-time refiner
+  (below).
+- PQ settings, accepted only with `quantize_type: "pq"`:
+
+  | Param         | Type        | Default | Notes                                                        |
+  | ------------- | ----------- | ------- | ------------------------------------------------------------ |
+  | `num_chunk`   | int         | 8       | Sub-quantizers, 1..`dim`. More chunks keep more information. |
+  | `num_bits`    | 4 or 8      | 8       | Bits per code.                                               |
+  | `fast_scan`   | bool        | `false` | `ivf` only, with `num_bits: 4` and a `num_chunk` that divides `dim`. Packed SIMD scan. |
+  | `opq_iter`    | int 1–100   | 5       | OPQ iterations. Requires `enable_rotate: true`.              |
+  | `opq_pq_iter` | int 1–100   | 4       | PQ iterations per OPQ iteration. Requires `enable_rotate: true`. |
+
+  PQ learns its codebook during `optimize`. Until the first optimize, searches
+  scan the vectors exactly.
+
+> **Measure before adopting.** SIFT1M (1M × 128, L2), HNSW `m=16`,
+> `ef_construction=200`, mmap on, searching at `ef=200` with 16 concurrent
+> clients. Zvec 0.8.1 on an Apple M5, engine tier:
+>
+> | `quantize_type` | disk vs fp32 | recall@10 | + refiner (`scale_factor` 0) | QPS vs fp32 | + refiner |
+> | --------------- | -----------: | --------: | ---------------------------: | ----------: | --------: |
+> | none (fp32)     | 687 MB       | 0.996     | —                            | 21.3k       | —         |
+> | `fp16`          | +38%         | 0.996     | 0.996                        | +13%        | −49%      |
+> | `int8`          | +20%         | 0.987     | 0.995                        | +25%        | −48%      |
+> | `int4`          | +11%         | 0.867     | 0.996                        | −5%         | −49%      |
+> | `uniform_uint8` | +20%         | 0.995     | 0.995                        | +20%        | −48%      |
+> | `uniform_uint7` | +20%         | 0.965     | 0.995                        | +22%        | −49%      |
+> | `uniform_uint4` | +11%         | 0.834     | 0.994                        | +16%        | −50%      |
+> | `pq` (32 × 8-bit) | +7%        | 0.717     | 0.991                        | +20%        | −48%      |
+> | `pq` (32 × 4-bit) | +2%        | 0.400     | 0.922                        | +18%        | −52%      |
+>
+> - **Disk and memory grow.** Every variant uses more disk than fp32, because
+>   Zvec keeps the full-precision vectors, and server memory was the same or
+>   higher. On this engine version quantization buys **speed**, not space.
+> - **`uniform_uint8` is the one free win.** It matches fp32 recall and runs
+>   about 20% faster, with no refiner needed.
+> - **The refiner restores recall but halves throughput at `scale_factor` 0**,
+>   because it re-scores max(`topk`, `ef`) = 200 candidates. A small window is
+>   much cheaper: for `pq`, `scale_factor: 5` gave 0.984 recall at +11% QPS, and
+>   `2` gave 0.908 at +17%. Start around 3–5 and tune.
+> - **PQ needs the refiner.** OPQ (`enable_rotate: true`) lowered PQ recall on
+>   SIFT (0.623 vs 0.717) and slowed optimize (66 s vs 56 s, against 47 s for
+>   fp32). The other variants optimize faster than fp32 (31–37 s).
+>
+> Results differ for other data and hardware, and SIFT is low-dimensional by
+> modern embedding standards. Run the sweep on your own data with
 > `python -m benchmarks quant` (see `benchmarks/README.md`).
 
 ```json
-{ "name": "embedding", "dim": 768, "index": "hnsw",
-  "params": { "m": 16, "quantize_type": "int8", "enable_rotate": true } }
+{ "name": "embedding", "dim": 768, "index": "ivf", "metric": "l2",
+  "params": { "n_list": 1024, "quantize_type": "pq", "num_chunk": 96,
+              "num_bits": 4, "fast_scan": true } }
 ```
+
+`index_param` in the create response and in `GET /collections/{name}` echoes the
+effective settings, including every `quantizer_param` default
+(`enable_rotate`, `num_chunk`, `num_bits`, `fast_scan`, `opq_iter`,
+`opq_pq_iter`).
 
 **Metrics** (for `vectors[].metric`): `cosine` (default), `ip` (inner product),
 `l2` (Euclidean). Aliases such as `dot` / `inner_product` and `euclidean` are
@@ -233,7 +295,7 @@ Create a collection.
 | `name`   | string          | —               | Vector field name.                     |
 | `dim`    | int (> 0)       | —               | Vector dimension.                      |
 | `dtype`  | string          | `VECTOR_FP32`   | See [data types](#data-types).         |
-| `index`  | string          | `hnsw`          | `hnsw` / `flat` / `ivf`.               |
+| `index`  | string          | `hnsw`          | See [index types](#index-types--metrics). |
 | `metric` | string          | `cosine`        | `cosine` / `ip` / `l2`.                |
 | `params` | object \| null  | `null`          | Index tuning params.                   |
 
@@ -241,7 +303,7 @@ Create a collection.
 
 | Field      | Type    | Default | Notes                                   |
 | ---------- | ------- | ------- | --------------------------------------- |
-| `name`     | string  | —       | Scalar field name.                      |
+| `name`     | string  | —       | Scalar field name: ASCII, up to 64 bytes. |
 | `dtype`    | string  | —       | See [scalar dtypes](#data-types).       |
 | `nullable` | bool    | `false` | Whether the field may be null.          |
 | `indexed`  | bool    | `false` | Build an inverted index (faster filters). |
@@ -356,6 +418,12 @@ Optimize the collection's indexes.
 ## Documents
 
 All document endpoints are under `/collections/{name}`.
+
+**Document ids** can be any non-empty UTF-8 string of up to 1,024 bytes without
+a NUL or newline character, so URLs, paths, and titles work as-is. An invalid id
+returns `400`. Omit `id` on insert to get a random hex UUID. HTTP clients
+normalize the path segments `.` and `..`, so to fetch an id like that, use
+`POST /docs/fetch`, or encode its dots as `%2E`.
 
 ### `POST /collections/{name}/docs/insert`
 
@@ -492,6 +560,7 @@ Fetch documents by id. Missing ids are simply omitted from the result map.
 ### `GET /collections/{name}/docs/{doc_id}`
 
 Fetch a single document by id. Returns `404` (`document_not_found`) if missing.
+URL-encode the id. Ids that contain `/` work both encoded (`%2F`) and literally.
 
 **Query parameters**
 
@@ -581,13 +650,25 @@ Query `params` by index type (unknown keys return `400`):
 
 | Index                  | Params                                                        |
 | ---------------------- | ------------------------------------------------------------- |
-| `hnsw`, `hnsw_rabitq`  | `ef` (int), `radius` (float), `is_linear` (bool), `is_using_refiner` (bool) |
-| `ivf`                  | `nprobe` (int)                                                |
-| `ivf_rabitq`           | `nprobe`, `radius`, `is_linear`, `is_using_refiner`, `scale_factor` (float) |
+| `hnsw`, `hnsw_rabitq`  | `ef` (int), `radius` (float), `is_linear` (bool), `is_using_refiner` (bool), `scale_factor` (float) |
+| `ivf`                  | `nprobe` (int), `is_using_refiner` (bool), `scale_factor` (float) |
+| `ivf_rabitq`           | `nprobe`, `radius`, `is_linear`, `is_using_refiner`, `scale_factor` |
 | `flat`                 | none                                                          |
 
-`ef` / `nprobe` trade speed for recall; `is_linear: true` forces an exact
-brute-force scan; `radius` limits hits to a distance threshold.
+- `ef` and `nprobe` trade speed for recall.
+- `is_linear: true` forces an exact brute-force scan.
+- `radius` limits hits to a distance threshold.
+
+**Refiner.** `is_using_refiner: true` re-scores a larger candidate set against
+the full-precision vectors, which recovers most of the recall that quantization
+loses. `scale_factor` (0–1000) sizes that candidate set, and the defaults
+differ by index:
+
+- on `hnsw`, `0` (the default) means max(`topk`, `ef`) candidates;
+- on `ivf`, the default is `10` (`topk` × 10).
+
+On `hnsw`, the refiner requires a quantized index (`quantize_type` set), and
+otherwise returns `400`.
 
 **Example request**
 

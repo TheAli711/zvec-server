@@ -72,6 +72,7 @@ def _recall_pass(
             nprobe=point.nprobe,
             filter=point.filter,
             include_vector=point.include_vector,
+            refine=point.refine,
         )
         # Skip empty ids defensively: zvec 0.5.x's mmap forward store could fail to
         # resolve a few freshly-optimized docs and return "" (fixed in 0.7.0).
@@ -94,7 +95,7 @@ def measure_search(
     n_q = queries.shape[0]
 
     # Recall (concurrency-independent) — compute once, reuse across concurrency.
-    rkey = (point.topk, point.ef, point.nprobe, point.filter, point.include_vector)
+    rkey = (point.topk, point.ef, point.nprobe, point.filter, point.include_vector, point.refine)
     if rkey not in recall_cache:
         recall_cache[rkey] = _recall_pass(
             runner, queries, ground_truth, point, recall_k, sample=min(n_q, 1000)
@@ -110,6 +111,7 @@ def measure_search(
             nprobe=point.nprobe,
             filter=point.filter,
             include_vector=point.include_vector,
+            refine=point.refine,
         )
 
     counter = itertools.count()
@@ -129,6 +131,7 @@ def measure_search(
                 nprobe=point.nprobe,
                 filter=point.filter,
                 include_vector=point.include_vector,
+                refine=point.refine,
             )
             lat.append(time.perf_counter() - t0)
             if out.request_bytes is not None:
@@ -161,6 +164,7 @@ def measure_search(
         peak_rss_mb=rss.peak_mb,
         avg_request_bytes=(sum(req_bytes) / len(req_bytes)) if req_bytes else None,
         avg_response_bytes=(sum(resp_bytes) / len(resp_bytes)) if resp_bytes else None,
+        refine=point.refine,
     )
 
 

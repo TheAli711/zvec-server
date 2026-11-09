@@ -7,6 +7,7 @@ import contextlib
 import gc
 import json
 from typing import Any
+from urllib.parse import quote
 
 import pytest
 from fastapi.testclient import TestClient
@@ -73,6 +74,70 @@ def test_get_single_document(
     response = client.get(f"/collections/{created_collection}/docs/a")
     assert response.status_code == 200
     assert response.json()["id"] == "a"
+
+
+_FIELDS = {"category": "tech", "year": 2024}
+
+# Zvec 0.8 accepts any non-empty UTF-8 id up to 1,024 bytes without NUL/newline.
+RELAXED_IDS = [
+    "doc with spaces",
+    "https://example.com/a/b?c=d",
+    "a,b'c\"d",
+    "naïve-日本語-🙂",
+    "x" * 1024,
+    "é" * 512,  # 1,024 bytes
+]
+
+
+def test_relaxed_document_ids_roundtrip(client: TestClient, created_collection: str) -> None:
+    docs = [
+        {"id": doc_id, "vectors": {"embedding": [0.1 * i, 0.2, 0.3, 0.4]}, "fields": _FIELDS}
+        for i, doc_id in enumerate(RELAXED_IDS, start=1)
+    ]
+    response = _insert(client, created_collection, docs)
+    assert response.status_code == 200, response.text
+    assert all(item["ok"] for item in response.json()["results"])
+
+    fetched = client.post(
+        f"/collections/{created_collection}/docs/fetch", json={"ids": RELAXED_IDS}
+    )
+    assert fetched.status_code == 200
+    assert set(fetched.json()["docs"]) == set(RELAXED_IDS)
+
+    for doc_id in RELAXED_IDS:
+        got = client.get(f"/collections/{created_collection}/docs/{quote(doc_id, safe='')}")
+        assert got.status_code == 200, (doc_id[:40], got.text)
+        assert got.json()["id"] == doc_id
+
+    search = client.post(
+        f"/collections/{created_collection}/search",
+        json={"queries": [{"field": "embedding", "id": RELAXED_IDS[3]}], "topk": 10},
+    )
+    assert search.status_code == 200, search.text
+    assert {r["id"] for r in search.json()["results"]} == set(RELAXED_IDS)
+
+
+def test_get_document_with_slash_in_id(client: TestClient, created_collection: str) -> None:
+    doc = {
+        "id": "tenant/a/doc-1",
+        "vectors": {"embedding": [0.1, 0.2, 0.3, 0.4]},
+        "fields": _FIELDS,
+    }
+    assert _insert(client, created_collection, [doc]).status_code == 200
+    for path in ("tenant/a/doc-1", "tenant%2Fa%2Fdoc-1"):
+        got = client.get(f"/collections/{created_collection}/docs/{path}")
+        assert got.status_code == 200, (path, got.text)
+        assert got.json()["id"] == "tenant/a/doc-1"
+
+
+@pytest.mark.parametrize("doc_id", ["x" * 1025, "é" * 513, "a\nb", "a\u0000b", ""])
+def test_invalid_document_ids_return_400(
+    client: TestClient, created_collection: str, doc_id: str
+) -> None:
+    doc = {"id": doc_id, "vectors": {"embedding": [0.1, 0.2, 0.3, 0.4]}, "fields": _FIELDS}
+    response = _insert(client, created_collection, [doc])
+    assert response.status_code == 400, response.text
+    assert response.json()["error"]["code"] == "invalid_argument"
 
 
 def test_get_missing_document_returns_404(client: TestClient, created_collection: str) -> None:

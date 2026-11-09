@@ -462,44 +462,37 @@ class CollectionManager:
         return loaded, unavailable
 
     # ----------------------------------------------------------------- shutdown
-    def flush_all(self) -> None:
-        """Flush every open collection (best-effort)."""
-        with self._lock:
-            managed_list = list(self._registry.values())
-        for managed in managed_list:
-            if not managed.available:
-                continue
-            try:
-                with managed.rwlock.gen_wlock():
-                    zcol.flush_collection(managed.collection)
-            except Exception:
-                logger.exception("Error flushing collection", extra={"collection": managed.name})
-
     def close(self) -> None:
         """Flush and release all collections (called at shutdown).
 
-        Each handle is closed under its exclusive lock, so in-flight operations
-        finish first, and Zvec's on-disk lock is released immediately rather than
-        whenever the handle is garbage-collected — a replacement instance in a
-        rolling restart can then open the collections without waiting.
+        Each handle is flushed and closed under a single hold of its exclusive
+        lock, so in-flight operations finish first and nothing queued behind the
+        lock (e.g. an optimize) can slip in between the flush and the close (ZS-080).
+        Zvec's on-disk lock is released immediately rather than whenever the
+        handle is garbage-collected — a replacement instance in a rolling restart
+        can then open the collections without waiting.
         """
         for task in self._recovery_tasks.values():
             task.cancel()
         self._recovery_tasks.clear()
-        self.flush_all()
         with self._lock:
             managed_list = list(self._registry.values())
             self._registry.clear()
         for managed in managed_list:
+            log_extra = {"collection": managed.name}
             with managed.rwlock.gen_wlock():
                 managed.close_cursors()
                 collection, managed.collection = managed.collection, None
                 if collection is None:
                     continue
                 try:
+                    zcol.flush_collection(collection)
+                except Exception:
+                    logger.exception("Error flushing collection", extra=log_extra)
+                try:
                     zcol.close_collection(collection)
                 except Exception:
-                    logger.exception("Error closing collection", extra={"collection": managed.name})
+                    logger.exception("Error closing collection", extra=log_extra)
 
     # ------------------------------------------------------------------ helpers
     def _effective_mmap(self, options: CollectionOptions | None) -> bool:
